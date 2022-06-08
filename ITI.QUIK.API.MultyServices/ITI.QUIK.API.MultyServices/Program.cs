@@ -1,3 +1,5 @@
+using DataAbstraction.Connections;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -7,14 +9,16 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// add child connections adress
+builder.Services.Configure<HttpClientConfig>(
+    builder.Configuration.GetSection("HttpClientConfig"));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
+
 
 app.UseHttpsRedirection();
 
