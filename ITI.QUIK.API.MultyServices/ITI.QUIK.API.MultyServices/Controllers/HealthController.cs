@@ -53,51 +53,61 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         {
             _logger.LogInformation("HttpGet IsChildConnectionOk/ToQuikDataBase Call");
 
-            using (var client = new HttpClient())
-            {
-                client.BaseAddress = new Uri(_connection.ConnectionString);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var response = await client.GetAsync(_connection.ConnectionString + "/api/QuikDataBase/CheckConnections/QuikDataBase");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    ListStringResponseModel result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
-
-                    _logger.LogInformation("HttpGet IsChildConnectionOk/ToQuikDataBase succes is " + result.IsSuccess);
-                    return Ok(result);
-                }
-            }
-
-            _logger.LogWarning("HttpGet IsChildConnectionOk/ToQuikDataBase NotFound");
-            return NotFound();
+            return await GetResultOfCheckConnection("/api/QuikDataBase/CheckConnections/QuikDataBase");
         }
-
 
         [HttpGet("IsChildConnectionOk/ToQadmin/SpotBRL")]
         public async Task<IActionResult> IsChildConnectionOkToQadminSpotBRL()
         {
             _logger.LogInformation("HttpGet IsChildConnectionOk/ToQadmin/SpotBRL Call");
 
+            return await GetResultOfCheckConnection("/api/QuikQAdminFortsApi/CheckConnections/FortsApi");
+        }
+
+        [HttpGet("IsChildConnectionOk/ToQadmin/FortsBRL")]
+        public async Task<IActionResult> IsChildConnectionOkToQadminFortsBRL()
+        {
+            _logger.LogInformation("HttpGet IsChildConnectionOk/ToQadmin/FortsBRL Call");
+
+            return await GetResultOfCheckConnection("/api/QuikQAdminFortsApi/CheckConnections/FortsApi");
+        }
+
+        [HttpGet("IsChildConnectionOk/ToQMonitor")]
+        public async Task<IActionResult> IsChildConnectionOkToQMonitor()
+        {
+            _logger.LogInformation("HttpGet IsChildConnectionOk/ToQMonitor Call");
+
+            return await GetResultOfCheckConnection("/api/QuikQMonitor/CheckConnections/QMonitorAPI");
+        }
+
+        [HttpGet("IsChildConnectionOk/ToSFTP")]
+        public async Task<IActionResult> IsChildConnectionOkToSFTP()
+        {
+            _logger.LogInformation("HttpGet IsChildConnectionOk/ToSFTP Call");
+
+            return await GetResultOfCheckConnection("/api/QuikSftpServer/CheckConnections/ServerSFTP");
+        }
+
+        private async Task<IActionResult> GetResultOfCheckConnection(string apiRequest)
+        {
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(_connection.ConnectionString);
-                client.DefaultRequestHeaders.Accept.Add( new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                var response = await client.GetAsync(_connection.ConnectionString + "/api/QuikQAdminFortsApi/CheckConnections/FortsApi");
+                var response = await client.GetAsync(_connection.ConnectionString + apiRequest);
 
                 if (response.IsSuccessStatusCode)
                 {
                     ListStringResponseModel result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                    _logger.LogInformation("HttpGet IsChildConnectionOk/ToQadmin/SpotBRL succes is " + result.IsSuccess);
+                    _logger.LogInformation($"HttpGet {apiRequest} succes is {result.IsSuccess}");
                     return Ok(result);
                 }
             }
 
-            _logger.LogWarning("HttpGet IsChildConnectionOk/ToQadmin/SpotBRL NotFound");
+            _logger.LogWarning($"HttpGet {apiRequest} NotFound");
             return NotFound();
         }
-
     }
 }
