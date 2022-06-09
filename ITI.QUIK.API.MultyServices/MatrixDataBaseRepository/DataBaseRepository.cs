@@ -10,14 +10,14 @@ namespace MatrixDataBaseRepository
     public class DataBaseRepository : IDataBaseRepository
     {
         private ILogger<DataBaseRepository> _logger;
-        private DataBaseConnectionConfiguration _connection;
+        private readonly string _connectionString = "";
 
         private static string _queryChechConnection = "select * from moff.CLIENT_PORTFOLIO where id_client = 'BP17840'";
 
         public DataBaseRepository(IOptions<DataBaseConnectionConfiguration> connection, ILogger<DataBaseRepository> logger)
         {
-            _connection = connection.Value;
             _logger = logger;
+            _connectionString = connection.Value.ConnectionString + " User Id=" + connection.Value.Login + "; Password=" + connection.Value.Password + ";";
         }
 
         public async Task<ListStringResponseModel> CheckConnections()
@@ -26,11 +26,11 @@ namespace MatrixDataBaseRepository
 
             ListStringResponseModel response = new ListStringResponseModel();
 
-            string connectionString = _connection.ConnectionString + " User Id=" + _connection.Login + "; Password=" + _connection.Password + ";";
+            //string connectionString = _connection.ConnectionString + " User Id=" + _connection.Login + "; Password=" + _connection.Password + ";";
 
             try
             {
-                using (OracleConnection connection = new OracleConnection(connectionString))
+                using (OracleConnection connection = new OracleConnection(_connectionString))
                 {
                     OracleCommand command = new OracleCommand(_queryChechConnection, connection);
 
@@ -50,14 +50,14 @@ namespace MatrixDataBaseRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"QuikDBRepository CheckConnections Failed, Exception: " + ex.Message);
+                _logger.LogWarning($"DBRepository CheckConnections Failed, Exception: " + ex.Message);
 
                 response.IsSuccess = false;
                 response.Messages.Add("Exception at DataBase: " + ex.Message);
                 return response;
             }
 
-            _logger.LogInformation($"QuikDBRepository CheckConnections Success");
+            _logger.LogInformation($"DBRepository CheckConnections Success");
             return response;
         }
     }
