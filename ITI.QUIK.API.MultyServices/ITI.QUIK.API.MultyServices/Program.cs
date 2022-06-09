@@ -20,8 +20,6 @@ builder.Services.AddTransient<IDataBaseRepository, DataBaseRepository>();
 builder.Services.Configure<DataBaseConnectionConfiguration>(
     builder.Configuration.GetSection("DataBaseConfig"));
 
-//connectionStringOra + LogonData.loginOracle + "; Password=" + LogonData.passwordOracle + ";";
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
