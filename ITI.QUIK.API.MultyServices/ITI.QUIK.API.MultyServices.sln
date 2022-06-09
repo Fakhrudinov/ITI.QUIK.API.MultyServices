@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ITI.QUIK.API.MultyServices"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAbstraction", "DataAbstraction\DataAbstraction.csproj", "{C073E169-8CF1-47D9-8A6F-76E8111285E6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatrixDataBaseRepository", "MatrixDataBaseRepository\MatrixDataBaseRepository.csproj", "{285FC208-DD0A-4FD6-AC07-180AB1F1F777}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{C073E169-8CF1-47D9-8A6F-76E8111285E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C073E169-8CF1-47D9-8A6F-76E8111285E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C073E169-8CF1-47D9-8A6F-76E8111285E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{285FC208-DD0A-4FD6-AC07-180AB1F1F777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{285FC208-DD0A-4FD6-AC07-180AB1F1F777}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{285FC208-DD0A-4FD6-AC07-180AB1F1F777}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{285FC208-DD0A-4FD6-AC07-180AB1F1F777}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

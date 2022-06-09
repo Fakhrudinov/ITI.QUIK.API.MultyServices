@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DataAbstraction\DataAbstraction.csproj" />
+    <ProjectReference Include="..\MatrixDataBaseRepository\MatrixDataBaseRepository.csproj" />
   </ItemGroup>
 
 </Project>
