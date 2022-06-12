@@ -37,5 +37,27 @@ namespace ITI.QUIK.API.MultyServices.Controllers
                 return BadRequest(result);
             }
         }
+
+        [HttpGet("GetUser/SpotPortfolios/{clientCode}")]
+        public async Task<IActionResult> GetUserSpotPortfolios(string clientCode)
+        {
+            _logger.LogInformation("HttpGet GetUser/PersonalInfo Call");
+
+            MatrixClientCodeModelResponse result = await _repository.GetUserSpotPortfolios(clientCode);
+
+            if (result.Response.IsSuccess)
+            {
+                if (result.MatrixClientCodesList.Count == 0)
+                {
+                    return NotFound();
+                }
+
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
+        }
     }
 }
