@@ -14,8 +14,9 @@ namespace MatrixDataBaseRepository
         private readonly string _connectionString = "";
 
         //команды не должны содержать ; в конце! 
-        private static string _queryChechConnection = "select * from moff.CLIENT_PORTFOLIO where id_client = 'BP17840'";
-        private static string _queryGetAllSpotPortfolios = "SELECT DISTINCT ID_ACCOUNT FROM moff.CLIENT_PORTFOLIO WHERE id_client = :clientCode AND SECBOARD != 'RTS_FUT'";
+        private const string _queryChechConnection = "select * from moff.CLIENT_PORTFOLIO where id_client = 'BP17840'";
+        private const string _queryGetAllSpotPortfolios = "SELECT ID FROM moff.CLIENT_PORTFOLIO WHERE id_client = :clientCode AND SECBOARD != 'RTS_FUT'";
+        private const string _queryGetAllFortsPortfolios = "SELECT ID, ALIAS FROM moff.CLIENT_PORTFOLIO WHERE id_client = :clientCode AND SECBOARD = 'RTS_FUT'";
 
         public DataBaseRepository(IOptions<DataBaseConnectionConfiguration> connection, ILogger<DataBaseRepository> logger)
         {
@@ -101,6 +102,49 @@ namespace MatrixDataBaseRepository
             }
 
             _logger.LogInformation($"DBRepository GetUserSpotPortfolios Success");
+            return result;
+        }
+
+        public async Task<MatrixToFortsCodesMappingResponse> GetUserFortsPortfolios(string clientCode)
+        {
+            _logger.LogInformation($"DBRepository GetUserFortsPortfolios for {clientCode} Called");
+
+            MatrixToFortsCodesMappingResponse result = new MatrixToFortsCodesMappingResponse();
+
+            try
+            {
+                using (OracleConnection connection = new OracleConnection(_connectionString))
+                {
+                    OracleCommand command = new OracleCommand(_queryGetAllFortsPortfolios, connection);
+                    command.Parameters.Add(":clientCode", clientCode);
+
+                    _logger.LogInformation($"DBRepository GetUserFortsPortfolios try to connect");
+                    await connection.OpenAsync();
+
+                    using (OracleDataReader reader = command.ExecuteReader())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            MatrixToFortsCodesMappingModel portfolioMapping = new MatrixToFortsCodesMappingModel();
+                            portfolioMapping.MatrixClientCode = reader.GetString(0);
+                            portfolioMapping.FortsClientCode = reader.GetString(1);
+
+                            result.MatrixToFortsCodesList.Add(portfolioMapping);
+                        }
+                    }
+
+                    command.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"DBRepository GetUserFortsPortfolios Failed, Exception: " + ex.Message);
+
+                result.Response.IsSuccess = false;
+                result.Response.Messages.Add($"DBRepository GetUserFortsPortfolios Failed, Exception: " + ex.Message);
+            }
+
+            _logger.LogInformation($"DBRepository GetUserFortsPortfolios Success");
             return result;
         }
     }

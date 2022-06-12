@@ -41,13 +41,35 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("GetUser/SpotPortfolios/{clientCode}")]
         public async Task<IActionResult> GetUserSpotPortfolios(string clientCode)
         {
-            _logger.LogInformation("HttpGet GetUser/PersonalInfo Call");
+            _logger.LogInformation($"HttpGet GetUser/SpotPortfolios {clientCode} Call");
 
             MatrixClientCodeModelResponse result = await _repository.GetUserSpotPortfolios(clientCode);
 
             if (result.Response.IsSuccess)
             {
                 if (result.MatrixClientCodesList.Count == 0)
+                {
+                    return NotFound();
+                }
+
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
+        }
+
+        [HttpGet("GetUser/FortsPortfolios/{clientCode}")]
+        public async Task<IActionResult> GetUserFortsPortfolios(string clientCode)
+        {
+            _logger.LogInformation($"HttpGet GetUser/FortsPortfolios {clientCode} Call");
+
+            MatrixToFortsCodesMappingResponse result = await _repository.GetUserFortsPortfolios(clientCode);
+
+            if (result.Response.IsSuccess)
+            {
+                if (result.MatrixToFortsCodesList.Count == 0)
                 {
                     return NotFound();
                 }
