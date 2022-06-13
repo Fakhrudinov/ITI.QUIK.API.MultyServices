@@ -1,9 +1,7 @@
-﻿using DataAbstraction.Connections;
-using DataAbstraction.Interfaces;
+﻿using DataAbstraction.Interfaces;
 using DataAbstraction.Responses;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
+
 
 namespace ITI.QUIK.API.MultyServices.Controllers
 {
@@ -34,7 +32,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             }
             else
             {
-                return BadRequest(result);
+                return BadRequest(result.Messages);
             }
         }
 
@@ -56,7 +54,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             }
             else
             {
-                return BadRequest(result);
+                return BadRequest(result.Response.Messages);
             }
         }
 
@@ -78,8 +76,55 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             }
             else
             {
-                return BadRequest(result);
+                return BadRequest(result.Response.Messages);
             }
         }
+
+        [HttpGet("GetUser/FortsPortfolios/NoEDP/{clientCode}")]
+        public async Task<IActionResult> GetUserFortsNoEDPPortfolios(string clientCode)
+        {
+            _logger.LogInformation($"HttpGet GetUser/NoEDP/FortsPortfolios {clientCode} Call");
+
+            MatrixToFortsCodesMappingResponse result = await _repository.GetUserFortsPortfoliosNoEDP(clientCode);
+
+            if (result.Response.IsSuccess)
+            {
+                if (result.MatrixToFortsCodesList.Count == 0)
+                {
+                    return NotFound();
+                }
+
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result.Response.Messages);
+            }
+        }
+
+        [HttpGet("Get/IsPortfolios/InEDP/{clientRfPortfolio}")]
+        public async Task<IActionResult> GetIsPortfolioInEDP(string clientRfPortfolio)
+        {
+            _logger.LogInformation($"HttpGet Get/IsPortfolios/InEDP/{clientRfPortfolio} Call");
+
+            BoolResponse result = await _repository.GetIsPortfolioInEDP(clientRfPortfolio);
+
+            if (result.IsSuccess)
+            {
+                if (result.Messages[0].Equals("(404)"))
+                {
+                    return NotFound(clientRfPortfolio);
+                }
+
+                return Ok("(404) not found portfolio " + result);
+            }
+            else
+            {
+                return BadRequest(result.Messages);
+            }
+        }
+
+        // get personal info
+        // check RF - not in MO
     }
 }

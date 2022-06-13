@@ -7,5 +7,7 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> CheckConnections();
         Task<MatrixClientCodeModelResponse> GetUserSpotPortfolios(string clientCode);
         Task<MatrixToFortsCodesMappingResponse> GetUserFortsPortfolios(string clientCode);
+        Task<MatrixToFortsCodesMappingResponse> GetUserFortsPortfoliosNoEDP(string clientCode);
+        Task<BoolResponse> GetIsPortfolioInEDP(string clientRfPortfolio);
     }
 }
