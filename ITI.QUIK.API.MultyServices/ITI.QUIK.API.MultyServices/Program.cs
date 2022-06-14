@@ -1,4 +1,6 @@
 using DataAbstraction.Connections;
+using DataAbstraction.Interfaces;
+using MatrixDataBaseRepository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,9 +11,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// add child connections adress
+// add child Quik API connections adress
 builder.Services.Configure<HttpClientConfig>(
     builder.Configuration.GetSection("HttpClientConfig"));
+
+// Matrix DataBase configure
+builder.Services.AddTransient<IDataBaseRepository, DataBaseRepository>();
+builder.Services.Configure<DataBaseConnectionConfiguration>(
+    builder.Configuration.GetSection("DataBaseConfig"));
 
 var app = builder.Build();
 
