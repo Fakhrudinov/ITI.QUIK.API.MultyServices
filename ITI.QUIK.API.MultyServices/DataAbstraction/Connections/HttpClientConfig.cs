@@ -1,7 +1,8 @@
 ﻿namespace DataAbstraction.Connections
 {
-    public class HttpClientConfig
+    public class HttpConfigurations
     {
-        public string ConnectionString { get; set; }
+        public string QuikAPIConnectionString { get; set; }
+        public string MatrixAPIConnectionString { get; set; }
     }
 }

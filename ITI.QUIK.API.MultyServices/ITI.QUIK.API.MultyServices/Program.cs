@@ -11,14 +11,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// add child Quik API connections adress
-builder.Services.Configure<HttpClientConfig>(
-    builder.Configuration.GetSection("HttpClientConfig"));
-
-//// Matrix DataBase configure
-//builder.Services.AddTransient<IDataBaseRepository, DataBaseRepository>();
-//builder.Services.Configure<DataBaseConnectionConfiguration>(
-//    builder.Configuration.GetSection("DataBaseConfig"));
+// add child API connections adress
+builder.Services.Configure<HttpConfigurations>(
+    builder.Configuration.GetSection("HttpConfigurations"));
 
 var app = builder.Build();
 

@@ -11,9 +11,9 @@ namespace ITI.QUIK.API.MultyServices.Controllers
     public class HealthController : ControllerBase
     {
         private ILogger<HealthController> _logger;
-        private HttpClientConfig _connection;
+        private HttpConfigurations _connection;
 
-        public HealthController(ILogger<HealthController> logger, IOptions<HttpClientConfig> connection)
+        public HealthController(ILogger<HealthController> logger, IOptions<HttpConfigurations> connection)
         {
             _logger = logger;
             _connection = connection.Value;
@@ -34,7 +34,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
             using (var client = new HttpClient())
             {
-                var responseMessage = await client.GetAsync(_connection.ConnectionString + "/api/HealthState/OK");
+                var responseMessage = await client.GetAsync(_connection.QuikAPIConnectionString + "/api/HealthState/OK");
 
                 if (responseMessage.IsSuccessStatusCode)
                 {
@@ -92,10 +92,10 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         {
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri(_connection.ConnectionString);
+                client.BaseAddress = new Uri(_connection.QuikAPIConnectionString);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                var response = await client.GetAsync(_connection.ConnectionString + apiRequest);
+                var response = await client.GetAsync(_connection.QuikAPIConnectionString + apiRequest);
 
                 if (response.IsSuccessStatusCode)
                 {
