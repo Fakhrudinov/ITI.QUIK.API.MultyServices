@@ -1,6 +1,6 @@
 using DataAbstraction.Connections;
 using DataAbstraction.Interfaces;
-using MatrixDataBaseRepository;
+//using MatrixDataBaseRepository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,10 +15,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.Configure<HttpClientConfig>(
     builder.Configuration.GetSection("HttpClientConfig"));
 
-// Matrix DataBase configure
-builder.Services.AddTransient<IDataBaseRepository, DataBaseRepository>();
-builder.Services.Configure<DataBaseConnectionConfiguration>(
-    builder.Configuration.GetSection("DataBaseConfig"));
+//// Matrix DataBase configure
+//builder.Services.AddTransient<IDataBaseRepository, DataBaseRepository>();
+//builder.Services.Configure<DataBaseConnectionConfiguration>(
+//    builder.Configuration.GetSection("DataBaseConfig"));
 
 var app = builder.Build();
 

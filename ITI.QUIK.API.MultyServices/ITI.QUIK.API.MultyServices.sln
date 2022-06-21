@@ -3,11 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32516.85
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ITI.QUIK.API.MultyServices", "ITI.QUIK.API.MultyServices\ITI.QUIK.API.MultyServices.csproj", "{A074652E-20F0-4F51-99C5-E79E352F0D99}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ITI.QUIK.API.MultyServices", "ITI.QUIK.API.MultyServices\ITI.QUIK.API.MultyServices.csproj", "{A074652E-20F0-4F51-99C5-E79E352F0D99}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAbstraction", "DataAbstraction\DataAbstraction.csproj", "{C073E169-8CF1-47D9-8A6F-76E8111285E6}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatrixDataBaseRepository", "MatrixDataBaseRepository\MatrixDataBaseRepository.csproj", "{285FC208-DD0A-4FD6-AC07-180AB1F1F777}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataAbstraction", "DataAbstraction\DataAbstraction.csproj", "{C073E169-8CF1-47D9-8A6F-76E8111285E6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +21,6 @@ Global
 		{C073E169-8CF1-47D9-8A6F-76E8111285E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C073E169-8CF1-47D9-8A6F-76E8111285E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C073E169-8CF1-47D9-8A6F-76E8111285E6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{285FC208-DD0A-4FD6-AC07-180AB1F1F777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{285FC208-DD0A-4FD6-AC07-180AB1F1F777}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{285FC208-DD0A-4FD6-AC07-180AB1F1F777}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{285FC208-DD0A-4FD6-AC07-180AB1F1F777}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
