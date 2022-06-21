@@ -48,6 +48,52 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             return NotFound();
         }
 
+        [HttpGet("IsMatrixApiHealthOk")]
+        public async Task<IActionResult> IsMatrixApiOk()
+        {
+            _logger.LogInformation("HttpGet IsMatrixApiHealthOk Call");
+
+            using (var client = new HttpClient())
+            {
+                var responseMessage = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/HealthState/OK");
+
+                if (responseMessage.IsSuccessStatusCode)
+                {
+                    string responseBody = await responseMessage.Content.ReadAsStringAsync();
+                    _logger.LogInformation("HttpGet IsMatrixApiHealthOk Ok: " + responseBody);
+                    return Ok(responseBody);
+                }
+            }
+
+            _logger.LogWarning("HttpGet IsMatrixApiHealthOk result NotFound");
+            return NotFound();
+        }
+
+        [HttpGet("IsMatrixApiConnectionOk/ToMatrixDataBase")]
+        public async Task<IActionResult> IsMatrixApiConnectionOkToMatrixDataBase()
+        {
+            _logger.LogInformation("HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase Call");
+
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                var response = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/HealthState/CheckConnections/MatrixDataBase");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    ListStringResponseModel result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                    _logger.LogInformation($"HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase succes is {result.IsSuccess}");
+                    return Ok(result);
+                }
+            }
+
+            _logger.LogWarning($"HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase '/api/HealthState/CheckConnections/MatrixDataBase' NotFound");
+            return NotFound();
+        }
+
         [HttpGet("IsQuikApiConnectionOk/ToQuikDataBase")]
         public async Task<IActionResult> IsQuikApiConnectionOkToQuikDataBase()
         {
