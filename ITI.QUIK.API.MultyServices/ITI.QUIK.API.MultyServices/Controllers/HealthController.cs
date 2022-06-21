@@ -11,12 +11,12 @@ namespace ITI.QUIK.API.MultyServices.Controllers
     public class HealthController : ControllerBase
     {
         private ILogger<HealthController> _logger;
-        private HttpConfigurations _connection;
+        private HttpConfigurations _connections;
 
-        public HealthController(ILogger<HealthController> logger, IOptions<HttpConfigurations> connection)
+        public HealthController(ILogger<HealthController> logger, IOptions<HttpConfigurations> connections)
         {
             _logger = logger;
-            _connection = connection.Value;
+            _connections = connections.Value;
         }
 
         [HttpGet("MyHealth")]
@@ -27,75 +27,75 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             return Ok("Ok");
         }
 
-        [HttpGet("IsChildHealthOk")]
-        public async Task<IActionResult> IsChildOk()
+        [HttpGet("IsQuikApiHealthOk")]
+        public async Task<IActionResult> IsQuikApiOk()
         {
-            _logger.LogInformation("HttpGet IsChildHealthOk Call");
+            _logger.LogInformation("HttpGet IsQuikApiHealthOk Call");
 
             using (var client = new HttpClient())
             {
-                var responseMessage = await client.GetAsync(_connection.QuikAPIConnectionString + "/api/HealthState/OK");
+                var responseMessage = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/HealthState/OK");
 
                 if (responseMessage.IsSuccessStatusCode)
                 {
                     string responseBody = await responseMessage.Content.ReadAsStringAsync();
-                    _logger.LogInformation("HttpGet IsChildHealthOk Ok: " + responseBody);
+                    _logger.LogInformation("HttpGet IsQuikApiHealthOk Ok: " + responseBody);
                     return Ok(responseBody);
                 }
             }
 
-            _logger.LogWarning("HttpGet IsChildHealthOk result NotFound");
+            _logger.LogWarning("HttpGet IsQuikApiHealthOk result NotFound");
             return NotFound();
         }
 
-        [HttpGet("IsChildConnectionOk/ToQuikDataBase")]
-        public async Task<IActionResult> IsChildConnectionOkToQuikDataBase()
+        [HttpGet("IsQuikApiConnectionOk/ToQuikDataBase")]
+        public async Task<IActionResult> IsQuikApiConnectionOkToQuikDataBase()
         {
-            _logger.LogInformation("HttpGet IsChildConnectionOk/ToQuikDataBase Call");
+            _logger.LogInformation("HttpGet IsQuikApiConnectionOk/ToQuikDataBase Call");
 
-            return await GetResultOfCheckConnection("/api/QuikDataBase/CheckConnections/QuikDataBase");
+            return await GetResultOfQuikCheckConnection("/api/QuikDataBase/CheckConnections/QuikDataBase");
         }
 
-        [HttpGet("IsChildConnectionOk/ToQadmin/SpotBRL")]
-        public async Task<IActionResult> IsChildConnectionOkToQadminSpotBRL()
+        [HttpGet("IsQuikApiConnectionOk/ToQadmin/SpotBRL")]
+        public async Task<IActionResult> IsQuikApiConnectionOkToQadminSpotBRL()
         {
-            _logger.LogInformation("HttpGet IsChildConnectionOk/ToQadmin/SpotBRL Call");
+            _logger.LogInformation("HttpGet IsQuikApiConnectionOk/ToQadmin/SpotBRL Call");
 
-            return await GetResultOfCheckConnection("/api/QuikQAdminFortsApi/CheckConnections/FortsApi");
+            return await GetResultOfQuikCheckConnection("/api/QuikQAdminFortsApi/CheckConnections/FortsApi");
         }
 
-        [HttpGet("IsChildConnectionOk/ToQadmin/FortsBRL")]
-        public async Task<IActionResult> IsChildConnectionOkToQadminFortsBRL()
+        [HttpGet("IsQuikApiConnectionOk/ToQadmin/FortsBRL")]
+        public async Task<IActionResult> IsQuikApiConnectionOkToQadminFortsBRL()
         {
-            _logger.LogInformation("HttpGet IsChildConnectionOk/ToQadmin/FortsBRL Call");
+            _logger.LogInformation("HttpGet IsQuikApiConnectionOk/ToQadmin/FortsBRL Call");
 
-            return await GetResultOfCheckConnection("/api/QuikQAdminFortsApi/CheckConnections/FortsApi");
+            return await GetResultOfQuikCheckConnection("/api/QuikQAdminFortsApi/CheckConnections/FortsApi");
         }
 
-        [HttpGet("IsChildConnectionOk/ToQMonitor")]
-        public async Task<IActionResult> IsChildConnectionOkToQMonitor()
+        [HttpGet("IsQuikApiConnectionOk/ToQMonitor")]
+        public async Task<IActionResult> IsQuikApiConnectionOkToQMonitor()
         {
-            _logger.LogInformation("HttpGet IsChildConnectionOk/ToQMonitor Call");
+            _logger.LogInformation("HttpGet IsQuikApiConnectionOk/ToQMonitor Call");
 
-            return await GetResultOfCheckConnection("/api/QuikQMonitor/CheckConnections/QMonitorAPI");
+            return await GetResultOfQuikCheckConnection("/api/QuikQMonitor/CheckConnections/QMonitorAPI");
         }
 
-        [HttpGet("IsChildConnectionOk/ToSFTP")]
-        public async Task<IActionResult> IsChildConnectionOkToSFTP()
+        [HttpGet("IsQuikApiConnectionOk/ToSFTP")]
+        public async Task<IActionResult> IsQuikApiConnectionOkToSFTP()
         {
-            _logger.LogInformation("HttpGet IsChildConnectionOk/ToSFTP Call");
+            _logger.LogInformation("HttpGet IsQuikApiConnectionOk/ToSFTP Call");
 
-            return await GetResultOfCheckConnection("/api/QuikSftpServer/CheckConnections/ServerSFTP");
+            return await GetResultOfQuikCheckConnection("/api/QuikSftpServer/CheckConnections/ServerSFTP");
         }
 
-        private async Task<IActionResult> GetResultOfCheckConnection(string apiRequest)
+        private async Task<IActionResult> GetResultOfQuikCheckConnection(string apiRequest)
         {
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri(_connection.QuikAPIConnectionString);
+                client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                var response = await client.GetAsync(_connection.QuikAPIConnectionString + apiRequest);
+                var response = await client.GetAsync(_connections.QuikAPIConnectionString + apiRequest);
 
                 if (response.IsSuccessStatusCode)
                 {
