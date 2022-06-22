@@ -1,6 +1,6 @@
+using ChildHttpApiRepository;
 using DataAbstraction.Connections;
 using DataAbstraction.Interfaces;
-//using MatrixDataBaseRepository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +14,9 @@ builder.Services.AddSwaggerGen();
 // add child API connections adress
 builder.Services.Configure<HttpConfigurations>(
     builder.Configuration.GetSection("HttpConfigurations"));
+
+// add child APIs repository
+builder.Services.AddTransient<IHttpApiRepository, HttpApiRepository>();
 
 var app = builder.Build();
 

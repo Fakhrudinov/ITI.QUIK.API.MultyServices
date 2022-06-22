@@ -1,9 +1,7 @@
-﻿using DataAbstraction.Connections;
+﻿using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
 using DataAbstraction.Responses;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 
 namespace ITI.QUIK.API.MultyServices.Controllers
@@ -13,18 +11,21 @@ namespace ITI.QUIK.API.MultyServices.Controllers
     public class NewUserController : ControllerBase
     {
         private ILogger<NewUserController> _logger;
-        private HttpConfigurations _connections;
+        private IHttpApiRepository _repository;
 
-        public NewUserController(ILogger<NewUserController> logger, IOptions<HttpConfigurations> connections)
+        public NewUserController(ILogger<NewUserController> logger, IHttpApiRepository repository)
         {
             _logger = logger;
-            _connections = connections.Value;
+            _repository = repository;
         }
 
-        [HttpGet("GetInfo/NewUser/OptionWorkShop/{clientCode}")]
+        [HttpGet("GetInfo/OptionWorkShop/{clientCode}")]
         public async Task<IActionResult> GetInfoNewUserOptionWorkShop(string clientCode)
         {
-            _logger.LogInformation($"HttpGet GetInfo/NewUser/OptionWorkShop/{clientCode} Call");
+            _logger.LogInformation($"HttpGet GetInfo/NewUser/ForOptionWorkShop/{clientCode} Call");
+
+            NewClientOptionWorkShopModelResponse newClientOW = new NewClientOptionWorkShopModelResponse();
+            newClientOW.NewOWClient.Key = new PubringKeyModel();
 
             //ListStringResponseModel validationResult = Validator.ValidateClientCode(clientCode);
             //if (!validationResult.IsSuccess)
@@ -33,84 +34,88 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             //    return BadRequest(validationResult);
             //}
 
-            //MatrixToFortsCodesMappingResponse result = await _repository.GetUserSpotPortfolios(clientCode);
-
-            NewClientOptionWorkShopModel newClientOW = new NewClientOptionWorkShopModel();
-
-            
-
-
-            using (var client = new HttpClient())
+            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientCode);
+            if (clientInformation.Response.IsSuccess)
             {
-                client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var response = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/DBClient/GetUser/PersonalInfo/" + clientCode);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    ClientInformationResponse result = await response.Content.ReadFromJsonAsync<ClientInformationResponse>();
-
-                    _logger.LogInformation($"HttpGet  GetInfo/NewUser/OptionWorkShop/ClientInformationResponse/{clientCode}  succes is {result.Response.IsSuccess}");
-                    //return Ok(result);
-                    newClientOW.Client = result.ClientInformation;
-                }
+                newClientOW.NewOWClient.Client = clientInformation.ClientInformation;
+            }
+            else
+            {
+                newClientOW.Response.IsSuccess = false;
+                newClientOW.Response.Messages.AddRange(clientInformation.Response.Messages);
             }
 
-            _logger.LogWarning($"HttpGet GetInfo/NewUser/OptionWorkShop/ClientInformationResponse/{clientCode} NotFound");
-            //return NotFound();
-
-
-
-            using (var client = new HttpClient())
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientNonEdpFortsCodes(clientCode);
+            if (fortsCodes.Response.IsSuccess)
             {
-                client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var response = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/DBClient/GetUser/FortsPortfolios/NoEDP/" + clientCode);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    MatrixToFortsCodesMappingResponse result = await response.Content.ReadFromJsonAsync<MatrixToFortsCodesMappingResponse>();
-
-                    _logger.LogInformation($"HttpGet  GetInfo/NewUser/OptionWorkShop/MatrixToFortsCodesMappingResponse/{clientCode}  succes is {result.Response.IsSuccess}");
-                    //return Ok(result);
-                    newClientOW.CodesPairRF = result.MatrixToFortsCodesList.ToArray();
-                }
+                newClientOW.NewOWClient.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
             }
-
-            _logger.LogWarning($"HttpGet GetInfo/NewUser/OptionWorkShop/MatrixToFortsCodesMappingResponse/{clientCode} NotFound");
-            //return NotFound();
+            else
+            {
+                newClientOW.Response.IsSuccess = false;
+                newClientOW.Response.Messages.AddRange(fortsCodes.Response.Messages);
+            }
 
             return Ok(newClientOW);
-
-
-            //if (result.Response.IsSuccess)
-            //{
-            //    //if (result.MatrixClientCodesList.Count == 0)
-            //    //{
-            //    //    return NotFound();
-            //    //}
-
-            //    return Ok(result);
-            //}
-            //else
-            //{
-            //    return BadRequest(result.Response.Messages);
-            //}
         }
 
-        // new OW user = input is (rf codes pair)+(key)
-        // get personal info
-        // check RF - not in MO
+        [HttpGet("GetInfo/{clientCode}")]
+        public async Task<IActionResult> GetInfoNewUserNonEDP(string clientCode)
+        {
+            _logger.LogInformation($"HttpGet GetInfo/NewUser/NonEDP/{clientCode} Call");
+
+            NewClientModelResponse newClient = new NewClientModelResponse();
+            newClient.NewClient.Key = new PubringKeyModel();
 
 
-        // new non EDP user = input is (code)+(key)
-        // get personal info
-        // get BO personal info
-        // at liast one of codes must be set       
-        // get all spot portfolios exlude = MO RS SF OT - list at settings
-        // get all rf codes pair
+            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientCode);
+            if (clientInformation.Response.IsSuccess)
+            {
+                newClient.NewClient.Client = clientInformation.ClientInformation;
+            }
+            else
+            {
+                newClient.Response.IsSuccess = false;
+                newClient.Response.Messages.AddRange(clientInformation.Response.Messages);
+            }
 
+            ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientCode);
+            if (clientBOInformation.Response.IsSuccess)
+            {
+                newClient.NewClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
+                newClient.NewClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
+                newClient.NewClient.Address = clientBOInformation.ClientBOInformation.Address;
+                newClient.NewClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
+            }
+            else
+            {
+                newClient.Response.IsSuccess = false;
+                newClient.Response.Messages.AddRange(clientBOInformation.Response.Messages);
+            }
+
+            MatrixClientCodeModelResponse spotCodes = await _repository.GetClientAllSpotCodesFiltered(clientCode);
+            if (spotCodes.Response.IsSuccess)
+            {
+                newClient.NewClient.CodesMatrix = spotCodes.MatrixClientCodesList.ToArray();
+            }
+            else
+            {
+                newClient.Response.IsSuccess = false;
+                newClient.Response.Messages.AddRange(spotCodes.Response.Messages);
+            }
+
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientAllFortsCodes(clientCode);
+            if (fortsCodes.Response.IsSuccess)
+            {
+                newClient.NewClient.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
+            }
+            else
+            {
+                newClient.Response.IsSuccess = false;
+                newClient.Response.Messages.AddRange(fortsCodes.Response.Messages);
+            }
+
+            return Ok(newClient);
+        }
     }
 }
