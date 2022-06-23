@@ -2,6 +2,7 @@
 using DataAbstraction.Models;
 using DataAbstraction.Responses;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 
 namespace ITI.QUIK.API.MultyServices.Controllers
@@ -12,11 +13,13 @@ namespace ITI.QUIK.API.MultyServices.Controllers
     {
         private ILogger<NewUserController> _logger;
         private IHttpApiRepository _repository;
+        private PubringKeyIgnoreWords _ignoreWords;
 
-        public NewUserController(ILogger<NewUserController> logger, IHttpApiRepository repository)
+        public NewUserController(ILogger<NewUserController> logger, IHttpApiRepository repository, IOptions<PubringKeyIgnoreWords> ignoreWords)
         {
             _logger = logger;
             _repository = repository;
+            _ignoreWords = ignoreWords.Value;
         }
 
         [HttpGet("GetInfo/OptionWorkShop/{clientCode}")]
@@ -116,6 +119,130 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             }
 
             return Ok(newClient);
+        }
+
+        [HttpGet("GetKeyModel/FromQuery")]
+        public async Task<IActionResult> GetKeyModel([FromQuery] string keyText)
+        {
+            _logger.LogInformation($"HttpGet GetKeyModel/FromQuery Call, Text=" + keyText);
+
+            return Ok(GetKeyFromString(keyText));
+        }
+
+
+
+        [HttpGet("GetKeyModel/FromFile")]
+        public async Task<IActionResult> GetKeyFromFileModel([FromQuery] string filePath)
+        {
+            _logger.LogInformation($"HttpGet GetKeyModel/FromFile Call, filePath=" + filePath);
+
+            if (!System.IO.File.Exists(filePath))
+            {
+                _logger.LogWarning("HttpGet GetKeyModel/FromFile Error - file not found: " + filePath);
+
+                PubringKeyModelResponse key = new PubringKeyModelResponse();
+
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add("HttpGet GetKeyModel/FromFile Error - file not found: " + filePath);
+                
+                return Ok(key);
+            }
+
+            FileInfo fileInfo = new FileInfo(filePath);
+            if (fileInfo.Length > 160)
+            {
+                PubringKeyModelResponse key = new PubringKeyModelResponse();
+
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add($"HttpGet GetKeyModel/FromFile Error - file size {fileInfo.Length} anomally big: " + filePath);
+
+                return Ok(key);
+            }
+
+
+            string keyText = "";
+
+            using (StreamReader reader = new StreamReader(filePath))
+            {
+                keyText = await reader.ReadToEndAsync();
+            }
+
+            return Ok(GetKeyFromString(keyText));
+        }
+
+        private PubringKeyModelResponse GetKeyFromString(string keyText)
+        {
+            PubringKeyModelResponse key = new PubringKeyModelResponse();
+
+            // чистим от переносов строк и табов
+            keyText = keyText.Replace(Environment.NewLine, " ");
+            keyText = keyText.Replace("\r\n", " ");
+            keyText = keyText.Replace("\n", " ");
+            keyText = keyText.Replace("\t", " ");
+
+            //чистим от списка слов из appsettings.json секция PubringKeyIgnoreWords
+            var deleteWordsArray = _ignoreWords.RemoveText.Split(" ");
+            foreach (string deleteWord in deleteWordsArray)
+            {
+                keyText = keyText.Replace(deleteWord, "");
+            }
+
+            // чистим от лишних пробелов
+            while (keyText.Contains("  "))
+            {
+                keyText = keyText.Replace("  ", " ");
+            }
+
+            //разбиваем строки
+            var keyTextArray = keyText.Split(" ");
+            foreach (string line in keyTextArray)
+            {
+                if (line.Contains("KEYID="))
+                {
+                    key.Key.KeyID = line.Replace("KEYID=", "");
+                }
+
+                if (line.Contains("KEY="))
+                {
+                    key.Key.RSAKey = line.Replace("KEY=", "");
+                }
+
+                if (line.Contains("TIME="))
+                {
+                    string time = line.Replace("TIME=", "");
+                    try
+                    {
+
+                        key.Key.Time = Int32.Parse(time);
+                    }
+                    catch (Exception)
+                    {
+                        key.Response.IsSuccess = false;
+                        key.Response.Messages.Add($"Error at parse Time value '{time}'");
+                    }
+                }
+            }
+
+            // проверим, всё ли есть в ключе
+            if (key.Key.KeyID is null)
+            {
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add($"Error: KeyID value is empty");
+            }
+
+            if (key.Key.RSAKey is null)
+            {
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add($"Error: RSAKey value is empty");
+            }
+
+            if (key.Key.Time == 0)
+            {
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add($"Error: Time value is empty");
+            }
+
+            return key;
         }
     }
 }

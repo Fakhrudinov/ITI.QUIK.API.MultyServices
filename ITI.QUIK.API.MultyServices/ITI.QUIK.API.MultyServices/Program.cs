@@ -1,6 +1,7 @@
 using ChildHttpApiRepository;
 using DataAbstraction.Connections;
 using DataAbstraction.Interfaces;
+using DataAbstraction.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,10 @@ builder.Services.Configure<HttpConfigurations>(
 
 // add child APIs repository
 builder.Services.AddTransient<IHttpApiRepository, HttpApiRepository>();
+
+// add string for pubring.txk key cleaning
+builder.Services.Configure<PubringKeyIgnoreWords>(
+    builder.Configuration.GetSection("PubringKeyIgnoreWords"));
 
 var app = builder.Build();
 
