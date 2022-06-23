@@ -122,14 +122,12 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         }
 
         [HttpGet("GetKeyModel/FromQuery")]
-        public async Task<IActionResult> GetKeyModel([FromQuery] string keyText)
+        public async Task<IActionResult> GetKeyModelFromQuery([FromQuery] string keyText)
         {
             _logger.LogInformation($"HttpGet GetKeyModel/FromQuery Call, Text=" + keyText);
 
             return Ok(GetKeyFromString(keyText));
         }
-
-
 
         [HttpGet("GetKeyModel/FromFile")]
         public async Task<IActionResult> GetKeyFromFileModel([FromQuery] string filePath)
@@ -149,19 +147,17 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             }
 
             FileInfo fileInfo = new FileInfo(filePath);
-            if (fileInfo.Length > 160)
+            if (fileInfo.Length > 600)//normal size is about 310 - 350. 600 for long login string
             {
                 PubringKeyModelResponse key = new PubringKeyModelResponse();
 
                 key.Response.IsSuccess = false;
-                key.Response.Messages.Add($"HttpGet GetKeyModel/FromFile Error - file size {fileInfo.Length} anomally big: " + filePath);
+                key.Response.Messages.Add($"HttpGet GetKeyModel/FromFile Error - file size '{fileInfo.Length}'byte anomally big: " + filePath);
 
                 return Ok(key);
             }
 
-
             string keyText = "";
-
             using (StreamReader reader = new StreamReader(filePath))
             {
                 keyText = await reader.ReadToEndAsync();
