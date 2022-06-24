@@ -10,6 +10,7 @@ namespace DataAbstraction.Interfaces
         Task<MatrixToFortsCodesMappingResponse> GetClientAllFortsCodes(string clientCode);
         Task<ClientBOInformationResponse> GetClientBOInformation(string clientCode);
         Task<MatrixClientCodeModelResponse> GetClientAllSpotCodesFiltered(string clientCode);
-        Task<NewClientOptionWorkShopModelResponse> CreateNewClientOptionWorkshop(NewClientOptionWorkShopModel newClientModel);
+        Task<ListStringResponseModel> CreateNewClientOptionWorkshop(NewClientOptionWorkShopModel newClientModel);
+        Task<ListStringResponseModel> GetResultFromQuikSFTPFileUpload(string file);
     }
 }

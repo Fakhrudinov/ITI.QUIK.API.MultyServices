@@ -44,14 +44,20 @@ namespace ITI.QUIK.API.MultyServices.Controllers
                 }
             }
 
-            _logger.LogWarning("HttpGet IsQuikApiHealthOk result NotFound");
-            return NotFound();
+            ListStringResponseModel result = new ListStringResponseModel();
+            result.IsSuccess = false;
+            result.Messages.Add($"(404) HttpGet IsQuikApiHealthOk request url NotFound");
+            result.Messages.Add(_connections.QuikAPIConnectionString + "/api/HealthState/OK");
+
+            return Ok(result);
         }
 
         [HttpGet("IsMatrixApiHealthOk")]
         public async Task<IActionResult> IsMatrixApiOk()
         {
             _logger.LogInformation("HttpGet IsMatrixApiHealthOk Call");
+
+            ListStringResponseModel result = new ListStringResponseModel();
 
             using (var client = new HttpClient())
             {
@@ -65,14 +71,19 @@ namespace ITI.QUIK.API.MultyServices.Controllers
                 }
             }
 
-            _logger.LogWarning("HttpGet IsMatrixApiHealthOk result NotFound");
-            return NotFound();
+            result.IsSuccess = false;
+            result.Messages.Add($"(404) HttpGet IsMatrixApiHealthOk request url NotFound");
+            result.Messages.Add(_connections.MatrixAPIConnectionString + "/api/HealthState/CheckConnections/MatrixDataBase");
+
+            return Ok(result);
         }
 
         [HttpGet("IsMatrixApiConnectionOk/ToMatrixDataBase")]
         public async Task<IActionResult> IsMatrixApiConnectionOkToMatrixDataBase()
         {
             _logger.LogInformation("HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase Call");
+
+            ListStringResponseModel result = new ListStringResponseModel();
 
             using (var client = new HttpClient())
             {
@@ -83,15 +94,18 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    ListStringResponseModel result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+                    result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
                     _logger.LogInformation($"HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase succes is {result.IsSuccess}");
                     return Ok(result);
                 }
             }
 
-            _logger.LogWarning($"HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase '/api/HealthState/CheckConnections/MatrixDataBase' NotFound");
-            return NotFound();
+            result.IsSuccess = false;
+            result.Messages.Add($"(404) HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase request url NotFound");
+            result.Messages.Add(_connections.MatrixAPIConnectionString + "/api/HealthState/CheckConnections/MatrixDataBase");
+
+            return Ok(result);
         }
 
         [HttpGet("IsQuikApiConnectionOk/ToQuikDataBase")]
@@ -134,26 +148,31 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             return await GetResultOfQuikCheckConnection("/api/QuikSftpServer/CheckConnections/ServerSFTP");
         }
 
-        public async Task<IActionResult> GetResultOfQuikCheckConnection(string apiRequest)
+        private async Task<IActionResult> GetResultOfQuikCheckConnection(string apiRequest)
         {
+            ListStringResponseModel result = new ListStringResponseModel();
+
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));                
 
                 var response = await client.GetAsync(_connections.QuikAPIConnectionString + apiRequest);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    ListStringResponseModel result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+                    result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
                     _logger.LogInformation($"HttpGet {apiRequest} succes is {result.IsSuccess}");
                     return Ok(result);
                 }
             }
 
-            _logger.LogWarning($"HttpGet {apiRequest} NotFound");
-            return NotFound();
+            result.IsSuccess = false;
+            result.Messages.Add($"(404) HttpGet GetResultOfQuikCheckConnection request url NotFound");
+            result.Messages.Add(_connections.QuikAPIConnectionString + apiRequest);
+
+            return Ok(result);
         }
     }
 }

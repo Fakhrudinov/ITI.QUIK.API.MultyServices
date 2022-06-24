@@ -165,6 +165,16 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             return Ok(GetKeyFromString(keyText));
         }
 
+        [HttpGet("GetResult/FromQuikSFTP/FileUpload")]
+        public async Task<IActionResult> GetResultFromQuikSFTPFileUpload([FromQuery] string file)
+        {
+            _logger.LogInformation($"HttpGet GetResult/FromQuikSFTP/FileUpload Call, file=" + file);
+
+            ListStringResponseModel result = await _repository.GetResultFromQuikSFTPFileUpload(file);
+
+            return Ok(result);
+        }
+
         [HttpPost("Post/NewClient/OptionWorkshop")]
         public async Task<IActionResult> PostNewClientOptionWorkshop([FromBody] NewClientOptionWorkShopModel newClientModel)
         {
@@ -172,9 +182,9 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
             //validate newClientModel
 
-            NewClientOptionWorkShopModelResponse createResponse = await _repository.CreateNewClientOptionWorkshop(newClientModel);
+            ListStringResponseModel createResponse = await _repository.CreateNewClientOptionWorkshop(newClientModel);
 
-            return Ok(newClientModel);
+            return Ok(createResponse);
         }
 
         private PubringKeyModelResponse GetKeyFromString(string keyText)
