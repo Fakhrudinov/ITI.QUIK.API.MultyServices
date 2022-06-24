@@ -1,4 +1,5 @@
-﻿using DataAbstraction.Responses;
+﻿using DataAbstraction.Models;
+using DataAbstraction.Responses;
 
 namespace DataAbstraction.Interfaces
 {
@@ -9,5 +10,6 @@ namespace DataAbstraction.Interfaces
         Task<MatrixToFortsCodesMappingResponse> GetClientAllFortsCodes(string clientCode);
         Task<ClientBOInformationResponse> GetClientBOInformation(string clientCode);
         Task<MatrixClientCodeModelResponse> GetClientAllSpotCodesFiltered(string clientCode);
+        Task<NewClientOptionWorkShopModelResponse> CreateNewClientOptionWorkshop(NewClientOptionWorkShopModel newClientModel);
     }
 }

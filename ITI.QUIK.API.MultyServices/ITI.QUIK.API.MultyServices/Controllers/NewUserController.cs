@@ -3,7 +3,6 @@ using DataAbstraction.Models;
 using DataAbstraction.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using System.Net.Http.Headers;
 
 namespace ITI.QUIK.API.MultyServices.Controllers
 {
@@ -164,6 +163,18 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             }
 
             return Ok(GetKeyFromString(keyText));
+        }
+
+        [HttpPost("Post/NewClient/OptionWorkshop")]
+        public async Task<IActionResult> PostNewClientOptionWorkshop([FromBody] NewClientOptionWorkShopModel newClientModel)
+        {
+            _logger.LogInformation($"HttpPost Post/NewClient/OptionWorkshop Call for " + newClientModel.CodesPairRF[0].MatrixClientCode);
+
+            //validate newClientModel
+
+            NewClientOptionWorkShopModelResponse createResponse = await _repository.CreateNewClientOptionWorkshop(newClientModel);
+
+            return Ok(newClientModel);
         }
 
         private PubringKeyModelResponse GetKeyFromString(string keyText)

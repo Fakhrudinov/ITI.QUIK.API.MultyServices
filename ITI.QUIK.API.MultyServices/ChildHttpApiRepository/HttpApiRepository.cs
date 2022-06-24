@@ -1,10 +1,13 @@
 ﻿using DataAbstraction.Connections;
 using DataAbstraction.Interfaces;
+using DataAbstraction.Models;
 using DataAbstraction.Responses;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 
 namespace ChildHttpApiRepository
 {
@@ -151,6 +154,42 @@ namespace ChildHttpApiRepository
 
             result.Response.IsSuccess = false;
             result.Response.Messages.Add($"(404) HttpApiRepository GetClientAllSpotCodesFiltered /api/DBClient/GetUser/SpotPortfolios/Filtered/{clientCode} NotFound");
+
+            return result;
+        }
+
+        public async Task<NewClientOptionWorkShopModelResponse> CreateNewClientOptionWorkshop(NewClientOptionWorkShopModel newClientModel)
+        {
+            _logger.LogInformation($"HttpApiRepository CreateNewClientOptionWorkshop Called for {newClientModel.CodesPairRF[0].MatrixClientCode}");
+
+            NewClientOptionWorkShopModelResponse result = new NewClientOptionWorkShopModelResponse();
+            result.NewOWClient = newClientModel;
+
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                string bodyJson = JsonSerializer.Serialize(newClientModel);
+                StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/NewClient/OptionWorkshop", stringContent);
+
+
+                if (response.IsSuccessStatusCode)
+                {
+                    result = await response.Content.ReadFromJsonAsync<NewClientOptionWorkShopModelResponse>();
+
+                    _logger.LogInformation($"HttpApiRepository CreateNewClientOptionWorkshop success for {newClientModel.CodesPairRF[0].MatrixClientCode}");
+                    return result;
+                }
+            }
+
+
+            _logger.LogWarning($"HttpApiRepository CreateNewClientOptionWorkshop NotFound");
+
+            result.Response.IsSuccess = false;
+            result.Response.Messages.Add($"(404) HttpApiRepository CreateNewClientOptionWorkshop NotFound");
 
             return result;
         }

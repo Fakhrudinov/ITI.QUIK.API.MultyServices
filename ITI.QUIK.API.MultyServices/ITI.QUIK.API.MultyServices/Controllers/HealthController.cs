@@ -134,7 +134,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             return await GetResultOfQuikCheckConnection("/api/QuikSftpServer/CheckConnections/ServerSFTP");
         }
 
-        private async Task<IActionResult> GetResultOfQuikCheckConnection(string apiRequest)
+        public async Task<IActionResult> GetResultOfQuikCheckConnection(string apiRequest)
         {
             using (var client = new HttpClient())
             {
