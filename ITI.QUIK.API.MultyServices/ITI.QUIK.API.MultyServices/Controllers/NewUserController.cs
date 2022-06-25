@@ -187,6 +187,30 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             return Ok(createResponse);
         }
 
+        [HttpPost("Post/NewClient")]
+        public async Task<IActionResult> PostNewClient([FromBody] NewClientModel newClientModel)
+        {
+            _logger.LogInformation($"HttpPost Post/NewClient Call for " + newClientModel.CodesPairRF[0].MatrixClientCode);
+
+            //validate newClientModel
+
+            NewClientModelResponse newClient = new NewClientModelResponse();
+            newClient.NewClient = newClientModel;
+
+            //SFTP create
+
+            //codes ini
+
+            //InstrTw register
+
+            // ? CD reg
+
+            // по плечу - в NoLeverage 
+
+            return Ok(newClientModel);
+        }
+
+
         private PubringKeyModelResponse GetKeyFromString(string keyText)
         {
             PubringKeyModelResponse key = new PubringKeyModelResponse();
