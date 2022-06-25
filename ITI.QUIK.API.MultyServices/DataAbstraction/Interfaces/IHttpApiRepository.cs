@@ -11,6 +11,9 @@ namespace DataAbstraction.Interfaces
         Task<ClientBOInformationResponse> GetClientBOInformation(string clientCode);
         Task<MatrixClientCodeModelResponse> GetClientAllSpotCodesFiltered(string clientCode);
         Task<ListStringResponseModel> CreateNewClientOptionWorkshop(NewClientOptionWorkShopModel newClientModel);
+        Task<ListStringResponseModel> CreateNewClient(NewClientModel newClientModel);
         Task<ListStringResponseModel> GetResultFromQuikSFTPFileUpload(string file);
+        Task<ListStringResponseModel> FillCodesIniFile(NewClientModel newClientModel);
+        Task<ListStringResponseModel> FillDataBaseInstrTW(NewClientModel newClientModel);
     }
 }

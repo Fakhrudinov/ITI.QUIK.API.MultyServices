@@ -197,6 +197,41 @@ namespace ChildHttpApiRepository
             return result;
         }
 
+        public async Task<ListStringResponseModel> CreateNewClient(NewClientModel newClientModel)
+        {
+            _logger.LogInformation($"HttpApiRepository CreateNewClient Called for {newClientModel.Client.FirstName}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                string bodyJson = JsonSerializer.Serialize(newClientModel);
+                StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/NewClient", stringContent);
+
+
+                if (response.IsSuccessStatusCode)
+                {
+                    result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                    _logger.LogInformation($"HttpApiRepository CreateNewClient success for {newClientModel.Client.FirstName}");
+                    return result;
+                }
+            }
+
+            _logger.LogWarning($"HttpApiRepository CreateNewClient request url NotFound");
+
+            result.IsSuccess = false;
+            result.Messages.Add($"(404) HttpApiRepository CreateNewClient request url NotFound");
+            result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/NewClient");
+
+            return result;
+        }
+
         public async Task<ListStringResponseModel> GetResultFromQuikSFTPFileUpload(string file)
         {
             _logger.LogInformation($"HttpApiRepository GetResultFromQuikSFTPFileUpload '{file}' Called");
@@ -225,6 +260,105 @@ namespace ChildHttpApiRepository
             result.IsSuccess = false;
             result.Messages.Add($"(404) HttpApiRepository GetResultFromQuikSFTPFileUpload request url NotFound");
             result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/GetResultOfXMLFileUpload?file=" + file);
+
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> FillCodesIniFile(NewClientModel newClientModel)
+        {
+            _logger.LogInformation($"HttpApiRepository FillCodesIniFile Called for {newClientModel.Client.FirstName}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            if(newClientModel.CodesMatrix != null)
+            {
+                CodesArrayModel codesArray = new CodesArrayModel();
+                codesArray.ClientCodes = new MatrixClientCodeModel[newClientModel.CodesMatrix.Length];
+
+                for (int i = 0; i < newClientModel.CodesMatrix.Length; i++)
+                {
+                    codesArray.ClientCodes[i] = newClientModel.CodesMatrix[i];
+                }
+
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    string bodyJson = JsonSerializer.Serialize(codesArray);
+                    StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                    var response = await client.PutAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/AddClientCodesToFileCodesIni", stringContent);
+
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"HttpApiRepository FillCodesIniFile success for {newClientModel.Client.FirstName}");
+                        return result;
+                    }
+                }
+
+                _logger.LogWarning($"HttpApiRepository FillCodesIniFile request url NotFound");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository FillCodesIniFile request url NotFound");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/AddClientCodesToFileCodesIni");
+            }
+            else
+            {
+                result.Messages.Add($"No action requared - there is no MS FX RS CD portfolios");
+            }
+
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> FillDataBaseInstrTW(NewClientModel newClientModel)
+        {
+            _logger.LogInformation($"HttpApiRepository FillDataBaseInstrTW Called for {newClientModel.Client.FirstName}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            NewMNPClientModel newMNPClient = new NewMNPClientModel();
+            newMNPClient.Client = newClientModel.Client;
+            newMNPClient.isClientPerson = newClientModel.isClientPerson;
+            newMNPClient.isClientResident = newClientModel.isClientResident;
+            newMNPClient.Address = newClientModel.Address;
+            newMNPClient.RegisterDate = newClientModel.RegisterDate;
+            newMNPClient.CodesMatrix = newClientModel.CodesMatrix;
+            newMNPClient.CodesPairRF = newClientModel.CodesPairRF;
+            newMNPClient.Manager = newClientModel.Manager;
+            newMNPClient.SubAccount = newClientModel.SubAccount;
+            newMNPClient.Depositary = newClientModel.Depositary;
+            newMNPClient.isClientDepo = newClientModel.isClientDepo;
+            newMNPClient.DepoClientAccountsManager = newClientModel.DepoClientAccountsManager;
+
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                string bodyJson = JsonSerializer.Serialize(newMNPClient);
+                StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync(_connections.QuikAPIConnectionString + "/api/QuikDataBase/Set/NewClient/ToMNP", stringContent);
+
+
+                if (response.IsSuccessStatusCode)
+                {
+                    result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                    _logger.LogInformation($"HttpApiRepository FillDataBaseInstrTW success for {newClientModel.Client.FirstName}");
+                    return result;
+                }
+            }
+
+            _logger.LogWarning($"HttpApiRepository FillDataBaseInstrTW request url NotFound");
+
+            result.IsSuccess = false;
+            result.Messages.Add($"(404) HttpApiRepository FillDataBaseInstrTW request url NotFound");
+            result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikDataBase/Set/NewClient/ToMNP");
 
             return result;
         }

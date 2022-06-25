@@ -178,11 +178,18 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpPost("Post/NewClient/OptionWorkshop")]
         public async Task<IActionResult> PostNewClientOptionWorkshop([FromBody] NewClientOptionWorkShopModel newClientModel)
         {
-            _logger.LogInformation($"HttpPost Post/NewClient/OptionWorkshop Call for " + newClientModel.CodesPairRF[0].MatrixClientCode);
+            _logger.LogInformation($"HttpPost Post/NewClient/OptionWorkshop Call for " + newClientModel.Client.FirstName);
 
             //validate newClientModel
 
             ListStringResponseModel createResponse = await _repository.CreateNewClientOptionWorkshop(newClientModel);
+
+            if (createResponse.IsSuccess)
+            {
+                ListStringResponseModel searchFileResult = await _repository.GetResultFromQuikSFTPFileUpload(createResponse.Messages[0]);
+
+                createResponse.Messages.AddRange(searchFileResult.Messages);
+            }
 
             return Ok(createResponse);
         }
@@ -190,24 +197,40 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpPost("Post/NewClient")]
         public async Task<IActionResult> PostNewClient([FromBody] NewClientModel newClientModel)
         {
-            _logger.LogInformation($"HttpPost Post/NewClient Call for " + newClientModel.CodesPairRF[0].MatrixClientCode);
+            _logger.LogInformation($"HttpPost Post/NewClient Call for " + newClientModel.Client.FirstName);
 
             //validate newClientModel
 
-            NewClientModelResponse newClient = new NewClientModelResponse();
-            newClient.NewClient = newClientModel;
+            NewClientCreationResponse createResponse = new NewClientCreationResponse();
+            createResponse.NewClient = newClientModel;
 
             //SFTP create
+            ListStringResponseModel createSftpResponse = await _repository.CreateNewClient(newClientModel);
+            createResponse.IsSftpUploadSuccess = createSftpResponse.IsSuccess;
+            createResponse.SftpUploadMessages = createSftpResponse.Messages;
 
             //codes ini
+            ListStringResponseModel fillCodesIniResponse = await _repository.FillCodesIniFile(newClientModel);
+            createResponse.IsCodesIniSuccess = fillCodesIniResponse.IsSuccess;
+            createResponse.CodesInMessages = fillCodesIniResponse.Messages;
 
             //InstrTw register
+            ListStringResponseModel fillDataBaseInstrTWResponse = await _repository.FillDataBaseInstrTW(newClientModel);
+            createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
+            createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
 
             // ? CD reg
 
             // по плечу - в NoLeverage 
 
-            return Ok(newClientModel);
+            //заполним результаты в IsSuccess
+
+
+            //добавить строки с именем файла
+
+            //поискать файл в результатах
+
+            return Ok(createResponse);
         }
 
 
