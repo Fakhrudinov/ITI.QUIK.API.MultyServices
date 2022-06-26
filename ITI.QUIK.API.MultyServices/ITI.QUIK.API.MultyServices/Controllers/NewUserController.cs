@@ -13,12 +13,14 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         private ILogger<NewUserController> _logger;
         private IHttpApiRepository _repository;
         private PubringKeyIgnoreWords _ignoreWords;
+        private ICore _core;
 
-        public NewUserController(ILogger<NewUserController> logger, IHttpApiRepository repository, IOptions<PubringKeyIgnoreWords> ignoreWords)
+        public NewUserController(ILogger<NewUserController> logger, IHttpApiRepository repository, IOptions<PubringKeyIgnoreWords> ignoreWords, ICore core)
         {
             _logger = logger;
             _repository = repository;
             _ignoreWords = ignoreWords.Value;
+            _core = core;
         }
 
         [HttpGet("GetInfo/OptionWorkShop/{clientCode}")]
@@ -201,34 +203,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
             //validate newClientModel
 
-            NewClientCreationResponse createResponse = new NewClientCreationResponse();
-            createResponse.NewClient = newClientModel;
-
-            //SFTP create
-            ListStringResponseModel createSftpResponse = await _repository.CreateNewClient(newClientModel);
-            createResponse.IsSftpUploadSuccess = createSftpResponse.IsSuccess;
-            createResponse.SftpUploadMessages = createSftpResponse.Messages;
-
-            //codes ini
-            ListStringResponseModel fillCodesIniResponse = await _repository.FillCodesIniFile(newClientModel);
-            createResponse.IsCodesIniSuccess = fillCodesIniResponse.IsSuccess;
-            createResponse.CodesInMessages = fillCodesIniResponse.Messages;
-
-            //InstrTw register
-            ListStringResponseModel fillDataBaseInstrTWResponse = await _repository.FillDataBaseInstrTW(newClientModel);
-            createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
-            createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
-
-            // ? CD reg
-
-            // по плечу - в NoLeverage 
-
-            //заполним результаты в IsSuccess
-
-
-            //добавить строки с именем файла
-
-            //поискать файл в результатах
+            NewClientCreationResponse createResponse = await _core.PostNewClient(newClientModel);
 
             return Ok(createResponse);
         }

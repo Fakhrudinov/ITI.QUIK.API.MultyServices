@@ -14,6 +14,6 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> CreateNewClient(NewClientModel newClientModel);
         Task<ListStringResponseModel> GetResultFromQuikSFTPFileUpload(string file);
         Task<ListStringResponseModel> FillCodesIniFile(NewClientModel newClientModel);
-        Task<ListStringResponseModel> FillDataBaseInstrTW(NewClientModel newClientModel);
+        Task<ListStringResponseModel> FillDataBaseInstrTW(NewMNPClientModel newClientModel);
     }
 }

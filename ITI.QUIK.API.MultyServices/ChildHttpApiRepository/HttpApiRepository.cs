@@ -314,25 +314,11 @@ namespace ChildHttpApiRepository
             return result;
         }
 
-        public async Task<ListStringResponseModel> FillDataBaseInstrTW(NewClientModel newClientModel)
+        public async Task<ListStringResponseModel> FillDataBaseInstrTW(NewMNPClientModel newMNPClient)
         {
-            _logger.LogInformation($"HttpApiRepository FillDataBaseInstrTW Called for {newClientModel.Client.FirstName}");
+            _logger.LogInformation($"HttpApiRepository FillDataBaseInstrTW Called for {newMNPClient.Client.FirstName}");
 
             ListStringResponseModel result = new ListStringResponseModel();
-
-            NewMNPClientModel newMNPClient = new NewMNPClientModel();
-            newMNPClient.Client = newClientModel.Client;
-            newMNPClient.isClientPerson = newClientModel.isClientPerson;
-            newMNPClient.isClientResident = newClientModel.isClientResident;
-            newMNPClient.Address = newClientModel.Address;
-            newMNPClient.RegisterDate = newClientModel.RegisterDate;
-            newMNPClient.CodesMatrix = newClientModel.CodesMatrix;
-            newMNPClient.CodesPairRF = newClientModel.CodesPairRF;
-            newMNPClient.Manager = newClientModel.Manager;
-            newMNPClient.SubAccount = newClientModel.SubAccount;
-            newMNPClient.Depositary = newClientModel.Depositary;
-            newMNPClient.isClientDepo = newClientModel.isClientDepo;
-            newMNPClient.DepoClientAccountsManager = newClientModel.DepoClientAccountsManager;
 
             using (var client = new HttpClient())
             {
@@ -349,7 +335,7 @@ namespace ChildHttpApiRepository
                 {
                     result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                    _logger.LogInformation($"HttpApiRepository FillDataBaseInstrTW success for {newClientModel.Client.FirstName}");
+                    _logger.LogInformation($"HttpApiRepository FillDataBaseInstrTW success for {newMNPClient.Client.FirstName}");
                     return result;
                 }
             }

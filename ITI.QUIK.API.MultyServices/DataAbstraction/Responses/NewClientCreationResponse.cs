@@ -13,12 +13,12 @@ namespace DataAbstraction.Responses
         public List<string> SftpUploadMessages { get; set; }
 
         public bool IsCodesIniSuccess { get; set; } = false;
-        public List<string> CodesInMessages { get; set; }
+        public List<string> CodesIniMessages { get; set; }
 
         public bool IsInstrTwSuccess { get; set; } = false;
         public List<string> InstrTwMessages { get; set; }
 
         public bool IsAddToTemplatesSuccess { get; set; } = false;
-        public List<string> ddToTemplatesMessages { get; set; }
+        public List<string> AddToTemplatesMessages { get; set; }
     }
 }
