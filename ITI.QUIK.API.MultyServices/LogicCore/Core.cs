@@ -103,7 +103,7 @@ namespace LogicCore
             }
 
             //IsSuccess total ?
-            if (createResponse.IsSftpUploadSuccess && createResponse.IsCodesIniSuccess && createResponse.IsAddToTemplatesSuccess)
+            if (createResponse.IsSftpUploadSuccess && createResponse.IsCodesIniSuccess && createResponse.IsAddToTemplatesSuccess && createResponse.IsInstrTwSuccess)
             {
                 createResponse.IsNewClientCreationSuccess = true;
             }
