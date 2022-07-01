@@ -68,9 +68,14 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         {
             _logger.LogInformation($"HttpGet GetInfo/NewUser/NonEDP/{clientCode} Call");
 
+            // этот запрос помогает авторизоваться в сторонней бэкофисной БД и предотвратит ошибки:
+            // ORA - 02396: превышено максимальное время ожидания, повторите соединение еще раз
+            // ORA - 02063: предшествующий line из BOFFCE_MOFF_LINK",
+            await _repository.WarmUpBackOfficeDataBase();
+
+            // далее все по плану
             NewClientModelResponse newClient = new NewClientModelResponse();
             newClient.NewClient.Key = new PubringKeyModel();
-
 
             ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientCode);
             if (clientInformation.Response.IsSuccess)
@@ -81,20 +86,6 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             {
                 newClient.Response.IsSuccess = false;
                 newClient.Response.Messages.AddRange(clientInformation.Response.Messages);
-            }
-
-            ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientCode);
-            if (clientBOInformation.Response.IsSuccess)
-            {
-                newClient.NewClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
-                newClient.NewClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
-                newClient.NewClient.Address = clientBOInformation.ClientBOInformation.Address;
-                newClient.NewClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
-            }
-            else
-            {
-                newClient.Response.IsSuccess = false;
-                newClient.Response.Messages.AddRange(clientBOInformation.Response.Messages);
             }
 
             MatrixClientCodeModelResponse spotCodes = await _repository.GetClientAllSpotCodesFiltered(clientCode);
@@ -117,6 +108,20 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             {
                 newClient.Response.IsSuccess = false;
                 newClient.Response.Messages.AddRange(fortsCodes.Response.Messages);
+            }
+
+            ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientCode);
+            if (clientBOInformation.Response.IsSuccess)
+            {
+                newClient.NewClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
+                newClient.NewClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
+                newClient.NewClient.Address = clientBOInformation.ClientBOInformation.Address;
+                newClient.NewClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
+            }
+            else
+            {
+                newClient.Response.IsSuccess = false;
+                newClient.Response.Messages.AddRange(clientBOInformation.Response.Messages);
             }
 
             return Ok(newClient);

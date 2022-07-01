@@ -48,31 +48,74 @@ namespace LogicCore
             createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
             createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
 
-            // codes ini, CD reg, NoLeverage reg
+            // codes ini, CD reg
             if (newClientModel.CodesMatrix != null)
             {
                 //codes ini
-                ListStringResponseModel fillCodesIniResponse = await _repository.FillCodesIniFile(newClientModel);
+                CodesArrayModel codesArray = new CodesArrayModel();
+                codesArray.ClientCodes = new MatrixClientCodeModel[newClientModel.CodesMatrix.Length];
+
+                for (int i = 0; i < newClientModel.CodesMatrix.Length; i++)
+                {
+                    codesArray.ClientCodes[i] = newClientModel.CodesMatrix[i];
+                }
+
+                ListStringResponseModel fillCodesIniResponse = await _repository.FillCodesIniFile(codesArray);
                 createResponse.IsCodesIniSuccess = fillCodesIniResponse.IsSuccess;
                 createResponse.CodesIniMessages = fillCodesIniResponse.Messages;
-                // ? CD reg
 
-                // по плечу - в NoLeverage 
+
+                // ? CD reg
+                bool totalSucces = true;
+                foreach (var code in newClientModel.CodesMatrix)
+                {
+                    if (code.MatrixClientCode.Contains("-CD-"))
+                    {
+                        ListStringResponseModel addCdToKomissiiResponse = await _repository.AddCdPortfolioToTemplateKomissii(code);
+                        if (!addCdToKomissiiResponse.IsSuccess)
+                        {
+                            totalSucces = false;
+                        }
+                        createResponse.AddToTemplatesMessages.AddRange(addCdToKomissiiResponse.Messages);
+
+                        ListStringResponseModel addCdToPoPlechuResponse = await _repository.AddCdPortfolioToTemplatePoPlechu(code);
+                        if (!addCdToPoPlechuResponse.IsSuccess)
+                        {
+                            totalSucces = false;
+                        }
+                        createResponse.AddToTemplatesMessages.AddRange(addCdToPoPlechuResponse.Messages);
+                    }
+                }
+
+                if (totalSucces)
+                {
+                    createResponse.IsAddToTemplatesSuccess = true;
+                }
+
             }
             else
             {
                 createResponse.IsCodesIniSuccess = true;
-                createResponse.CodesInMessages
-                createResponse.IsAddToTemplatesSuccess = true
+                createResponse.CodesIniMessages.Add("Codes.ini - No action required, newClientModel.CodesMatrix is null");
+                
+                createResponse.IsAddToTemplatesSuccess = true;
+                createResponse.AddToTemplatesMessages.Add("Add to templates - No action required, newClientModel.CodesMatrix is null");
             }
 
+            //IsSuccess total ?
+            if (createResponse.IsSftpUploadSuccess && createResponse.IsCodesIniSuccess && createResponse.IsAddToTemplatesSuccess)
+            {
+                createResponse.IsNewClientCreationSuccess = true;
+            }
 
-            //заполним результаты в IsSuccess
+            //проверим выполнение SFTP создания учетки в Qadmin - скорре всего результат будет "еще не обработан"
+            if (createResponse.IsSftpUploadSuccess)
+            {
+                ListStringResponseModel searchFileResult = await _repository.GetResultFromQuikSFTPFileUpload(createSftpResponse.Messages[0]);
 
-
-            //добавить строки с именем файла
-
-            //поискать файл в результатах
+                createResponse.NewClientCreationMessages.Add(createSftpResponse.Messages[0]);
+                createResponse.NewClientCreationMessages.AddRange(searchFileResult.Messages);
+            }
 
             return createResponse;
         }

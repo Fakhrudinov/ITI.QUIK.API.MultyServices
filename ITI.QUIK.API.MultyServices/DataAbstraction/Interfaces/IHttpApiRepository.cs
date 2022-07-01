@@ -13,7 +13,10 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> CreateNewClientOptionWorkshop(NewClientOptionWorkShopModel newClientModel);
         Task<ListStringResponseModel> CreateNewClient(NewClientModel newClientModel);
         Task<ListStringResponseModel> GetResultFromQuikSFTPFileUpload(string file);
-        Task<ListStringResponseModel> FillCodesIniFile(NewClientModel newClientModel);
+        Task<ListStringResponseModel> FillCodesIniFile(CodesArrayModel codesArray);
         Task<ListStringResponseModel> FillDataBaseInstrTW(NewMNPClientModel newClientModel);
+        Task<ListStringResponseModel> AddCdPortfolioToTemplateKomissii(MatrixClientCodeModel code);
+        Task<ListStringResponseModel> AddCdPortfolioToTemplatePoPlechu(MatrixClientCodeModel code);
+        Task WarmUpBackOfficeDataBase();
     }
 }

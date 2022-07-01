@@ -40,9 +40,16 @@ namespace ChildHttpApiRepository
                     result = await response.Content.ReadFromJsonAsync<ClientInformationResponse>();
 
                     _logger.LogInformation($"HttpApiRepository GetClientInformation '{clientCode}' succes is {result.Response.IsSuccess}");
-
-                    return result;
                 }
+                else
+                {
+                    _logger.LogWarning($"HttpApiRepository GetClientInformation response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                    result.Response.IsSuccess = false;
+                    result.Response.Messages.Add($"HttpApiRepository GetClientInformation response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                }
+
+                return result;
             }
 
             _logger.LogWarning($"HttpApiRepository GetClientInformation request url NotFound");
@@ -84,9 +91,16 @@ namespace ChildHttpApiRepository
                     result = await response.Content.ReadFromJsonAsync<MatrixToFortsCodesMappingResponse>();
 
                     _logger.LogInformation($"HttpApiRepository GetClientsFortsCodes '{request}' succes is {result.Response.IsSuccess}");
-
-                    return result;
                 }
+                else
+                {
+                    _logger.LogWarning($"HttpApiRepository GetClientsFortsCodes response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                    result.Response.IsSuccess = false;
+                    result.Response.Messages.Add($"HttpApiRepository GetClientsFortsCodes response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                }
+
+                return result;
             }
 
             _logger.LogWarning($"HttpApiRepository GetClientsFortsCodes request url '{request}' NotFound");
@@ -96,6 +110,30 @@ namespace ChildHttpApiRepository
             result.Response.Messages.Add(_connections.MatrixAPIConnectionString + request);
 
             return result;
+        }
+
+        public async Task WarmUpBackOfficeDataBase()
+        {
+            _logger.LogInformation($"HttpApiRepository WarmUpBackOfficeDataBase Called");
+
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                var response = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/DBClient/WarmUp/BackOfficeDataBase");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation($"HttpApiRepository WarmUpBackOfficeDataBase succes status is {response.StatusCode}");
+                }
+                else
+                {
+                    _logger.LogWarning($"HttpApiRepository WarmUpBackOfficeDataBase response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                }
+            }
+
+            _logger.LogWarning($"HttpApiRepository GetClientInformation request url NotFound: " + _connections.MatrixAPIConnectionString + "/api/DBClient/WarmUp/BackOfficeDataBase");
         }
 
         public async Task<ClientBOInformationResponse> GetClientBOInformation(string clientCode)
@@ -116,9 +154,16 @@ namespace ChildHttpApiRepository
                     result = await response.Content.ReadFromJsonAsync<ClientBOInformationResponse>();
 
                     _logger.LogInformation($"HttpApiRepository GetClientBOInformation /api/DBClient/GetUser/PersonalInfo/BackOffice/{clientCode} succes is {result.Response.IsSuccess}");
-
-                    return result;
                 }
+                else
+                {
+                    _logger.LogWarning($"HttpApiRepository GetClientBOInformation response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                    result.Response.IsSuccess = false;
+                    result.Response.Messages.Add($"HttpApiRepository GetClientBOInformation response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                }
+
+                return result;
             }
 
             _logger.LogWarning($"HttpApiRepository GetClientBOInformation request url /api/DBClient/GetUser/PersonalInfo/BackOffice/{clientCode} NotFound");
@@ -148,9 +193,16 @@ namespace ChildHttpApiRepository
                     result = await response.Content.ReadFromJsonAsync<MatrixClientCodeModelResponse>();
 
                     _logger.LogInformation($"HttpApiRepository GetClientAllSpotCodesFiltered /api/DBClient/GetUser/SpotPortfolios/Filtered/{clientCode} succes is {result.Response.IsSuccess}");
-
-                    return result;
                 }
+                else
+                {
+                    _logger.LogWarning($"HttpApiRepository GetClientAllSpotCodesFiltered response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                    result.Response.IsSuccess = false;
+                    result.Response.Messages.Add($"HttpApiRepository GetClientAllSpotCodesFiltered response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                }
+
+                return result;
             }
 
             _logger.LogWarning($"HttpApiRepository GetClientAllSpotCodesFiltered request url /api/DBClient/GetUser/SpotPortfolios/Filtered/{clientCode} NotFound");
@@ -184,8 +236,16 @@ namespace ChildHttpApiRepository
                     result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
                     _logger.LogInformation($"HttpApiRepository CreateNewClientOptionWorkshop success for {newClientModel.CodesPairRF[0].MatrixClientCode}");
-                    return result;
                 }
+                else
+                {
+                    _logger.LogWarning($"HttpApiRepository CreateNewClientOptionWorkshop response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                    result.IsSuccess = false;
+                    result.Messages.Add($"HttpApiRepository CreateNewClientOptionWorkshop response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                }
+
+                return result;
             }
 
             _logger.LogWarning($"HttpApiRepository CreateNewClientOptionWorkshop request url NotFound");
@@ -219,8 +279,16 @@ namespace ChildHttpApiRepository
                     result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
                     _logger.LogInformation($"HttpApiRepository CreateNewClient success for {newClientModel.Client.FirstName}");
-                    return result;
                 }
+                else
+                {
+                    _logger.LogWarning($"HttpApiRepository CreateNewClient response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                    result.IsSuccess = false;
+                    result.Messages.Add($"HttpApiRepository CreateNewClient response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                }
+
+                return result;
             }
 
             _logger.LogWarning($"HttpApiRepository CreateNewClient request url NotFound");
@@ -250,9 +318,16 @@ namespace ChildHttpApiRepository
                     result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
                     _logger.LogInformation($"HttpApiRepository GetResultFromQuikSFTPFileUpload succes is {result.IsSuccess}");
-
-                    return result;
                 }
+                else
+                {
+                    _logger.LogWarning($"HttpApiRepository GetResultFromQuikSFTPFileUpload response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                    result.IsSuccess = false;
+                    result.Messages.Add($"HttpApiRepository GetResultFromQuikSFTPFileUpload response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                }
+
+                return result;
             }
 
             _logger.LogWarning($"HttpApiRepository GetResultFromQuikSFTPFileUpload request url NotFound");
@@ -264,52 +339,45 @@ namespace ChildHttpApiRepository
             return result;
         }
 
-        public async Task<ListStringResponseModel> FillCodesIniFile(NewClientModel newClientModel)
+        public async Task<ListStringResponseModel> FillCodesIniFile(CodesArrayModel codesArray)
         {
-            _logger.LogInformation($"HttpApiRepository FillCodesIniFile Called for {newClientModel.Client.FirstName}");
+            _logger.LogInformation($"HttpApiRepository FillCodesIniFile Called for {codesArray.ClientCodes[0].MatrixClientCode}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
-            if(newClientModel.CodesMatrix != null)
+            using (var client = new HttpClient())
             {
-                CodesArrayModel codesArray = new CodesArrayModel();
-                codesArray.ClientCodes = new MatrixClientCodeModel[newClientModel.CodesMatrix.Length];
+                client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                for (int i = 0; i < newClientModel.CodesMatrix.Length; i++)
+                string bodyJson = JsonSerializer.Serialize(codesArray);
+                StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                var response = await client.PutAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/AddClientCodesToFileCodesIni", stringContent);
+
+
+                if (response.IsSuccessStatusCode)
                 {
-                    codesArray.ClientCodes[i] = newClientModel.CodesMatrix[i];
+                    result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                    _logger.LogInformation($"HttpApiRepository FillCodesIniFile success for {codesArray.ClientCodes[0].MatrixClientCode}");
+                }
+                else
+                {
+                    _logger.LogWarning($"HttpApiRepository FillCodesIniFile response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                    result.IsSuccess = false;
+                    result.Messages.Add($"HttpApiRepository FillCodesIniFile response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                 }
 
-                using (var client = new HttpClient())
-                {
-                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
-                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                    string bodyJson = JsonSerializer.Serialize(codesArray);
-                    StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
-
-                    var response = await client.PutAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/AddClientCodesToFileCodesIni", stringContent);
-
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
-
-                        _logger.LogInformation($"HttpApiRepository FillCodesIniFile success for {newClientModel.Client.FirstName}");
-                        return result;
-                    }
-                }
-
-                _logger.LogWarning($"HttpApiRepository FillCodesIniFile request url NotFound");
-
-                result.IsSuccess = false;
-                result.Messages.Add($"(404) HttpApiRepository FillCodesIniFile request url NotFound");
-                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/AddClientCodesToFileCodesIni");
+                return result;
             }
-            else
-            {
-                result.Messages.Add($"No action requared - there is no MS FX RS CD portfolios");
-            }
+
+            _logger.LogWarning($"HttpApiRepository FillCodesIniFile request url NotFound");
+
+            result.IsSuccess = false;
+            result.Messages.Add($"(404) HttpApiRepository FillCodesIniFile request url NotFound");
+            result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/AddClientCodesToFileCodesIni");
 
             return result;
         }
@@ -335,9 +403,17 @@ namespace ChildHttpApiRepository
                 {
                     result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                    _logger.LogInformation($"HttpApiRepository FillDataBaseInstrTW success for {newMNPClient.Client.FirstName}");
-                    return result;
+                    _logger.LogInformation($"HttpApiRepository FillDataBaseInstrTW success for {newMNPClient.Client.FirstName}");                    
                 }
+                else
+                {
+                    _logger.LogWarning($"HttpApiRepository FillDataBaseInstrTW response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                    result.IsSuccess = false;
+                    result.Messages.Add($"HttpApiRepository FillDataBaseInstrTW response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                }
+
+                return result;
             }
 
             _logger.LogWarning($"HttpApiRepository FillDataBaseInstrTW request url NotFound");
@@ -345,6 +421,92 @@ namespace ChildHttpApiRepository
             result.IsSuccess = false;
             result.Messages.Add($"(404) HttpApiRepository FillDataBaseInstrTW request url NotFound");
             result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikDataBase/Set/NewClient/ToMNP");
+
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> AddCdPortfolioToTemplateKomissii(MatrixClientCodeModel code)
+        {
+            _logger.LogInformation($"HttpApiRepository AddCdPortfolioToTemplateKomissii Called for {code.MatrixClientCode}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                string bodyJson = JsonSerializer.Serialize(code);
+                StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/AddMatrixClientPortfolioTo/KomissiiTemplate/CD_portfolio", stringContent);
+
+
+                if (response.IsSuccessStatusCode)
+                {
+                    result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                    _logger.LogInformation($"HttpApiRepository AddCdPortfolioToTemplateKomissii success for {code.MatrixClientCode}");
+                }
+                else
+                {
+                    _logger.LogWarning($"HttpApiRepository AddCdPortfolioToTemplateKomissii response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                    result.IsSuccess = false;
+                    result.Messages.Add($"HttpApiRepository AddCdPortfolioToTemplateKomissii response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                }
+
+                return result;
+            }
+
+            _logger.LogWarning($"HttpApiRepository AddCdPortfolioToTemplateKomissii request url NotFound");
+
+            result.IsSuccess = false;
+            result.Messages.Add($"(404) HttpApiRepository AddCdPortfolioToTemplateKomissii request url NotFound");
+            result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/AddMatrixClientPortfolioTo/KomissiiTemplate/CD_portfolio");
+
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> AddCdPortfolioToTemplatePoPlechu(MatrixClientCodeModel code)
+        {
+            _logger.LogInformation($"HttpApiRepository AddCdPortfolioToTemplatePoPlechu Called for {code.MatrixClientCode}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                string bodyJson = JsonSerializer.Serialize(code);
+                StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/AddMatrixClientPortfolioTo/PoPlechuTemplate/CD_portfolio", stringContent);
+
+
+                if (response.IsSuccessStatusCode)
+                {
+                    result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                    _logger.LogInformation($"HttpApiRepository AddCdPortfolioToTemplatePoPlechu success for {code.MatrixClientCode}");
+                }
+                else
+                {
+                    _logger.LogWarning($"HttpApiRepository AddCdPortfolioToTemplatePoPlechu response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                    result.IsSuccess = false;
+                    result.Messages.Add($"HttpApiRepository AddCdPortfolioToTemplatePoPlechu response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                }
+
+                return result;
+            }
+
+            _logger.LogWarning($"HttpApiRepository AddCdPortfolioToTemplatePoPlechu request url NotFound");
+
+            result.IsSuccess = false;
+            result.Messages.Add($"(404) HttpApiRepository AddCdPortfolioToTemplatePoPlechu request url NotFound");
+            result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/AddMatrixClientPortfolioTo/PoPlechuTemplate/CD_portfolio");
 
             return result;
         }
