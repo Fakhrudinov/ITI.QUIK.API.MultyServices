@@ -2,6 +2,7 @@
 using DataAbstraction.Models;
 using DataAbstraction.Responses;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace LogicCore
 {
@@ -9,12 +10,134 @@ namespace LogicCore
     {
         private ILogger<Core> _logger;
         private IHttpApiRepository _repository;
+        private PubringKeyIgnoreWords _ignoreWords;
 
-        public Core(ILogger<Core> logger, IHttpApiRepository repository)
+        public Core(ILogger<Core> logger, IHttpApiRepository repository, IOptions<PubringKeyIgnoreWords> ignoreWords)
         {
             _logger = logger;
             _repository = repository;
+            _ignoreWords = ignoreWords.Value;
         }
+
+        public async Task<NewClientModelResponse> GetInfoNewUserNonEDP(string clientCode)
+        {
+            _logger.LogInformation($"ICore GetInfoNewUserNonEDP Called for {clientCode}");
+
+            // этот запрос помогает авторизоваться в сторонней бэкофисной БД и предотвратит ошибки:
+            // ORA - 02396: превышено максимальное время ожидания, повторите соединение еще раз
+            // ORA - 02063: предшествующий line из BOFFCE_MOFF_LINK",
+            await _repository.WarmUpBackOfficeDataBase();
+
+            // далее все по плану
+            NewClientModelResponse newClient = new NewClientModelResponse();
+            newClient.NewClient.Key = new PubringKeyModel();
+
+            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientCode);
+            if (clientInformation.Response.IsSuccess)
+            {
+                newClient.NewClient.Client = clientInformation.ClientInformation;
+            }
+            else
+            {
+                newClient.Response.IsSuccess = false;
+                newClient.Response.Messages.AddRange(clientInformation.Response.Messages);
+            }
+            _logger.LogInformation($"ICore GetInfoNewUserNonEDP GetClientInformation result {clientInformation.Response.IsSuccess}");
+
+            MatrixClientCodeModelResponse spotCodes = await _repository.GetClientAllSpotCodesFiltered(clientCode);
+            if (spotCodes.Response.IsSuccess)
+            {
+                newClient.NewClient.CodesMatrix = spotCodes.MatrixClientCodesList.ToArray();
+            }
+            else
+            {
+                newClient.Response.IsSuccess = false;
+                newClient.Response.Messages.AddRange(spotCodes.Response.Messages);
+            }
+            _logger.LogInformation($"ICore GetInfoNewUserNonEDP GetClientAllSpotCodesFiltered result {spotCodes.Response.IsSuccess}");
+
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientAllFortsCodes(clientCode);
+            if (fortsCodes.Response.IsSuccess)
+            {
+                newClient.NewClient.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
+            }
+            else
+            {
+                newClient.Response.IsSuccess = false;
+                newClient.Response.Messages.AddRange(fortsCodes.Response.Messages);
+            }
+            _logger.LogInformation($"ICore GetInfoNewUserNonEDP GetClientAllFortsCodes result {fortsCodes.Response.IsSuccess}");
+
+            ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientCode);
+            if (clientBOInformation.Response.IsSuccess)
+            {
+                newClient.NewClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
+                newClient.NewClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
+                newClient.NewClient.Address = clientBOInformation.ClientBOInformation.Address;
+                newClient.NewClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
+            }
+            else
+            {
+                newClient.Response.IsSuccess = false;
+                newClient.Response.Messages.AddRange(clientBOInformation.Response.Messages);
+            }
+            _logger.LogInformation($"ICore GetInfoNewUserNonEDP GetClientAllFortsCodes result {clientBOInformation.Response.IsSuccess}");
+
+            return newClient;
+        }
+
+        public async Task<NewClientOptionWorkShopModelResponse> GetInfoNewUserOptionWorkShop(string clientCode)
+        {
+            _logger.LogInformation($"ICore GetInfoNewUserOptionWorkShop Called for {clientCode}");
+
+            NewClientOptionWorkShopModelResponse newClientOW = new NewClientOptionWorkShopModelResponse();
+            newClientOW.NewOWClient.Key = new PubringKeyModel();
+
+            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientCode);
+            if (clientInformation.Response.IsSuccess)
+            {
+                newClientOW.NewOWClient.Client = clientInformation.ClientInformation;
+            }
+            else
+            {
+                newClientOW.Response.IsSuccess = false;
+                newClientOW.Response.Messages.AddRange(clientInformation.Response.Messages);
+            }
+            _logger.LogInformation($"ICore GetInfoNewUserOptionWorkShop GetClientInformation result {clientInformation.Response.IsSuccess}");
+
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientNonEdpFortsCodes(clientCode);
+            if (fortsCodes.Response.IsSuccess)
+            {
+                newClientOW.NewOWClient.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
+            }
+            else
+            {
+                newClientOW.Response.IsSuccess = false;
+                newClientOW.Response.Messages.AddRange(fortsCodes.Response.Messages);
+            }
+            _logger.LogInformation($"ICore GetInfoNewUserOptionWorkShop GetClientNonEdpFortsCodes result {fortsCodes.Response.IsSuccess}");
+
+            return newClientOW;
+        }
+
+        public async Task<ListStringResponseModel> PostNewClientOptionWorkshop(NewClientOptionWorkShopModel newClientModel)
+        {
+            _logger.LogInformation($"ICore PostNewClientOptionWorkshop Called for {newClientModel.Client.FirstName}");
+
+            ListStringResponseModel createResponse = await _repository.CreateNewClientOptionWorkshop(newClientModel);
+
+            _logger.LogInformation($"ICore PostNewClientOptionWorkshop result is {createResponse.IsSuccess}");
+
+            if (createResponse.IsSuccess)
+            {
+                ListStringResponseModel searchFileResult = await _repository.GetResultFromQuikSFTPFileUpload(createResponse.Messages[0]);
+
+                createResponse.Messages.AddRange(searchFileResult.Messages);
+            }
+
+            return createResponse;
+        }
+
 
         public async Task<NewClientCreationResponse> PostNewClient(NewClientModel newClientModel)
         {
@@ -118,6 +241,124 @@ namespace LogicCore
             }
 
             return createResponse;
+        }
+
+        public async Task<ListStringResponseModel> GetResultFromQuikSFTPFileUpload(string fileName)
+        {
+            return await _repository.GetResultFromQuikSFTPFileUpload(fileName);
+        }
+
+        public PubringKeyModelResponse GetKeyFromFile(string filePath)
+        {
+            _logger.LogInformation($"ICore GetKeyFromFile Called for {filePath}");
+
+            if (!System.IO.File.Exists(filePath))
+            {
+                _logger.LogWarning("HttpGet GetKeyModel/FromFile Error - file not found: " + filePath);
+
+                PubringKeyModelResponse key = new PubringKeyModelResponse();
+
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add("HttpGet GetKeyModel/FromFile Error - file not found: " + filePath);
+
+                return key;
+            }
+
+            FileInfo fileInfo = new FileInfo(filePath);
+            if (fileInfo.Length > 600)//normal size is about 310 - 350. 600 for long login string
+            {
+                PubringKeyModelResponse key = new PubringKeyModelResponse();
+
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add($"HttpGet GetKeyModel/FromFile Error - file size '{fileInfo.Length}'byte anomally big: " + filePath);
+
+                return key;
+            }
+
+            string keyText = "";
+            using (StreamReader reader = new StreamReader(filePath))
+            {
+                keyText = reader.ReadToEnd();
+            }
+
+            return GetKeyFromString(keyText);
+        }
+
+        public PubringKeyModelResponse GetKeyFromString(string keyText)
+        {
+            _logger.LogInformation($"ICore GetKeyFromString Called for {keyText}");
+
+            PubringKeyModelResponse key = new PubringKeyModelResponse();
+
+            // чистим от переносов строк и табов
+            keyText = keyText.Replace(Environment.NewLine, " ");
+            keyText = keyText.Replace("\r\n", " ");
+            keyText = keyText.Replace("\n", " ");
+            keyText = keyText.Replace("\t", " ");
+
+            //чистим от списка слов из appsettings.json секция PubringKeyIgnoreWords
+            var deleteWordsArray = _ignoreWords.RemoveText.Split(" ");
+            foreach (string deleteWord in deleteWordsArray)
+            {
+                keyText = keyText.Replace(deleteWord, "");
+            }
+
+            // чистим от лишних пробелов
+            while (keyText.Contains("  "))
+            {
+                keyText = keyText.Replace("  ", " ");
+            }
+
+            //разбиваем строки
+            var keyTextArray = keyText.Split(" ");
+            foreach (string line in keyTextArray)
+            {
+                if (line.Contains("KEYID="))
+                {
+                    key.Key.KeyID = line.Replace("KEYID=", "");
+                }
+
+                if (line.Contains("KEY="))
+                {
+                    key.Key.RSAKey = line.Replace("KEY=", "");
+                }
+
+                if (line.Contains("TIME="))
+                {
+                    string time = line.Replace("TIME=", "");
+                    try
+                    {
+
+                        key.Key.Time = Int32.Parse(time);
+                    }
+                    catch (Exception)
+                    {
+                        key.Response.IsSuccess = false;
+                        key.Response.Messages.Add($"Error at parse Time value '{time}'");
+                    }
+                }
+            }
+
+            // проверим, всё ли есть в ключе
+            if (key.Key.KeyID is null)
+            {
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add($"Error: KeyID value is empty");
+            }
+
+            if (key.Key.RSAKey is null)
+            {
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add($"Error: RSAKey value is empty");
+            }
+
+            if (key.Key.Time == 0)
+            {
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add($"Error: Time value is empty");
+            }
+
+            return key;
         }
     }
 }

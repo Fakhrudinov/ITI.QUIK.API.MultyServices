@@ -2,7 +2,6 @@
 using DataAbstraction.Models;
 using DataAbstraction.Responses;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace ITI.QUIK.API.MultyServices.Controllers
 {
@@ -11,15 +10,11 @@ namespace ITI.QUIK.API.MultyServices.Controllers
     public class NewUserController : ControllerBase
     {
         private ILogger<NewUserController> _logger;
-        private IHttpApiRepository _repository;
-        private PubringKeyIgnoreWords _ignoreWords;
         private ICore _core;
 
-        public NewUserController(ILogger<NewUserController> logger, IHttpApiRepository repository, IOptions<PubringKeyIgnoreWords> ignoreWords, ICore core)
+        public NewUserController(ILogger<NewUserController> logger, ICore core)
         {
             _logger = logger;
-            _repository = repository;
-            _ignoreWords = ignoreWords.Value;
             _core = core;
         }
 
@@ -28,37 +23,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         {
             _logger.LogInformation($"HttpGet GetInfo/NewUser/ForOptionWorkShop/{clientCode} Call");
 
-            NewClientOptionWorkShopModelResponse newClientOW = new NewClientOptionWorkShopModelResponse();
-            newClientOW.NewOWClient.Key = new PubringKeyModel();
-
-            //ListStringResponseModel validationResult = Validator.ValidateClientCode(clientCode);
-            //if (!validationResult.IsSuccess)
-            //{
-            //    _logger.LogWarning($"HttpGet GetUser/SpotPortfolios {clientCode} Validation Fail: {validationResult.Messages[0]}");
-            //    return BadRequest(validationResult);
-            //}
-
-            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientCode);
-            if (clientInformation.Response.IsSuccess)
-            {
-                newClientOW.NewOWClient.Client = clientInformation.ClientInformation;
-            }
-            else
-            {
-                newClientOW.Response.IsSuccess = false;
-                newClientOW.Response.Messages.AddRange(clientInformation.Response.Messages);
-            }
-
-            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientNonEdpFortsCodes(clientCode);
-            if (fortsCodes.Response.IsSuccess)
-            {
-                newClientOW.NewOWClient.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
-            }
-            else
-            {
-                newClientOW.Response.IsSuccess = false;
-                newClientOW.Response.Messages.AddRange(fortsCodes.Response.Messages);
-            }
+            NewClientOptionWorkShopModelResponse newClientOW = await _core.GetInfoNewUserOptionWorkShop(clientCode);
 
             return Ok(newClientOW);
         }
@@ -68,61 +33,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         {
             _logger.LogInformation($"HttpGet GetInfo/NewUser/NonEDP/{clientCode} Call");
 
-            // этот запрос помогает авторизоваться в сторонней бэкофисной БД и предотвратит ошибки:
-            // ORA - 02396: превышено максимальное время ожидания, повторите соединение еще раз
-            // ORA - 02063: предшествующий line из BOFFCE_MOFF_LINK",
-            await _repository.WarmUpBackOfficeDataBase();
-
-            // далее все по плану
-            NewClientModelResponse newClient = new NewClientModelResponse();
-            newClient.NewClient.Key = new PubringKeyModel();
-
-            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientCode);
-            if (clientInformation.Response.IsSuccess)
-            {
-                newClient.NewClient.Client = clientInformation.ClientInformation;
-            }
-            else
-            {
-                newClient.Response.IsSuccess = false;
-                newClient.Response.Messages.AddRange(clientInformation.Response.Messages);
-            }
-
-            MatrixClientCodeModelResponse spotCodes = await _repository.GetClientAllSpotCodesFiltered(clientCode);
-            if (spotCodes.Response.IsSuccess)
-            {
-                newClient.NewClient.CodesMatrix = spotCodes.MatrixClientCodesList.ToArray();
-            }
-            else
-            {
-                newClient.Response.IsSuccess = false;
-                newClient.Response.Messages.AddRange(spotCodes.Response.Messages);
-            }
-
-            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientAllFortsCodes(clientCode);
-            if (fortsCodes.Response.IsSuccess)
-            {
-                newClient.NewClient.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
-            }
-            else
-            {
-                newClient.Response.IsSuccess = false;
-                newClient.Response.Messages.AddRange(fortsCodes.Response.Messages);
-            }
-
-            ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientCode);
-            if (clientBOInformation.Response.IsSuccess)
-            {
-                newClient.NewClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
-                newClient.NewClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
-                newClient.NewClient.Address = clientBOInformation.ClientBOInformation.Address;
-                newClient.NewClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
-            }
-            else
-            {
-                newClient.Response.IsSuccess = false;
-                newClient.Response.Messages.AddRange(clientBOInformation.Response.Messages);
-            }
+            NewClientModelResponse newClient = await _core.GetInfoNewUserNonEDP(clientCode);
 
             return Ok(newClient);
         }
@@ -132,7 +43,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         {
             _logger.LogInformation($"HttpGet GetKeyModel/FromQuery Call, Text=" + keyText);
 
-            return Ok(GetKeyFromString(keyText));
+            return Ok(_core.GetKeyFromString(keyText));
         }
 
         [HttpGet("GetKeyModel/FromFile")]
@@ -140,44 +51,17 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         {
             _logger.LogInformation($"HttpGet GetKeyModel/FromFile Call, filePath=" + filePath);
 
-            if (!System.IO.File.Exists(filePath))
-            {
-                _logger.LogWarning("HttpGet GetKeyModel/FromFile Error - file not found: " + filePath);
+            PubringKeyModelResponse key = _core.GetKeyFromFile(filePath);
 
-                PubringKeyModelResponse key = new PubringKeyModelResponse();
-
-                key.Response.IsSuccess = false;
-                key.Response.Messages.Add("HttpGet GetKeyModel/FromFile Error - file not found: " + filePath);
-                
-                return Ok(key);
-            }
-
-            FileInfo fileInfo = new FileInfo(filePath);
-            if (fileInfo.Length > 600)//normal size is about 310 - 350. 600 for long login string
-            {
-                PubringKeyModelResponse key = new PubringKeyModelResponse();
-
-                key.Response.IsSuccess = false;
-                key.Response.Messages.Add($"HttpGet GetKeyModel/FromFile Error - file size '{fileInfo.Length}'byte anomally big: " + filePath);
-
-                return Ok(key);
-            }
-
-            string keyText = "";
-            using (StreamReader reader = new StreamReader(filePath))
-            {
-                keyText = await reader.ReadToEndAsync();
-            }
-
-            return Ok(GetKeyFromString(keyText));
+            return Ok(key);
         }
 
         [HttpGet("GetResult/FromQuikSFTP/FileUpload")]
-        public async Task<IActionResult> GetResultFromQuikSFTPFileUpload([FromQuery] string file)
+        public async Task<IActionResult> GetResultFromQuikSFTPFileUpload([FromQuery] string fileName)
         {
-            _logger.LogInformation($"HttpGet GetResult/FromQuikSFTP/FileUpload Call, file=" + file);
+            _logger.LogInformation($"HttpGet GetResult/FromQuikSFTP/FileUpload Call, file=" + fileName);
 
-            ListStringResponseModel result = await _repository.GetResultFromQuikSFTPFileUpload(file);
+            ListStringResponseModel result = await _core.GetResultFromQuikSFTPFileUpload(fileName);
 
             return Ok(result);
         }
@@ -189,14 +73,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
             //validate newClientModel
 
-            ListStringResponseModel createResponse = await _repository.CreateNewClientOptionWorkshop(newClientModel);
-
-            if (createResponse.IsSuccess)
-            {
-                ListStringResponseModel searchFileResult = await _repository.GetResultFromQuikSFTPFileUpload(createResponse.Messages[0]);
-
-                createResponse.Messages.AddRange(searchFileResult.Messages);
-            }
+            ListStringResponseModel createResponse = await _core.PostNewClientOptionWorkshop(newClientModel);
 
             return Ok(createResponse);
         }
@@ -211,82 +88,6 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             NewClientCreationResponse createResponse = await _core.PostNewClient(newClientModel);
 
             return Ok(createResponse);
-        }
-
-
-        private PubringKeyModelResponse GetKeyFromString(string keyText)
-        {
-            PubringKeyModelResponse key = new PubringKeyModelResponse();
-
-            // чистим от переносов строк и табов
-            keyText = keyText.Replace(Environment.NewLine, " ");
-            keyText = keyText.Replace("\r\n", " ");
-            keyText = keyText.Replace("\n", " ");
-            keyText = keyText.Replace("\t", " ");
-
-            //чистим от списка слов из appsettings.json секция PubringKeyIgnoreWords
-            var deleteWordsArray = _ignoreWords.RemoveText.Split(" ");
-            foreach (string deleteWord in deleteWordsArray)
-            {
-                keyText = keyText.Replace(deleteWord, "");
-            }
-
-            // чистим от лишних пробелов
-            while (keyText.Contains("  "))
-            {
-                keyText = keyText.Replace("  ", " ");
-            }
-
-            //разбиваем строки
-            var keyTextArray = keyText.Split(" ");
-            foreach (string line in keyTextArray)
-            {
-                if (line.Contains("KEYID="))
-                {
-                    key.Key.KeyID = line.Replace("KEYID=", "");
-                }
-
-                if (line.Contains("KEY="))
-                {
-                    key.Key.RSAKey = line.Replace("KEY=", "");
-                }
-
-                if (line.Contains("TIME="))
-                {
-                    string time = line.Replace("TIME=", "");
-                    try
-                    {
-
-                        key.Key.Time = Int32.Parse(time);
-                    }
-                    catch (Exception)
-                    {
-                        key.Response.IsSuccess = false;
-                        key.Response.Messages.Add($"Error at parse Time value '{time}'");
-                    }
-                }
-            }
-
-            // проверим, всё ли есть в ключе
-            if (key.Key.KeyID is null)
-            {
-                key.Response.IsSuccess = false;
-                key.Response.Messages.Add($"Error: KeyID value is empty");
-            }
-
-            if (key.Key.RSAKey is null)
-            {
-                key.Response.IsSuccess = false;
-                key.Response.Messages.Add($"Error: RSAKey value is empty");
-            }
-
-            if (key.Key.Time == 0)
-            {
-                key.Response.IsSuccess = false;
-                key.Response.Messages.Add($"Error: Time value is empty");
-            }
-
-            return key;
         }
     }
 }
