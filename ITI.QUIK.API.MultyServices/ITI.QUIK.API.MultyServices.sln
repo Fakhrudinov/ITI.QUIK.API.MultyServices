@@ -7,6 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ITI.QUIK.API.MultyServices"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataAbstraction", "DataAbstraction\DataAbstraction.csproj", "{C073E169-8CF1-47D9-8A6F-76E8111285E6}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChildHttpApiRepository", "ChildHttpApiRepository\ChildHttpApiRepository.csproj", "{7CAFFA8E-0897-4FAD-942F-636030CD46A7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogicCore", "LogicCore\LogicCore.csproj", "{F2363ABF-4D5C-4235-9433-745DF3DB84DF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{C073E169-8CF1-47D9-8A6F-76E8111285E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C073E169-8CF1-47D9-8A6F-76E8111285E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C073E169-8CF1-47D9-8A6F-76E8111285E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CAFFA8E-0897-4FAD-942F-636030CD46A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CAFFA8E-0897-4FAD-942F-636030CD46A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CAFFA8E-0897-4FAD-942F-636030CD46A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CAFFA8E-0897-4FAD-942F-636030CD46A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F2363ABF-4D5C-4235-9433-745DF3DB84DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2363ABF-4D5C-4235-9433-745DF3DB84DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2363ABF-4D5C-4235-9433-745DF3DB84DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2363ABF-4D5C-4235-9433-745DF3DB84DF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

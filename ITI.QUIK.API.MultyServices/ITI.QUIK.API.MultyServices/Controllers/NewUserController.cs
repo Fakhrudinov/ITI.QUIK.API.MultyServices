@@ -1,5 +1,6 @@
 ﻿using DataAbstraction.Interfaces;
-using Microsoft.AspNetCore.Http;
+using DataAbstraction.Models;
+using DataAbstraction.Responses;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ITI.QUIK.API.MultyServices.Controllers
@@ -9,26 +10,84 @@ namespace ITI.QUIK.API.MultyServices.Controllers
     public class NewUserController : ControllerBase
     {
         private ILogger<NewUserController> _logger;
-        private IDataBaseRepository _repository;
+        private ICore _core;
 
-        public NewUserController(ILogger<NewUserController> logger, IDataBaseRepository repository)
+        public NewUserController(ILogger<NewUserController> logger, ICore core)
         {
             _logger = logger;
-            _repository = repository;
+            _core = core;
         }
 
+        [HttpGet("GetInfo/OptionWorkShop/{clientCode}")]
+        public async Task<IActionResult> GetInfoNewUserOptionWorkShop(string clientCode)
+        {
+            _logger.LogInformation($"HttpGet GetInfo/NewUser/ForOptionWorkShop/{clientCode} Call");
 
-        // new OW user = input is (rf codes pair)+(key)
-        // get personal info
-        // check RF - not in MO
+            NewClientOptionWorkShopModelResponse newClientOW = await _core.GetInfoNewUserOptionWorkShop(clientCode);
 
+            return Ok(newClientOW);
+        }
 
-        // new non EDP user = input is (code)+(key)
-        // get personal info
-        // get BO personal info
-        // at liast one of codes must be set       
-        // get all spot portfolios exlude = MO RS SF OT - list at settings
-        // get all rf codes pair
+        [HttpGet("GetInfo/{clientCode}")]
+        public async Task<IActionResult> GetInfoNewUserNonEDP(string clientCode)
+        {
+            _logger.LogInformation($"HttpGet GetInfo/NewUser/NonEDP/{clientCode} Call");
 
+            NewClientModelResponse newClient = await _core.GetInfoNewUserNonEDP(clientCode);
+
+            return Ok(newClient);
+        }
+
+        [HttpGet("GetKeyModel/FromQuery")]
+        public async Task<IActionResult> GetKeyModelFromQuery([FromQuery] string keyText)
+        {
+            _logger.LogInformation($"HttpGet GetKeyModel/FromQuery Call, Text=" + keyText);
+
+            return Ok(_core.GetKeyFromString(keyText));
+        }
+
+        [HttpGet("GetKeyModel/FromFile")]
+        public async Task<IActionResult> GetKeyFromFileModel([FromQuery] string filePath)
+        {
+            _logger.LogInformation($"HttpGet GetKeyModel/FromFile Call, filePath=" + filePath);
+
+            PubringKeyModelResponse key = _core.GetKeyFromFile(filePath);
+
+            return Ok(key);
+        }
+
+        [HttpGet("GetResult/FromQuikSFTP/FileUpload")]
+        public async Task<IActionResult> GetResultFromQuikSFTPFileUpload([FromQuery] string fileName)
+        {
+            _logger.LogInformation($"HttpGet GetResult/FromQuikSFTP/FileUpload Call, file=" + fileName);
+
+            ListStringResponseModel result = await _core.GetResultFromQuikSFTPFileUpload(fileName);
+
+            return Ok(result);
+        }
+
+        [HttpPost("Post/NewClient/OptionWorkshop")]
+        public async Task<IActionResult> PostNewClientOptionWorkshop([FromBody] NewClientOptionWorkShopModel newClientModel)
+        {
+            _logger.LogInformation($"HttpPost Post/NewClient/OptionWorkshop Call for " + newClientModel.Client.FirstName);
+
+            //validate newClientModel
+
+            ListStringResponseModel createResponse = await _core.PostNewClientOptionWorkshop(newClientModel);
+
+            return Ok(createResponse);
+        }
+
+        [HttpPost("Post/NewClient")]
+        public async Task<IActionResult> PostNewClient([FromBody] NewClientModel newClientModel)
+        {
+            _logger.LogInformation($"HttpPost Post/NewClient Call for " + newClientModel.Client.FirstName);
+
+            //validate newClientModel
+
+            NewClientCreationResponse createResponse = await _core.PostNewClient(newClientModel);
+
+            return Ok(createResponse);
+        }
     }
 }

@@ -1,0 +1,364 @@
+﻿using DataAbstraction.Interfaces;
+using DataAbstraction.Models;
+using DataAbstraction.Responses;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace LogicCore
+{
+    public class Core : ICore
+    {
+        private ILogger<Core> _logger;
+        private IHttpApiRepository _repository;
+        private PubringKeyIgnoreWords _ignoreWords;
+
+        public Core(ILogger<Core> logger, IHttpApiRepository repository, IOptions<PubringKeyIgnoreWords> ignoreWords)
+        {
+            _logger = logger;
+            _repository = repository;
+            _ignoreWords = ignoreWords.Value;
+        }
+
+        public async Task<NewClientModelResponse> GetInfoNewUserNonEDP(string clientCode)
+        {
+            _logger.LogInformation($"ICore GetInfoNewUserNonEDP Called for {clientCode}");
+
+            // этот запрос помогает авторизоваться в сторонней бэкофисной БД и предотвратит ошибки:
+            // ORA - 02396: превышено максимальное время ожидания, повторите соединение еще раз
+            // ORA - 02063: предшествующий line из BOFFCE_MOFF_LINK",
+            await _repository.WarmUpBackOfficeDataBase();
+
+            // далее все по плану
+            NewClientModelResponse newClient = new NewClientModelResponse();
+            newClient.NewClient.Key = new PubringKeyModel();
+
+            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientCode);
+            if (clientInformation.Response.IsSuccess)
+            {
+                newClient.NewClient.Client = clientInformation.ClientInformation;
+            }
+            else
+            {
+                newClient.Response.IsSuccess = false;
+                newClient.Response.Messages.AddRange(clientInformation.Response.Messages);
+            }
+            _logger.LogInformation($"ICore GetInfoNewUserNonEDP GetClientInformation result {clientInformation.Response.IsSuccess}");
+
+            MatrixClientCodeModelResponse spotCodes = await _repository.GetClientAllSpotCodesFiltered(clientCode);
+            if (spotCodes.Response.IsSuccess)
+            {
+                newClient.NewClient.CodesMatrix = spotCodes.MatrixClientCodesList.ToArray();
+            }
+            else
+            {
+                newClient.Response.IsSuccess = false;
+                newClient.Response.Messages.AddRange(spotCodes.Response.Messages);
+            }
+            _logger.LogInformation($"ICore GetInfoNewUserNonEDP GetClientAllSpotCodesFiltered result {spotCodes.Response.IsSuccess}");
+
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientAllFortsCodes(clientCode);
+            if (fortsCodes.Response.IsSuccess)
+            {
+                newClient.NewClient.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
+            }
+            else
+            {
+                newClient.Response.IsSuccess = false;
+                newClient.Response.Messages.AddRange(fortsCodes.Response.Messages);
+            }
+            _logger.LogInformation($"ICore GetInfoNewUserNonEDP GetClientAllFortsCodes result {fortsCodes.Response.IsSuccess}");
+
+            ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientCode);
+            if (clientBOInformation.Response.IsSuccess)
+            {
+                newClient.NewClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
+                newClient.NewClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
+                newClient.NewClient.Address = clientBOInformation.ClientBOInformation.Address;
+                newClient.NewClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
+            }
+            else
+            {
+                newClient.Response.IsSuccess = false;
+                newClient.Response.Messages.AddRange(clientBOInformation.Response.Messages);
+            }
+            _logger.LogInformation($"ICore GetInfoNewUserNonEDP GetClientAllFortsCodes result {clientBOInformation.Response.IsSuccess}");
+
+            return newClient;
+        }
+
+        public async Task<NewClientOptionWorkShopModelResponse> GetInfoNewUserOptionWorkShop(string clientCode)
+        {
+            _logger.LogInformation($"ICore GetInfoNewUserOptionWorkShop Called for {clientCode}");
+
+            NewClientOptionWorkShopModelResponse newClientOW = new NewClientOptionWorkShopModelResponse();
+            newClientOW.NewOWClient.Key = new PubringKeyModel();
+
+            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientCode);
+            if (clientInformation.Response.IsSuccess)
+            {
+                newClientOW.NewOWClient.Client = clientInformation.ClientInformation;
+            }
+            else
+            {
+                newClientOW.Response.IsSuccess = false;
+                newClientOW.Response.Messages.AddRange(clientInformation.Response.Messages);
+            }
+            _logger.LogInformation($"ICore GetInfoNewUserOptionWorkShop GetClientInformation result {clientInformation.Response.IsSuccess}");
+
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientNonEdpFortsCodes(clientCode);
+            if (fortsCodes.Response.IsSuccess)
+            {
+                newClientOW.NewOWClient.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
+            }
+            else
+            {
+                newClientOW.Response.IsSuccess = false;
+                newClientOW.Response.Messages.AddRange(fortsCodes.Response.Messages);
+            }
+            _logger.LogInformation($"ICore GetInfoNewUserOptionWorkShop GetClientNonEdpFortsCodes result {fortsCodes.Response.IsSuccess}");
+
+            return newClientOW;
+        }
+
+        public async Task<ListStringResponseModel> PostNewClientOptionWorkshop(NewClientOptionWorkShopModel newClientModel)
+        {
+            _logger.LogInformation($"ICore PostNewClientOptionWorkshop Called for {newClientModel.Client.FirstName}");
+
+            ListStringResponseModel createResponse = await _repository.CreateNewClientOptionWorkshop(newClientModel);
+
+            _logger.LogInformation($"ICore PostNewClientOptionWorkshop result is {createResponse.IsSuccess}");
+
+            if (createResponse.IsSuccess)
+            {
+                ListStringResponseModel searchFileResult = await _repository.GetResultFromQuikSFTPFileUpload(createResponse.Messages[0]);
+
+                createResponse.Messages.AddRange(searchFileResult.Messages);
+            }
+
+            return createResponse;
+        }
+
+
+        public async Task<NewClientCreationResponse> PostNewClient(NewClientModel newClientModel)
+        {
+            _logger.LogInformation($"ICore PostNewClient Called for {newClientModel.Client.FirstName}");
+
+            NewClientCreationResponse createResponse = new NewClientCreationResponse();
+
+            //SFTP create
+            _logger.LogInformation($"ICore SFTP register for {newClientModel.Client.FirstName}");
+            ListStringResponseModel createSftpResponse = await _repository.CreateNewClient(newClientModel);
+            createResponse.IsSftpUploadSuccess = createSftpResponse.IsSuccess;
+            createResponse.SftpUploadMessages = createSftpResponse.Messages;
+
+            //InstrTw register
+            _logger.LogInformation($"ICore InstrTw register for {newClientModel.Client.FirstName}");
+            NewMNPClientModel newMNPClient = new NewMNPClientModel();
+            newMNPClient.Client = newClientModel.Client;
+            newMNPClient.isClientPerson = newClientModel.isClientPerson;
+            newMNPClient.isClientResident = newClientModel.isClientResident;
+            newMNPClient.Address = newClientModel.Address;
+            newMNPClient.RegisterDate = newClientModel.RegisterDate;
+            newMNPClient.CodesMatrix = newClientModel.CodesMatrix;
+            newMNPClient.CodesPairRF = newClientModel.CodesPairRF;
+            newMNPClient.Manager = newClientModel.Manager;
+            newMNPClient.SubAccount = newClientModel.SubAccount;
+            newMNPClient.Depositary = newClientModel.Depositary;
+            newMNPClient.isClientDepo = newClientModel.isClientDepo;
+            newMNPClient.DepoClientAccountsManager = newClientModel.DepoClientAccountsManager;
+
+            ListStringResponseModel fillDataBaseInstrTWResponse = await _repository.FillDataBaseInstrTW(newMNPClient);
+            createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
+            createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
+
+            // codes ini, CD reg
+            if (newClientModel.CodesMatrix != null)
+            {
+                //codes ini
+                CodesArrayModel codesArray = new CodesArrayModel();
+                codesArray.ClientCodes = new MatrixClientCodeModel[newClientModel.CodesMatrix.Length];
+
+                for (int i = 0; i < newClientModel.CodesMatrix.Length; i++)
+                {
+                    codesArray.ClientCodes[i] = newClientModel.CodesMatrix[i];
+                }
+
+                ListStringResponseModel fillCodesIniResponse = await _repository.FillCodesIniFile(codesArray);
+                createResponse.IsCodesIniSuccess = fillCodesIniResponse.IsSuccess;
+                createResponse.CodesIniMessages = fillCodesIniResponse.Messages;
+
+
+                // ? CD reg
+                bool totalSucces = true;
+                foreach (var code in newClientModel.CodesMatrix)
+                {
+                    if (code.MatrixClientCode.Contains("-CD-"))
+                    {
+                        ListStringResponseModel addCdToKomissiiResponse = await _repository.AddCdPortfolioToTemplateKomissii(code);
+                        if (!addCdToKomissiiResponse.IsSuccess)
+                        {
+                            totalSucces = false;
+                        }
+                        createResponse.AddToTemplatesMessages.AddRange(addCdToKomissiiResponse.Messages);
+
+                        ListStringResponseModel addCdToPoPlechuResponse = await _repository.AddCdPortfolioToTemplatePoPlechu(code);
+                        if (!addCdToPoPlechuResponse.IsSuccess)
+                        {
+                            totalSucces = false;
+                        }
+                        createResponse.AddToTemplatesMessages.AddRange(addCdToPoPlechuResponse.Messages);
+                    }
+                }
+
+                if (totalSucces)
+                {
+                    createResponse.IsAddToTemplatesSuccess = true;
+                }
+
+            }
+            else
+            {
+                createResponse.IsCodesIniSuccess = true;
+                createResponse.CodesIniMessages.Add("Codes.ini - No action required, newClientModel.CodesMatrix is null");
+                
+                createResponse.IsAddToTemplatesSuccess = true;
+                createResponse.AddToTemplatesMessages.Add("Add to templates - No action required, newClientModel.CodesMatrix is null");
+            }
+
+            //IsSuccess total ?
+            if (createResponse.IsSftpUploadSuccess && createResponse.IsCodesIniSuccess && createResponse.IsAddToTemplatesSuccess && createResponse.IsInstrTwSuccess)
+            {
+                createResponse.IsNewClientCreationSuccess = true;
+            }
+
+            //проверим выполнение SFTP создания учетки в Qadmin - скорре всего результат будет "еще не обработан"
+            if (createResponse.IsSftpUploadSuccess)
+            {
+                ListStringResponseModel searchFileResult = await _repository.GetResultFromQuikSFTPFileUpload(createSftpResponse.Messages[0]);
+
+                createResponse.NewClientCreationMessages.Add(createSftpResponse.Messages[0]);
+                createResponse.NewClientCreationMessages.AddRange(searchFileResult.Messages);
+            }
+
+            return createResponse;
+        }
+
+        public async Task<ListStringResponseModel> GetResultFromQuikSFTPFileUpload(string fileName)
+        {
+            return await _repository.GetResultFromQuikSFTPFileUpload(fileName);
+        }
+
+        public PubringKeyModelResponse GetKeyFromFile(string filePath)
+        {
+            _logger.LogInformation($"ICore GetKeyFromFile Called for {filePath}");
+
+            if (!System.IO.File.Exists(filePath))
+            {
+                _logger.LogWarning("HttpGet GetKeyModel/FromFile Error - file not found: " + filePath);
+
+                PubringKeyModelResponse key = new PubringKeyModelResponse();
+
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add("HttpGet GetKeyModel/FromFile Error - file not found: " + filePath);
+
+                return key;
+            }
+
+            FileInfo fileInfo = new FileInfo(filePath);
+            if (fileInfo.Length > 600)//normal size is about 310 - 350. 600 for long login string
+            {
+                PubringKeyModelResponse key = new PubringKeyModelResponse();
+
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add($"HttpGet GetKeyModel/FromFile Error - file size '{fileInfo.Length}'byte anomally big: " + filePath);
+
+                return key;
+            }
+
+            string keyText = "";
+            using (StreamReader reader = new StreamReader(filePath))
+            {
+                keyText = reader.ReadToEnd();
+            }
+
+            return GetKeyFromString(keyText);
+        }
+
+        public PubringKeyModelResponse GetKeyFromString(string keyText)
+        {
+            _logger.LogInformation($"ICore GetKeyFromString Called for {keyText}");
+
+            PubringKeyModelResponse key = new PubringKeyModelResponse();
+
+            // чистим от переносов строк и табов
+            keyText = keyText.Replace(Environment.NewLine, " ");
+            keyText = keyText.Replace("\r\n", " ");
+            keyText = keyText.Replace("\n", " ");
+            keyText = keyText.Replace("\t", " ");
+
+            //чистим от списка слов из appsettings.json секция PubringKeyIgnoreWords
+            var deleteWordsArray = _ignoreWords.RemoveText.Split(" ");
+            foreach (string deleteWord in deleteWordsArray)
+            {
+                keyText = keyText.Replace(deleteWord, "");
+            }
+
+            // чистим от лишних пробелов
+            while (keyText.Contains("  "))
+            {
+                keyText = keyText.Replace("  ", " ");
+            }
+
+            //разбиваем строки
+            var keyTextArray = keyText.Split(" ");
+            foreach (string line in keyTextArray)
+            {
+                if (line.Contains("KEYID="))
+                {
+                    key.Key.KeyID = line.Replace("KEYID=", "");
+                }
+
+                if (line.Contains("KEY="))
+                {
+                    key.Key.RSAKey = line.Replace("KEY=", "");
+                }
+
+                if (line.Contains("TIME="))
+                {
+                    string time = line.Replace("TIME=", "");
+                    try
+                    {
+
+                        key.Key.Time = Int32.Parse(time);
+                    }
+                    catch (Exception)
+                    {
+                        key.Response.IsSuccess = false;
+                        key.Response.Messages.Add($"Error at parse Time value '{time}'");
+                    }
+                }
+            }
+
+            // проверим, всё ли есть в ключе
+            if (key.Key.KeyID is null)
+            {
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add($"Error: KeyID value is empty");
+            }
+
+            if (key.Key.RSAKey is null)
+            {
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add($"Error: RSAKey value is empty");
+            }
+
+            if (key.Key.Time == 0)
+            {
+                key.Response.IsSuccess = false;
+                key.Response.Messages.Add($"Error: Time value is empty");
+            }
+
+            return key;
+        }
+    }
+}
