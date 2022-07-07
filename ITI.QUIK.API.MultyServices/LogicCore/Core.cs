@@ -445,8 +445,7 @@ namespace LogicCore
                         }
                     }
 
-                    //данные ключа - берем последний незаблокированный RSAKey Blocked=\"0\" 
-                    //XmlNodeList userKey = doc.SelectNodes("//qx:RSAKey[@Blocked='0']", nsmanager);
+                    //данные ключей
                     XmlNodeList userKeys = doc.SelectNodes("//qx:RSAKey", nsmanager);
                     if (userKeys.Count > 0)
                     {
@@ -462,20 +461,7 @@ namespace LogicCore
 
                             client.Keys.Add(newKey);
                         }
-
-                        //client.Key.KeyID = userKey[0].Attributes.GetNamedItem("KeyID").InnerText;
-                        //client.Key.Time = Int32.Parse(userKey[0].Attributes.GetNamedItem("Time").InnerText);
-                        //client.Key.RSAKey = userKey[0].InnerText;
                     }
-
-                    //XmlNode userKey = doc.SelectSingleNode("//qx:RSAKey", nsmanager);
-                    //if (userKey is not null)
-                    //{
-                    //    client.Key = new PubringKeyModel();
-                    //    client.Key.KeyID = userKey.Attributes.GetNamedItem("KeyID").InnerText;
-                    //    client.Key.Time = Int32.Parse(userKey.Attributes.GetNamedItem("Time").InnerText);
-                    //    client.Key.RSAKey = userKey.InnerText;
-                    //}
 
                     //коды клиента 
                     XmlNodeList nodesWithCodes = doc.SelectNodes("//qx:Classes", nsmanager);
@@ -501,22 +487,6 @@ namespace LogicCore
                             }                            
                         }
                     }
-
-
-
-                    //foreach (XmlNode node in root.ChildNodes)
-                    //{
-                    //    if (node.Name == "UserInfo")
-                    //    {
-                    //        XmlNode nodeFirstName = node.SelectSingleNode("//FirstName");
-                    //    }
-
-                    //    var name = node.Name;
-                    //    var ns = node.NamespaceURI;
-                    //}                    
-
-                    //var asdasd = root.GetElementsByTagName("UserInfo");
-                    //var asdasd2 = root.SelectNodes("//UserInfo");
 
 
                     clientList.Add(client);
