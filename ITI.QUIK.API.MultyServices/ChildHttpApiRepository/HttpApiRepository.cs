@@ -570,5 +570,93 @@ namespace ChildHttpApiRepository
                 return result;
             }
         }
+
+        public async Task<ListStringResponseModel> GetIsUserAlreadyExistByMatrixPortfolio(string clientPortfolio)
+        {
+            _logger.LogInformation($"HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio Called for {clientPortfolio}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/UID/byMatrixCode?MatrixClientCode=" + clientPortfolio);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio succes is {result.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/UID/byMatrixCode?MatrixClientCode=" + clientPortfolio);
+
+                return result;
+            }
+        }
+
+        public async Task<ListStringResponseModel> GetIsUserAlreadyExistByFortsCode(string fortsClientCode)
+        {
+            _logger.LogInformation($"HttpApiRepository GetIsUserAlreadyExistByFortsCode Called for {fortsClientCode}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/UID/byFortsCode?FortsClientCode=" + fortsClientCode);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"HttpApiRepository GetIsUserAlreadyExistByFortsCode succes is {result.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"HttpApiRepository GetIsUserAlreadyExistByFortsCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository GetIsUserAlreadyExistByFortsCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"HttpApiRepository GetIsUserAlreadyExistByFortsCode request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository GetIsUserAlreadyExistByFortsCode request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/UID/byFortsCode?FortsClientCode=" + fortsClientCode);
+
+                return result;
+            }
+        }
     }
 }
