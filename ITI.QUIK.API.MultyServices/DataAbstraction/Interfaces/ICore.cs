@@ -14,5 +14,7 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> PostNewClientOptionWorkshop(NewClientOptionWorkShopModel newClientModel);
         Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByMatrixPortfolio(string clientPortfolio);
         Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByFortsCode(string fortsClientCode);
+        Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientCodeModel model);
+        Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model);
     }
 }

@@ -20,5 +20,7 @@ namespace DataAbstraction.Interfaces
         Task WarmUpBackOfficeDataBase();
         Task<ListStringResponseModel> GetIsUserAlreadyExistByMatrixPortfolio(string clientPortfolio);
         Task<ListStringResponseModel> GetIsUserAlreadyExistByFortsCode(string fortsClientCode);
+        Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientCodeModel model);
+        Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model);
     }
 }

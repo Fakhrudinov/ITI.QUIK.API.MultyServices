@@ -658,5 +658,101 @@ namespace ChildHttpApiRepository
                 return result;
             }
         }
+
+        public async Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientCodeModel model)
+        {
+            _logger.LogInformation($"HttpApiRepository BlockUserByMatrixClientCode Called for {model.MatrixClientCode}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    var request = new HttpRequestMessage
+                    {
+                        Method = HttpMethod.Delete,
+                        RequestUri = new Uri(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/BlockUserBy/MatrixClientCode"),
+                        Content = new StringContent(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json")
+                    };
+                    var response = await client.SendAsync(request);
+
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"HttpApiRepository BlockUserByMatrixClientCode success for {model.MatrixClientCode}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"HttpApiRepository BlockUserByMatrixClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository BlockUserByMatrixClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"HttpApiRepository BlockUserByMatrixClientCode request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository BlockUserByMatrixClientCode request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/BlockUserBy/MatrixClientCode");
+
+                return result;
+            }
+        }
+
+        public async Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model)
+        {
+            _logger.LogInformation($"HttpApiRepository BlockUserByFortsClientCode Called for {model.FortsClientCode}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    var request = new HttpRequestMessage
+                    {
+                        Method = HttpMethod.Delete,
+                        RequestUri = new Uri(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/BlockUserBy/FortsClientCode"),
+                        Content = new StringContent(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json")
+                    };
+                    var response = await client.SendAsync(request);
+
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"HttpApiRepository BlockUserByFortsClientCode success for {model.FortsClientCode}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"HttpApiRepository BlockUserByFortsClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository BlockUserByFortsClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"HttpApiRepository BlockUserByFortsClientCode request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository BlockUserByFortsClientCode request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/BlockUserBy/FortsClientCode");
+
+                return result;
+            }
+        }
     }
 }

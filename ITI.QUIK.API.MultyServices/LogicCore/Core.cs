@@ -495,5 +495,15 @@ namespace LogicCore
 
             return clientList;
         }
+
+        public async Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientCodeModel model)
+        {
+            return await _repository.BlockUserByMatrixClientCode(model);
+        }
+
+        public async Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model)
+        {
+            return await _repository.BlockUserByFortsClientCode(model);
+        }
     }
 }
