@@ -23,7 +23,7 @@ namespace LogicCore
 
         public async Task<NewClientModelResponse> GetInfoNewUserNonEDP(string clientCode)
         {
-            _logger.LogInformation($"ICore GetInfoNewUserNonEDP Called for {clientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserNonEDP Called for {clientCode}");
 
             // этот запрос помогает авторизоваться в сторонней бэкофисной БД и предотвратит ошибки:
             // ORA - 02396: превышено максимальное время ожидания, повторите соединение еще раз
@@ -44,7 +44,7 @@ namespace LogicCore
                 newClient.Response.IsSuccess = false;
                 newClient.Response.Messages.AddRange(clientInformation.Response.Messages);
             }
-            _logger.LogInformation($"ICore GetInfoNewUserNonEDP GetClientInformation result {clientInformation.Response.IsSuccess}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserNonEDP GetClientInformation result {clientInformation.Response.IsSuccess}");
 
             MatrixClientCodeModelResponse spotCodes = await _repository.GetClientAllSpotCodesFiltered(clientCode);
             if (spotCodes.Response.IsSuccess)
@@ -56,7 +56,7 @@ namespace LogicCore
                 newClient.Response.IsSuccess = false;
                 newClient.Response.Messages.AddRange(spotCodes.Response.Messages);
             }
-            _logger.LogInformation($"ICore GetInfoNewUserNonEDP GetClientAllSpotCodesFiltered result {spotCodes.Response.IsSuccess}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserNonEDP GetClientAllSpotCodesFiltered result {spotCodes.Response.IsSuccess}");
 
             MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientAllFortsCodes(clientCode);
             if (fortsCodes.Response.IsSuccess)
@@ -68,7 +68,7 @@ namespace LogicCore
                 newClient.Response.IsSuccess = false;
                 newClient.Response.Messages.AddRange(fortsCodes.Response.Messages);
             }
-            _logger.LogInformation($"ICore GetInfoNewUserNonEDP GetClientAllFortsCodes result {fortsCodes.Response.IsSuccess}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserNonEDP GetClientAllFortsCodes result {fortsCodes.Response.IsSuccess}");
 
             ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientCode);
             if (clientBOInformation.Response.IsSuccess)
@@ -83,14 +83,14 @@ namespace LogicCore
                 newClient.Response.IsSuccess = false;
                 newClient.Response.Messages.AddRange(clientBOInformation.Response.Messages);
             }
-            _logger.LogInformation($"ICore GetInfoNewUserNonEDP GetClientAllFortsCodes result {clientBOInformation.Response.IsSuccess}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserNonEDP GetClientAllFortsCodes result {clientBOInformation.Response.IsSuccess}");
 
             return newClient;
         }
 
         public async Task<NewClientOptionWorkShopModelResponse> GetInfoNewUserOptionWorkShop(string clientCode)
         {
-            _logger.LogInformation($"ICore GetInfoNewUserOptionWorkShop Called for {clientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserOptionWorkShop Called for {clientCode}");
 
             NewClientOptionWorkShopModelResponse newClientOW = new NewClientOptionWorkShopModelResponse();
             newClientOW.NewOWClient.Key = new PubringKeyModel();
@@ -105,7 +105,7 @@ namespace LogicCore
                 newClientOW.Response.IsSuccess = false;
                 newClientOW.Response.Messages.AddRange(clientInformation.Response.Messages);
             }
-            _logger.LogInformation($"ICore GetInfoNewUserOptionWorkShop GetClientInformation result {clientInformation.Response.IsSuccess}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserOptionWorkShop GetClientInformation result {clientInformation.Response.IsSuccess}");
 
             MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientNonEdpFortsCodes(clientCode);
             if (fortsCodes.Response.IsSuccess)
@@ -117,18 +117,18 @@ namespace LogicCore
                 newClientOW.Response.IsSuccess = false;
                 newClientOW.Response.Messages.AddRange(fortsCodes.Response.Messages);
             }
-            _logger.LogInformation($"ICore GetInfoNewUserOptionWorkShop GetClientNonEdpFortsCodes result {fortsCodes.Response.IsSuccess}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserOptionWorkShop GetClientNonEdpFortsCodes result {fortsCodes.Response.IsSuccess}");
 
             return newClientOW;
         }
 
         public async Task<ListStringResponseModel> PostNewClientOptionWorkshop(NewClientOptionWorkShopModel newClientModel)
         {
-            _logger.LogInformation($"ICore PostNewClientOptionWorkshop Called for {newClientModel.Client.FirstName}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore PostNewClientOptionWorkshop Called for {newClientModel.Client.FirstName}");
 
             ListStringResponseModel createResponse = await _repository.CreateNewClientOptionWorkshop(newClientModel);
 
-            _logger.LogInformation($"ICore PostNewClientOptionWorkshop result is {createResponse.IsSuccess}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore PostNewClientOptionWorkshop result is {createResponse.IsSuccess}");
 
             if (createResponse.IsSuccess)
             {
@@ -143,18 +143,18 @@ namespace LogicCore
 
         public async Task<NewClientCreationResponse> PostNewClient(NewClientModel newClientModel)
         {
-            _logger.LogInformation($"ICore PostNewClient Called for {newClientModel.Client.FirstName}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore PostNewClient Called for {newClientModel.Client.FirstName}");
 
             NewClientCreationResponse createResponse = new NewClientCreationResponse();
 
             //SFTP create
-            _logger.LogInformation($"ICore SFTP register for {newClientModel.Client.FirstName}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore SFTP register for {newClientModel.Client.FirstName}");
             ListStringResponseModel createSftpResponse = await _repository.CreateNewClient(newClientModel);
             createResponse.IsSftpUploadSuccess = createSftpResponse.IsSuccess;
             createResponse.SftpUploadMessages = createSftpResponse.Messages;
 
             //InstrTw register
-            _logger.LogInformation($"ICore InstrTw register for {newClientModel.Client.FirstName}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore InstrTw register for {newClientModel.Client.FirstName}");
             NewMNPClientModel newMNPClient = new NewMNPClientModel();
             newMNPClient.Client = newClientModel.Client;
             newMNPClient.isClientPerson = newClientModel.isClientPerson;
@@ -252,11 +252,11 @@ namespace LogicCore
 
         public PubringKeyModelResponse GetKeyFromFile(string filePath)
         {
-            _logger.LogInformation($"ICore GetKeyFromFile Called for {filePath}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetKeyFromFile Called for {filePath}");
 
             if (!System.IO.File.Exists(filePath))
             {
-                _logger.LogWarning("HttpGet GetKeyModel/FromFile Error - file not found: " + filePath);
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet GetKeyModel/FromFile Error - file not found: " + filePath);
 
                 PubringKeyModelResponse key = new PubringKeyModelResponse();
 
@@ -288,7 +288,7 @@ namespace LogicCore
 
         public PubringKeyModelResponse GetKeyFromString(string keyText)
         {
-            _logger.LogInformation($"ICore GetKeyFromString Called for {keyText}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetKeyFromString Called for {keyText}");
 
             PubringKeyModelResponse key = new PubringKeyModelResponse();
 
@@ -365,10 +365,10 @@ namespace LogicCore
 
         public async Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByMatrixPortfolio(string clientPortfolio)
         {
-            _logger.LogInformation($"ICore GetIsUserAlreadyExistByMatrixPortfolio Called for {clientPortfolio}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixPortfolio Called for {clientPortfolio}");
             
             ListStringResponseModel findedClients = await _repository.GetIsUserAlreadyExistByMatrixPortfolio(clientPortfolio);
-            _logger.LogInformation($"ICore GetIsUserAlreadyExistByMatrixPortfolio result is {findedClients.IsSuccess}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixPortfolio result is {findedClients.IsSuccess}");
 
             FindedQuikQAdminClientResponse findedResponse = new FindedQuikQAdminClientResponse();
 
@@ -387,10 +387,10 @@ namespace LogicCore
         }
         public async Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByFortsCode(string fortsClientCode)
         {
-            _logger.LogInformation($"ICore GetIsUserAlreadyExistByFortsCode Called for {fortsClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByFortsCode Called for {fortsClientCode}");
 
             ListStringResponseModel findedClients = await _repository.GetIsUserAlreadyExistByFortsCode(fortsClientCode);
-            _logger.LogInformation($"ICore GetIsUserAlreadyExistByMatrixPortfolio result is {findedClients.IsSuccess}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixPortfolio result is {findedClients.IsSuccess}");
 
             FindedQuikQAdminClientResponse findedResponse = new FindedQuikQAdminClientResponse();
 

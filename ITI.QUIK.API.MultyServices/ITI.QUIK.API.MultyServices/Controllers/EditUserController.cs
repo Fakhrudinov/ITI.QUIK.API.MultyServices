@@ -21,7 +21,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("Get/IsUser/AlreadyExist/ByMatrixPortfolio/{clientPortfolio}")]
         public async Task<IActionResult> GetIsUserAlreadyExistByMatrixPortfolio(string clientPortfolio)
         {
-            _logger.LogInformation($"HttpGet Get/IsUser/AlreadyExist/ByMatrixPortfolio/{clientPortfolio} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/ByMatrixPortfolio/{clientPortfolio} Call");
 
             //validate clientPortfolio
 
@@ -33,7 +33,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("Get/IsUser/AlreadyExist/ByFortsCode/{fortsClientCode}")]
         public async Task<IActionResult> GetIsUserAlreadyExistByFortsCode(string fortsClientCode)
         {
-            _logger.LogInformation($"HttpGet Get/IsUser/AlreadyExist/ByFortsCode/{fortsClientCode} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/ByFortsCode/{fortsClientCode} Call");
 
             //validate fortsClientCode
 
@@ -45,7 +45,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpDelete("BlockUserBy/MatrixClientCode")]
         public async Task<IActionResult> BlockUserByMatrixClientCode([FromBody] MatrixClientCodeModel model)
         {
-            _logger.LogInformation($"HttpDelete BlockUserBy/MatrixClientCode/{model.MatrixClientCode} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/MatrixClientCode/{model.MatrixClientCode} Call");
 
             //validate MatrixClientCodeModel model
 
@@ -56,7 +56,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpDelete("BlockUserBy/FortsClientCode")]
         public async Task<IActionResult> BlockUserByFortsClientCode([FromBody] FortsClientCodeModel model)
         {
-            _logger.LogInformation($"HttpDelete BlockUserBy/FortsClientCode/{model.FortsClientCode} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/FortsClientCode/{model.FortsClientCode} Call");
 
             //validate FortsClientCodeModel model
 
@@ -67,7 +67,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpDelete("BlockUserBy/UID/{uid}")]
         public async Task<IActionResult> BlockUserByUID(int uid)
         {
-            _logger.LogInformation($"HttpDelete BlockUserBy/UID/{uid} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/UID/{uid} Call");
 
             //validate uid
 
@@ -80,7 +80,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpPut("SetNewPubringKeyBy/MatrixClientCode")]
         public async Task<IActionResult> SetNewPubringKeyByMatrixClientCode([FromBody] MatrixCodeAndPubringKeyModel model)
         {
-            _logger.LogInformation("HttpPut SetNewPubringKey/ByMatrixClientCode Call " + model.ClientCode);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetNewPubringKey/ByMatrixClientCode Call " + model.ClientCode);
 
             ////проверим корректность входных данных
 
@@ -91,7 +91,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpPut("SetNewPubringKeyBy/FortsClientCode")]
         public async Task<IActionResult> SetNewPubringKeyByFortsClientCode([FromBody] FortsCodeAndPubringKeyModel model)
         {
-            _logger.LogInformation("HttpPut SetNewPubringKey/ByFortsClientCode Call " + model.ClientCode);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetNewPubringKey/ByFortsClientCode Call " + model.ClientCode);
 
             ////проверим корректность входных данных
 
@@ -104,7 +104,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpPut("SetAllTrades/ByMatrixClientCode")]
         public async Task<IActionResult> SetAllTradesByMatrixClientCode([FromBody] MatrixClientCodeModel model)
         {
-            _logger.LogInformation("HttpPut SetAllTrades/ByMatrixClientCode Call " + model.MatrixClientCode);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetAllTrades/ByMatrixClientCode Call " + model.MatrixClientCode);
 
             //проверим корректность входных данных
 
@@ -116,7 +116,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpPut("SetAllTradesBy/FortsClientCode")]
         public async Task<IActionResult> SetAllTradesByFortsClientCode([FromBody] FortsClientCodeModel model)
         {
-            _logger.LogInformation("HttpPut SetAllTradesBy/FortsClientCode Call " + model.FortsClientCode);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetAllTradesBy/FortsClientCode Call " + model.FortsClientCode);
 
             //проверим корректность входных данных
 

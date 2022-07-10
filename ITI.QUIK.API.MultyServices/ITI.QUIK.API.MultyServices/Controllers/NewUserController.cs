@@ -21,7 +21,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("GetInfo/OptionWorkShop/{clientCode}")]
         public async Task<IActionResult> GetInfoNewUserOptionWorkShop(string clientCode)
         {
-            _logger.LogInformation($"HttpGet GetInfo/NewUser/ForOptionWorkShop/{clientCode} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet GetInfo/NewUser/ForOptionWorkShop/{clientCode} Call");
 
             NewClientOptionWorkShopModelResponse newClientOW = await _core.GetInfoNewUserOptionWorkShop(clientCode);
 
@@ -31,7 +31,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("GetInfo/{clientCode}")]
         public async Task<IActionResult> GetInfoNewUserNonEDP(string clientCode)
         {
-            _logger.LogInformation($"HttpGet GetInfo/NewUser/NonEDP/{clientCode} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet GetInfo/NewUser/NonEDP/{clientCode} Call");
 
             NewClientModelResponse newClient = await _core.GetInfoNewUserNonEDP(clientCode);
 
@@ -41,7 +41,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("GetKeyModel/FromQuery")]
         public async Task<IActionResult> GetKeyModelFromQuery([FromQuery] string keyText)
         {
-            _logger.LogInformation($"HttpGet GetKeyModel/FromQuery Call, Text=" + keyText);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet GetKeyModel/FromQuery Call, Text=" + keyText);
 
             return Ok(_core.GetKeyFromString(keyText));
         }
@@ -49,7 +49,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("GetKeyModel/FromFile")]
         public async Task<IActionResult> GetKeyFromFileModel([FromQuery] string filePath)
         {
-            _logger.LogInformation($"HttpGet GetKeyModel/FromFile Call, filePath=" + filePath);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet GetKeyModel/FromFile Call, filePath=" + filePath);
 
             PubringKeyModelResponse key = _core.GetKeyFromFile(filePath);
 
@@ -59,7 +59,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("GetResult/FromQuikSFTP/FileUpload")]
         public async Task<IActionResult> GetResultFromQuikSFTPFileUpload([FromQuery] string fileName)
         {
-            _logger.LogInformation($"HttpGet GetResult/FromQuikSFTP/FileUpload Call, file=" + fileName);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet GetResult/FromQuikSFTP/FileUpload Call, file=" + fileName);
 
             ListStringResponseModel result = await _core.GetResultFromQuikSFTPFileUpload(fileName);
 
@@ -69,7 +69,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpPost("Post/NewClient/OptionWorkshop")]
         public async Task<IActionResult> PostNewClientOptionWorkshop([FromBody] NewClientOptionWorkShopModel newClientModel)
         {
-            _logger.LogInformation($"HttpPost Post/NewClient/OptionWorkshop Call for " + newClientModel.Client.FirstName);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPost Post/NewClient/OptionWorkshop Call for " + newClientModel.Client.FirstName);
 
             //validate newClientModel
 
@@ -81,7 +81,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpPost("Post/NewClient")]
         public async Task<IActionResult> PostNewClient([FromBody] NewClientModel newClientModel)
         {
-            _logger.LogInformation($"HttpPost Post/NewClient Call for " + newClientModel.Client.FirstName);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPost Post/NewClient Call for " + newClientModel.Client.FirstName);
 
             //validate newClientModel
 

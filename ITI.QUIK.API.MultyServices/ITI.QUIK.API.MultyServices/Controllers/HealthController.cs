@@ -22,7 +22,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("MyHealth")]
         public IActionResult IsOk()
         {
-            _logger.LogInformation("HttpGet MyHealth Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet MyHealth Call");
 
             return Ok("Ok");
         }
@@ -30,7 +30,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("IsQuikApiHealthOk")]
         public async Task<IActionResult> IsQuikApiOk()
         {
-            _logger.LogInformation("HttpGet IsQuikApiHealthOk Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsQuikApiHealthOk Call");
 
             using (var client = new HttpClient())
             {
@@ -39,7 +39,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
                 if (responseMessage.IsSuccessStatusCode)
                 {
                     string responseBody = await responseMessage.Content.ReadAsStringAsync();
-                    _logger.LogInformation("HttpGet IsQuikApiHealthOk Ok: " + responseBody);
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsQuikApiHealthOk Ok: " + responseBody);
                     return Ok(responseBody);
                 }
             }
@@ -55,7 +55,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("IsMatrixApiHealthOk")]
         public async Task<IActionResult> IsMatrixApiOk()
         {
-            _logger.LogInformation("HttpGet IsMatrixApiHealthOk Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsMatrixApiHealthOk Call");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -66,7 +66,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
                 if (responseMessage.IsSuccessStatusCode)
                 {
                     string responseBody = await responseMessage.Content.ReadAsStringAsync();
-                    _logger.LogInformation("HttpGet IsMatrixApiHealthOk Ok: " + responseBody);
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsMatrixApiHealthOk Ok: " + responseBody);
                     return Ok(responseBody);
                 }
             }
@@ -81,7 +81,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("IsMatrixApiConnectionOk/ToMatrixDataBase")]
         public async Task<IActionResult> IsMatrixApiConnectionOkToMatrixDataBase()
         {
-            _logger.LogInformation("HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase Call");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -96,7 +96,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
                 {
                     result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                    _logger.LogInformation($"HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase succes is {result.IsSuccess}");
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase succes is {result.IsSuccess}");
                     return Ok(result);
                 }
             }
@@ -111,7 +111,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("IsQuikApiConnectionOk/ToQuikDataBase")]
         public async Task<IActionResult> IsQuikApiConnectionOkToQuikDataBase()
         {
-            _logger.LogInformation("HttpGet IsQuikApiConnectionOk/ToQuikDataBase Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsQuikApiConnectionOk/ToQuikDataBase Call");
 
             return await GetResultOfQuikCheckConnection("/api/QuikDataBase/CheckConnections/QuikDataBase");
         }
@@ -119,7 +119,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("IsQuikApiConnectionOk/ToQadmin/SpotBRL")]
         public async Task<IActionResult> IsQuikApiConnectionOkToQadminSpotBRL()
         {
-            _logger.LogInformation("HttpGet IsQuikApiConnectionOk/ToQadmin/SpotBRL Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsQuikApiConnectionOk/ToQadmin/SpotBRL Call");
 
             return await GetResultOfQuikCheckConnection("/api/QuikQAdminFortsApi/CheckConnections/FortsApi");
         }
@@ -127,7 +127,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("IsQuikApiConnectionOk/ToQadmin/FortsBRL")]
         public async Task<IActionResult> IsQuikApiConnectionOkToQadminFortsBRL()
         {
-            _logger.LogInformation("HttpGet IsQuikApiConnectionOk/ToQadmin/FortsBRL Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsQuikApiConnectionOk/ToQadmin/FortsBRL Call");
 
             return await GetResultOfQuikCheckConnection("/api/QuikQAdminFortsApi/CheckConnections/FortsApi");
         }
@@ -135,7 +135,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("IsQuikApiConnectionOk/ToQMonitor")]
         public async Task<IActionResult> IsQuikApiConnectionOkToQMonitor()
         {
-            _logger.LogInformation("HttpGet IsQuikApiConnectionOk/ToQMonitor Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsQuikApiConnectionOk/ToQMonitor Call");
 
             return await GetResultOfQuikCheckConnection("/api/QuikQMonitor/CheckConnections/QMonitorAPI");
         }
@@ -143,7 +143,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("IsQuikApiConnectionOk/ToSFTP")]
         public async Task<IActionResult> IsQuikApiConnectionOkToSFTP()
         {
-            _logger.LogInformation("HttpGet IsQuikApiConnectionOk/ToSFTP Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsQuikApiConnectionOk/ToSFTP Call");
 
             return await GetResultOfQuikCheckConnection("/api/QuikSftpServer/CheckConnections/ServerSFTP");
         }
@@ -163,7 +163,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
                 {
                     result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                    _logger.LogInformation($"HttpGet {apiRequest} succes is {result.IsSuccess}");
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet {apiRequest} succes is {result.IsSuccess}");
                     return Ok(result);
                 }
             }

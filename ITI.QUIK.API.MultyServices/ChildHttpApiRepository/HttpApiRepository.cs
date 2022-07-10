@@ -24,7 +24,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ClientInformationResponse> GetClientInformation(string clientCode)
         {
-            _logger.LogInformation($"HttpApiRepository GetClientInformation '{clientCode}' Called");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientInformation '{clientCode}' Called");
 
             ClientInformationResponse result = new ClientInformationResponse();
             try
@@ -40,11 +40,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ClientInformationResponse>();
 
-                        _logger.LogInformation($"HttpApiRepository GetClientInformation '{clientCode}' succes is {result.Response.IsSuccess}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientInformation '{clientCode}' succes is {result.Response.IsSuccess}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository GetClientInformation response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientInformation response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.Response.IsSuccess = false;
                         result.Response.Messages.Add($"HttpApiRepository GetClientInformation response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -55,7 +55,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository GetClientInformation request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientInformation request url NotFound; {ex.Message}");
 
                 result.Response.IsSuccess = false;
                 result.Response.Messages.Add($"(404) HttpApiRepository GetClientInformation request url NotFound; {ex.Message}");
@@ -67,14 +67,14 @@ namespace ChildHttpApiRepository
 
         public async Task<MatrixToFortsCodesMappingResponse> GetClientNonEdpFortsCodes(string clientCode)
         {
-            _logger.LogInformation($"HttpApiRepository GetClientNonEdpFortsCodes '{clientCode}' Called");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientNonEdpFortsCodes '{clientCode}' Called");
 
             return await GetClientsFortsCodes("/api/DBClient/GetUser/FortsPortfolios/NoEDP/" + clientCode);
         }
 
         public async Task<MatrixToFortsCodesMappingResponse> GetClientAllFortsCodes(string clientCode)
         {
-            _logger.LogInformation($"HttpApiRepository GetClientAllFortsCodes '{clientCode}' Called");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientAllFortsCodes '{clientCode}' Called");
 
             return await GetClientsFortsCodes("/api/DBClient/GetUser/FortsPortfolios/" + clientCode);
         }
@@ -96,11 +96,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<MatrixToFortsCodesMappingResponse>();
 
-                        _logger.LogInformation($"HttpApiRepository GetClientsFortsCodes '{request}' succes is {result.Response.IsSuccess}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsFortsCodes '{request}' succes is {result.Response.IsSuccess}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository GetClientsFortsCodes response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsFortsCodes response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.Response.IsSuccess = false;
                         result.Response.Messages.Add($"HttpApiRepository GetClientsFortsCodes response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -111,7 +111,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository GetClientsFortsCodes request url '{request}' NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsFortsCodes request url '{request}' NotFound; {ex.Message}");
 
                 result.Response.IsSuccess = false;
                 result.Response.Messages.Add($"(404) HttpApiRepository GetClientsFortsCodes request url NotFound; {ex.Message}");
@@ -123,7 +123,7 @@ namespace ChildHttpApiRepository
 
         public async Task WarmUpBackOfficeDataBase()
         {
-            _logger.LogInformation($"HttpApiRepository WarmUpBackOfficeDataBase Called");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository WarmUpBackOfficeDataBase Called");
 
             try
             {
@@ -136,24 +136,24 @@ namespace ChildHttpApiRepository
 
                     if (response.IsSuccessStatusCode)
                     {
-                        _logger.LogInformation($"HttpApiRepository WarmUpBackOfficeDataBase succes status is {response.StatusCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository WarmUpBackOfficeDataBase succes status is {response.StatusCode}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository WarmUpBackOfficeDataBase response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository WarmUpBackOfficeDataBase response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository WarmUpBackOfficeDataBase request url NotFound: " + _connections.MatrixAPIConnectionString + "/api/DBClient/WarmUp/BackOfficeDataBase");
-                _logger.LogWarning($"HttpApiRepository WarmUpBackOfficeDataBase request Exception is : {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository WarmUpBackOfficeDataBase request url NotFound: " + _connections.MatrixAPIConnectionString + "/api/DBClient/WarmUp/BackOfficeDataBase");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository WarmUpBackOfficeDataBase request Exception is : {ex.Message}");
             }
         }
 
         public async Task<ClientBOInformationResponse> GetClientBOInformation(string clientCode)
         {
-            _logger.LogInformation($"HttpApiRepository GetClientBOInformation '{clientCode}' Called");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientBOInformation '{clientCode}' Called");
 
             ClientBOInformationResponse result = new ClientBOInformationResponse();
 
@@ -170,11 +170,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ClientBOInformationResponse>();
 
-                        _logger.LogInformation($"HttpApiRepository GetClientBOInformation /api/DBClient/GetUser/PersonalInfo/BackOffice/{clientCode} succes is {result.Response.IsSuccess}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientBOInformation /api/DBClient/GetUser/PersonalInfo/BackOffice/{clientCode} succes is {result.Response.IsSuccess}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository GetClientBOInformation response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientBOInformation response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.Response.IsSuccess = false;
                         result.Response.Messages.Add($"HttpApiRepository GetClientBOInformation response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -185,7 +185,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository GetClientBOInformation request url /api/DBClient/GetUser/PersonalInfo/BackOffice/{clientCode} NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientBOInformation request url /api/DBClient/GetUser/PersonalInfo/BackOffice/{clientCode} NotFound; {ex.Message}");
 
                 result.Response.IsSuccess = false;
                 result.Response.Messages.Add($"(404) HttpApiRepository GetClientBOInformation request url NotFound;  {ex.Message}");
@@ -197,7 +197,7 @@ namespace ChildHttpApiRepository
 
         public async Task<MatrixClientCodeModelResponse> GetClientAllSpotCodesFiltered(string clientCode)
         {
-            _logger.LogInformation($"HttpApiRepository GetClientAllSpotCodesFiltered '{clientCode}' Called");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientAllSpotCodesFiltered '{clientCode}' Called");
 
             MatrixClientCodeModelResponse result = new MatrixClientCodeModelResponse();
 
@@ -214,11 +214,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<MatrixClientCodeModelResponse>();
 
-                        _logger.LogInformation($"HttpApiRepository GetClientAllSpotCodesFiltered /api/DBClient/GetUser/SpotPortfolios/Filtered/{clientCode} succes is {result.Response.IsSuccess}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientAllSpotCodesFiltered /api/DBClient/GetUser/SpotPortfolios/Filtered/{clientCode} succes is {result.Response.IsSuccess}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository GetClientAllSpotCodesFiltered response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientAllSpotCodesFiltered response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.Response.IsSuccess = false;
                         result.Response.Messages.Add($"HttpApiRepository GetClientAllSpotCodesFiltered response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -229,7 +229,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository GetClientAllSpotCodesFiltered request url /api/DBClient/GetUser/SpotPortfolios/Filtered/{clientCode} NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientAllSpotCodesFiltered request url /api/DBClient/GetUser/SpotPortfolios/Filtered/{clientCode} NotFound; {ex.Message}");
 
                 result.Response.IsSuccess = false;
                 result.Response.Messages.Add($"(404) HttpApiRepository GetClientAllSpotCodesFiltered request url NotFound; {ex.Message}");
@@ -241,7 +241,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> CreateNewClientOptionWorkshop(NewClientOptionWorkShopModel newClientModel)
         {
-            _logger.LogInformation($"HttpApiRepository CreateNewClientOptionWorkshop Called for {newClientModel.CodesPairRF[0].MatrixClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository CreateNewClientOptionWorkshop Called for {newClientModel.CodesPairRF[0].MatrixClientCode}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -262,11 +262,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository CreateNewClientOptionWorkshop success for {newClientModel.CodesPairRF[0].MatrixClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository CreateNewClientOptionWorkshop success for {newClientModel.CodesPairRF[0].MatrixClientCode}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository CreateNewClientOptionWorkshop response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository CreateNewClientOptionWorkshop response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository CreateNewClientOptionWorkshop response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -277,7 +277,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository CreateNewClientOptionWorkshop request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository CreateNewClientOptionWorkshop request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository CreateNewClientOptionWorkshop request url NotFound; {ex.Message}");
@@ -289,7 +289,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> CreateNewClient(NewClientModel newClientModel)
         {
-            _logger.LogInformation($"HttpApiRepository CreateNewClient Called for {newClientModel.Client.FirstName}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository CreateNewClient Called for {newClientModel.Client.FirstName}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -310,11 +310,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository CreateNewClient success for {newClientModel.Client.FirstName}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository CreateNewClient success for {newClientModel.Client.FirstName}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository CreateNewClient response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository CreateNewClient response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository CreateNewClient response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -325,7 +325,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository CreateNewClient request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository CreateNewClient request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository CreateNewClient request url NotFound; {ex.Message}");
@@ -337,7 +337,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> GetResultFromQuikSFTPFileUpload(string file)
         {
-            _logger.LogInformation($"HttpApiRepository GetResultFromQuikSFTPFileUpload '{file}' Called");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetResultFromQuikSFTPFileUpload '{file}' Called");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -354,11 +354,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository GetResultFromQuikSFTPFileUpload succes is {result.IsSuccess}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetResultFromQuikSFTPFileUpload succes is {result.IsSuccess}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository GetResultFromQuikSFTPFileUpload response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetResultFromQuikSFTPFileUpload response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository GetResultFromQuikSFTPFileUpload response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -369,7 +369,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository GetResultFromQuikSFTPFileUpload request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetResultFromQuikSFTPFileUpload request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository GetResultFromQuikSFTPFileUpload request url NotFound; {ex.Message}");
@@ -381,7 +381,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> FillCodesIniFile(CodesArrayModel codesArray)
         {
-            _logger.LogInformation($"HttpApiRepository FillCodesIniFile Called for {codesArray.ClientCodes[0].MatrixClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository FillCodesIniFile Called for {codesArray.ClientCodes[0].MatrixClientCode}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -402,11 +402,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository FillCodesIniFile success for {codesArray.ClientCodes[0].MatrixClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository FillCodesIniFile success for {codesArray.ClientCodes[0].MatrixClientCode}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository FillCodesIniFile response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository FillCodesIniFile response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository FillCodesIniFile response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -417,7 +417,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository FillCodesIniFile request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository FillCodesIniFile request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository FillCodesIniFile request url NotFound; {ex.Message}");
@@ -429,7 +429,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> FillDataBaseInstrTW(NewMNPClientModel newMNPClient)
         {
-            _logger.LogInformation($"HttpApiRepository FillDataBaseInstrTW Called for {newMNPClient.Client.FirstName}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository FillDataBaseInstrTW Called for {newMNPClient.Client.FirstName}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -450,11 +450,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository FillDataBaseInstrTW success for {newMNPClient.Client.FirstName}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository FillDataBaseInstrTW success for {newMNPClient.Client.FirstName}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository FillDataBaseInstrTW response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository FillDataBaseInstrTW response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository FillDataBaseInstrTW response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -465,7 +465,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository FillDataBaseInstrTW request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository FillDataBaseInstrTW request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository FillDataBaseInstrTW request url NotFound; {ex.Message}");
@@ -477,7 +477,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> AddCdPortfolioToTemplateKomissii(MatrixClientCodeModel code)
         {
-            _logger.LogInformation($"HttpApiRepository AddCdPortfolioToTemplateKomissii Called for {code.MatrixClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplateKomissii Called for {code.MatrixClientCode}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -498,11 +498,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository AddCdPortfolioToTemplateKomissii success for {code.MatrixClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplateKomissii success for {code.MatrixClientCode}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository AddCdPortfolioToTemplateKomissii response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplateKomissii response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository AddCdPortfolioToTemplateKomissii response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -513,7 +513,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository AddCdPortfolioToTemplateKomissii request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplateKomissii request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository AddCdPortfolioToTemplateKomissii request url NotFound; {ex.Message}");
@@ -525,7 +525,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> AddCdPortfolioToTemplatePoPlechu(MatrixClientCodeModel code)
         {
-            _logger.LogInformation($"HttpApiRepository AddCdPortfolioToTemplatePoPlechu Called for {code.MatrixClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplatePoPlechu Called for {code.MatrixClientCode}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -546,11 +546,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository AddCdPortfolioToTemplatePoPlechu success for {code.MatrixClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplatePoPlechu success for {code.MatrixClientCode}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository AddCdPortfolioToTemplatePoPlechu response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplatePoPlechu response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository AddCdPortfolioToTemplatePoPlechu response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -561,7 +561,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository AddCdPortfolioToTemplatePoPlechu request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplatePoPlechu request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository AddCdPortfolioToTemplatePoPlechu request url NotFound; {ex.Message}");
@@ -573,7 +573,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> GetIsUserAlreadyExistByMatrixPortfolio(string clientPortfolio)
         {
-            _logger.LogInformation($"HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio Called for {clientPortfolio}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio Called for {clientPortfolio}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -590,11 +590,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio succes is {result.IsSuccess}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio succes is {result.IsSuccess}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -605,7 +605,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio request url NotFound; {ex.Message}");
@@ -617,7 +617,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> GetIsUserAlreadyExistByFortsCode(string fortsClientCode)
         {
-            _logger.LogInformation($"HttpApiRepository GetIsUserAlreadyExistByFortsCode Called for {fortsClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByFortsCode Called for {fortsClientCode}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -634,11 +634,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository GetIsUserAlreadyExistByFortsCode succes is {result.IsSuccess}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByFortsCode succes is {result.IsSuccess}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository GetIsUserAlreadyExistByFortsCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByFortsCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository GetIsUserAlreadyExistByFortsCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -649,7 +649,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository GetIsUserAlreadyExistByFortsCode request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByFortsCode request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository GetIsUserAlreadyExistByFortsCode request url NotFound; {ex.Message}");
@@ -661,7 +661,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientCodeModel model)
         {
-            _logger.LogInformation($"HttpApiRepository BlockUserByMatrixClientCode Called for {model.MatrixClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByMatrixClientCode Called for {model.MatrixClientCode}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -682,11 +682,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository BlockUserByMatrixClientCode success for {model.MatrixClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByMatrixClientCode success for {model.MatrixClientCode}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository BlockUserByMatrixClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByMatrixClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository BlockUserByMatrixClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -697,7 +697,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository BlockUserByMatrixClientCode request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByMatrixClientCode request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository BlockUserByMatrixClientCode request url NotFound; {ex.Message}");
@@ -708,7 +708,7 @@ namespace ChildHttpApiRepository
         }
         public async Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model)
         {
-            _logger.LogInformation($"HttpApiRepository BlockUserByFortsClientCode Called for {model.FortsClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByFortsClientCode Called for {model.FortsClientCode}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -729,11 +729,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository BlockUserByFortsClientCode success for {model.FortsClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByFortsClientCode success for {model.FortsClientCode}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository BlockUserByFortsClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByFortsClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository BlockUserByFortsClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -744,7 +744,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository BlockUserByFortsClientCode request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByFortsClientCode request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository BlockUserByFortsClientCode request url NotFound; {ex.Message}");
@@ -755,7 +755,7 @@ namespace ChildHttpApiRepository
         }
         public async Task<ListStringResponseModel> BlockUserByUID(int uid)
         {
-            _logger.LogInformation($"HttpApiRepository BlockUserByUID '{uid}' Called");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByUID '{uid}' Called");
 
             ListStringResponseModel result = new ListStringResponseModel();
             try
@@ -771,11 +771,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository BlockUserByUID '{uid}' succes is {result.IsSuccess}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByUID '{uid}' succes is {result.IsSuccess}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository BlockUserByUID response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByUID response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository BlockUserByUID response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -786,7 +786,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository BlockUserByUID request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByUID request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository BlockUserByUID request url NotFound; {ex.Message}");
@@ -798,7 +798,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> SetNewPubringKeyByMatrixClientCode(MatrixCodeAndPubringKeyModel model)
         {
-            _logger.LogInformation($"HttpApiRepository SetNewPubringKeyByMatrixClientCode Called for {model.ClientCode.MatrixClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNewPubringKeyByMatrixClientCode Called for {model.ClientCode.MatrixClientCode}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -818,11 +818,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository SetNewPubringKeyByMatrixClientCode success for {model.ClientCode.MatrixClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNewPubringKeyByMatrixClientCode success for {model.ClientCode.MatrixClientCode}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository SetNewPubringKeyByMatrixClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNewPubringKeyByMatrixClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository SetNewPubringKeyByMatrixClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -833,7 +833,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository SetNewPubringKeyByMatrixClientCode request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNewPubringKeyByMatrixClientCode request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository SetNewPubringKeyByMatrixClientCode request url NotFound; {ex.Message}");
@@ -845,7 +845,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> SetNewPubringKeyByFortsClientCode(FortsCodeAndPubringKeyModel model)
         {
-            _logger.LogInformation($"HttpApiRepository SetNewPubringKeyByFortsClientCode Called for {model.ClientCode.FortsClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNewPubringKeyByFortsClientCode Called for {model.ClientCode.FortsClientCode}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -865,11 +865,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository SetNewPubringKeyByFortsClientCode success for {model.ClientCode.FortsClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNewPubringKeyByFortsClientCode success for {model.ClientCode.FortsClientCode}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository SetNewPubringKeyByFortsClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNewPubringKeyByFortsClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository SetNewPubringKeyByFortsClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -880,7 +880,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository SetNewPubringKeyByFortsClientCode request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNewPubringKeyByFortsClientCode request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository SetNewPubringKeyByFortsClientCode request url NotFound; {ex.Message}");
@@ -892,7 +892,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientCodeModel model)
         {
-            _logger.LogInformation($"HttpApiRepository SetAllTradesByMatrixClientCode Called for {model.MatrixClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetAllTradesByMatrixClientCode Called for {model.MatrixClientCode}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -912,11 +912,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository SetAllTradesByMatrixClientCode success for {model.MatrixClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetAllTradesByMatrixClientCode success for {model.MatrixClientCode}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository SetAllTradesByMatrixClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetAllTradesByMatrixClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository SetAllTradesByMatrixClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -927,7 +927,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository SetAllTradesByMatrixClientCode request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetAllTradesByMatrixClientCode request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository SetAllTradesByMatrixClientCode request url NotFound; {ex.Message}");
@@ -939,7 +939,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model)
         {
-            _logger.LogInformation($"HttpApiRepository SetAllTradesByFortsClientCode Called for {model.FortsClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetAllTradesByFortsClientCode Called for {model.FortsClientCode}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -959,11 +959,11 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"HttpApiRepository SetAllTradesByFortsClientCode success for {model.FortsClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetAllTradesByFortsClientCode success for {model.FortsClientCode}");
                     }
                     else
                     {
-                        _logger.LogWarning($"HttpApiRepository SetAllTradesByFortsClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetAllTradesByFortsClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository SetAllTradesByFortsClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
@@ -974,7 +974,7 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"HttpApiRepository SetAllTradesByFortsClientCode request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetAllTradesByFortsClientCode request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository SetAllTradesByFortsClientCode request url NotFound; {ex.Message}");
