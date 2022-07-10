@@ -53,7 +53,6 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
             return Ok(result);
         }
-
         [HttpDelete("BlockUserBy/FortsClientCode")]
         public async Task<IActionResult> BlockUserByFortsClientCode([FromBody] FortsClientCodeModel model)
         {
@@ -62,6 +61,66 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             //validate FortsClientCodeModel model
 
             ListStringResponseModel result = await _core.BlockUserByFortsClientCode(model);
+
+            return Ok(result);
+        }
+        [HttpDelete("BlockUserBy/UID/{uid}")]
+        public async Task<IActionResult> BlockUserByUID(int uid)
+        {
+            _logger.LogInformation($"HttpDelete BlockUserBy/UID/{uid} Call");
+
+            //validate uid
+
+            ListStringResponseModel result = await _core.BlockUserByUID(uid);
+
+            return Ok(result);
+        }
+
+
+        [HttpPut("SetNewPubringKeyBy/MatrixClientCode")]
+        public async Task<IActionResult> SetNewPubringKeyByMatrixClientCode([FromBody] MatrixCodeAndPubringKeyModel model)
+        {
+            _logger.LogInformation("HttpPut SetNewPubringKey/ByMatrixClientCode Call " + model.ClientCode);
+
+            ////проверим корректность входных данных
+
+            ListStringResponseModel result = await _core.SetNewPubringKeyByMatrixClientCode(model);
+
+            return Ok(result);
+        }
+        [HttpPut("SetNewPubringKeyBy/FortsClientCode")]
+        public async Task<IActionResult> SetNewPubringKeyByFortsClientCode([FromBody] FortsCodeAndPubringKeyModel model)
+        {
+            _logger.LogInformation("HttpPut SetNewPubringKey/ByFortsClientCode Call " + model.ClientCode);
+
+            ////проверим корректность входных данных
+
+            ListStringResponseModel result = await _core.SetNewPubringKeyByFortsClientCode(model);
+
+            return Ok(result);
+        }
+
+
+        [HttpPut("SetAllTrades/ByMatrixClientCode")]
+        public async Task<IActionResult> SetAllTradesByMatrixClientCode([FromBody] MatrixClientCodeModel model)
+        {
+            _logger.LogInformation("HttpPut SetAllTrades/ByMatrixClientCode Call " + model.MatrixClientCode);
+
+            //проверим корректность входных данных
+
+            ListStringResponseModel result = await _core.SetAllTradesByMatrixClientCode(model);
+
+            return Ok(result);
+        }
+
+        [HttpPut("SetAllTradesBy/FortsClientCode")]
+        public async Task<IActionResult> SetAllTradesByFortsClientCode([FromBody] FortsClientCodeModel model)
+        {
+            _logger.LogInformation("HttpPut SetAllTradesBy/FortsClientCode Call " + model.FortsClientCode);
+
+            //проверим корректность входных данных
+
+            ListStringResponseModel result = await _core.SetAllTradesByFortsClientCode(model);
 
             return Ok(result);
         }

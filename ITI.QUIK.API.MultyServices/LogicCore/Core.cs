@@ -496,14 +496,38 @@ namespace LogicCore
             return clientList;
         }
 
+
         public async Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientCodeModel model)
         {
             return await _repository.BlockUserByMatrixClientCode(model);
         }
-
         public async Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model)
         {
             return await _repository.BlockUserByFortsClientCode(model);
+        }
+        public async Task<ListStringResponseModel> BlockUserByUID(int uid)
+        {
+            return await _repository.BlockUserByUID(uid);
+        }
+
+
+        public async Task<ListStringResponseModel> SetNewPubringKeyByMatrixClientCode(MatrixCodeAndPubringKeyModel model)
+        {
+            return await _repository.SetNewPubringKeyByMatrixClientCode(model);
+        }
+        public async Task<ListStringResponseModel> SetNewPubringKeyByFortsClientCode(FortsCodeAndPubringKeyModel model)
+        {
+            return await _repository.SetNewPubringKeyByFortsClientCode(model);
+        }
+
+
+        public async Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientCodeModel model)
+        {
+            return await _repository.SetAllTradesByMatrixClientCode(model);
+        }
+        public async Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model)
+        {
+            return await _repository.SetAllTradesByFortsClientCode(model);
         }
     }
 }
