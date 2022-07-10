@@ -3,6 +3,8 @@ using DataAbstraction.Models;
 using DataAbstraction.Responses;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Text;
+using System.Xml;
 
 namespace LogicCore
 {
@@ -359,6 +361,173 @@ namespace LogicCore
             }
 
             return key;
+        }
+
+        public async Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByMatrixPortfolio(string clientPortfolio)
+        {
+            _logger.LogInformation($"ICore GetIsUserAlreadyExistByMatrixPortfolio Called for {clientPortfolio}");
+            
+            ListStringResponseModel findedClients = await _repository.GetIsUserAlreadyExistByMatrixPortfolio(clientPortfolio);
+            _logger.LogInformation($"ICore GetIsUserAlreadyExistByMatrixPortfolio result is {findedClients.IsSuccess}");
+
+            FindedQuikQAdminClientResponse findedResponse = new FindedQuikQAdminClientResponse();
+
+            if (findedClients.IsSuccess)
+            {
+                findedResponse.IsSuccess = true;
+                findedResponse.QuikQAdminClient = GetClientsFromMessages(findedClients.Messages);
+            }
+            else
+            {
+                findedResponse.IsSuccess = false;
+                findedResponse.Messages.AddRange(findedClients.Messages);
+            }
+
+            return findedResponse;
+        }
+        public async Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByFortsCode(string fortsClientCode)
+        {
+            _logger.LogInformation($"ICore GetIsUserAlreadyExistByFortsCode Called for {fortsClientCode}");
+
+            ListStringResponseModel findedClients = await _repository.GetIsUserAlreadyExistByFortsCode(fortsClientCode);
+            _logger.LogInformation($"ICore GetIsUserAlreadyExistByMatrixPortfolio result is {findedClients.IsSuccess}");
+
+            FindedQuikQAdminClientResponse findedResponse = new FindedQuikQAdminClientResponse();
+
+            if (findedClients.IsSuccess)
+            {
+                findedResponse.IsSuccess = true;
+                findedResponse.QuikQAdminClient = GetClientsFromMessages(findedClients.Messages);
+            }
+            else
+            {
+                findedResponse.IsSuccess = false;
+                findedResponse.Messages.AddRange(findedClients.Messages);
+            }
+
+            return findedResponse;
+        }
+        private List<QuikQAdminClientModel> GetClientsFromMessages(List<string> messages)
+        {
+            List<QuikQAdminClientModel> clientList = new List<QuikQAdminClientModel>();
+
+            foreach (string message in messages)
+            {
+                if (message.Contains("<UserDescription UID="))
+                {
+                    QuikQAdminClientModel client = new QuikQAdminClientModel();
+
+                    XmlDocument doc = new XmlDocument();
+                    XmlNamespaceManager nsmanager = new XmlNamespaceManager(doc.NameTable);
+                    nsmanager.AddNamespace("qx", "urn:quik:user-rights-import");
+                    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+                    doc.LoadXml(message);
+
+                    XmlElement root = doc.DocumentElement;
+                    client.UID = Int32.Parse(root.Attributes.GetNamedItem("UID").InnerText);
+                    
+                    client.FirstName = doc.SelectSingleNode("//qx:FirstName", nsmanager).InnerText;
+                    client.MiddleName = doc.SelectSingleNode("//qx:MiddleName", nsmanager).InnerText;
+                    client.LastName = doc.SelectSingleNode("//qx:LastName", nsmanager).InnerText;
+                    client.Comment = doc.SelectSingleNode("//qx:Comment", nsmanager).InnerText;
+
+                    string blockedValue = doc.SelectSingleNode("//qx:Blocked", nsmanager).InnerText;
+                    if (int.TryParse(blockedValue, out int number))
+                    {
+                        if (number == 0)
+                        {
+                            client.IsBlocked = false;
+                        }
+                        else
+                        {
+                            client.IsBlocked = true;
+                        }
+                    }
+
+                    //данные ключей
+                    XmlNodeList userKeys = doc.SelectNodes("//qx:RSAKey", nsmanager);
+                    if (userKeys.Count > 0)
+                    {
+                        client.Keys = new List<PubringKeyModel>();
+
+                        foreach (XmlNode userKey in userKeys)
+                        {
+                            PubringKeyModel newKey = new PubringKeyModel();
+
+                            newKey.KeyID = userKey.Attributes.GetNamedItem("KeyID").InnerText;
+                            newKey.Time = Int32.Parse(userKey.Attributes.GetNamedItem("Time").InnerText);
+                            newKey.RSAKey = userKey.InnerText;
+
+                            client.Keys.Add(newKey);
+                        }
+                    }
+
+                    //коды клиента 
+                    XmlNodeList nodesWithCodes = doc.SelectNodes("//qx:Classes", nsmanager);
+                    foreach (XmlNode node in nodesWithCodes)
+                    {
+                        string clientCodes = node.Attributes.GetNamedItem("ClientCodes").InnerText;
+                        if (clientCodes.Contains(","))
+                        {
+                            string [] codesArray = clientCodes.Split(", ");
+                            foreach (string code in codesArray)
+                            {
+                                if (!client.ClientCodes.Contains(code))
+                                {
+                                    client.ClientCodes.Add(code);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (!client.ClientCodes.Contains(clientCodes))
+                            {
+                                client.ClientCodes.Add(clientCodes);
+                            }                            
+                        }
+                    }
+
+
+                    clientList.Add(client);
+                }
+            }
+
+            return clientList;
+        }
+
+
+        public async Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientCodeModel model)
+        {
+            return await _repository.BlockUserByMatrixClientCode(model);
+        }
+        public async Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model)
+        {
+            return await _repository.BlockUserByFortsClientCode(model);
+        }
+        public async Task<ListStringResponseModel> BlockUserByUID(int uid)
+        {
+            return await _repository.BlockUserByUID(uid);
+        }
+
+
+        public async Task<ListStringResponseModel> SetNewPubringKeyByMatrixClientCode(MatrixCodeAndPubringKeyModel model)
+        {
+            return await _repository.SetNewPubringKeyByMatrixClientCode(model);
+        }
+        public async Task<ListStringResponseModel> SetNewPubringKeyByFortsClientCode(FortsCodeAndPubringKeyModel model)
+        {
+            return await _repository.SetNewPubringKeyByFortsClientCode(model);
+        }
+
+
+        public async Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientCodeModel model)
+        {
+            return await _repository.SetAllTradesByMatrixClientCode(model);
+        }
+        public async Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model)
+        {
+            return await _repository.SetAllTradesByFortsClientCode(model);
         }
     }
 }
