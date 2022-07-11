@@ -765,7 +765,7 @@ namespace ChildHttpApiRepository
                     client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                    var response = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/QuikSftpServer/BlockUserBy/UID/" + uid);
+                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/BlockUserBy/UID/" + uid);
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -981,6 +981,84 @@ namespace ChildHttpApiRepository
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/SetAllTradesBy/FortsClientCode");
 
                 return result;
+            }
+        }
+
+        public async Task<ListStringResponseModel> GenerateNewFileCurrClnts()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GenerateNewFileCurrClnts Called");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/RequestFile/CurrClnts");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GenerateNewFileCurrClnts succes is {result.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GenerateNewFileCurrClnts response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository GenerateNewFileCurrClnts response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GenerateNewFileCurrClnts request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository GenerateNewFileCurrClnts request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/RequestFile/CurrClnts");
+
+                return result;
+            }
+        }
+
+        public async Task DownloadNewFileCurrClnts()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository DownloadNewFileCurrClnts Called");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/DownloadFile/CurrClnts");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository DownloadNewFileCurrClnts succes is {result.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository DownloadNewFileCurrClnts response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository DownloadNewFileCurrClnts request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} {_connections.QuikAPIConnectionString}/api/QuikSftpServer/DownloadFile/CurrClnts");
             }
         }
     }

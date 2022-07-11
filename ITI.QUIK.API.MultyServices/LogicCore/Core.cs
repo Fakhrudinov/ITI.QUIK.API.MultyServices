@@ -529,5 +529,65 @@ namespace LogicCore
         {
             return await _repository.SetAllTradesByFortsClientCode(model);
         }
+
+        public async void RenewAllClientFile()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewAllClientFile Called");
+            
+            //послать запрос на формирование нового файла с всеми клиентами            
+            ListStringResponseModel generateNewCurrClnts = await _repository.GenerateNewFileCurrClnts();
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewAllClientFile generateNewCurrClnts.IsSuccess={generateNewCurrClnts.IsSuccess}");
+
+            //проверим выполнение SFTP запроса на создание нового CurrClnts
+            if (generateNewCurrClnts.IsSuccess)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewAllClientFile generateNewCurrClnts file is ={generateNewCurrClnts.Messages[0]}");
+
+                //ждем минуту и делаем 10 попыток найти файл через каждые 20 секунд
+
+                Thread.Sleep(60000);
+
+                bool isSuccess = false;
+
+                for (int i = 0; i < 10; i++)
+                {
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewAllClientFile try {i} find complete request");
+
+                    ListStringResponseModel getFileResult = await _repository.GetResultFromQuikSFTPFileUpload(generateNewCurrClnts.Messages[0]);
+                    if(getFileResult.IsSuccess && getFileResult.Messages[0].Contains("обработан и исполнен"))
+                    {
+                        //если успешно - запускаем скачивание файла
+                        isSuccess = true;
+                        await DownloadNewFileCurrClnts();
+                        break;
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewAllClientFile current status is {getFileResult.Messages[0]}");
+                    }
+
+                    Thread.Sleep(20000);
+                }
+
+                if (!isSuccess)
+                {
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewAllClientFile any search of complete request is failed.");
+                }
+
+            }
+            else
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewAllClientFile generateNewCurrClnts.IsSuccess={generateNewCurrClnts.IsSuccess}, " +
+                    $"{generateNewCurrClnts.Messages[0]}");
+            }
+        }
+
+        private async Task DownloadNewFileCurrClnts()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore DownloadNewFileCurrClnts Called");
+
+            await _repository.DownloadNewFileCurrClnts();
+        }
     }
 }

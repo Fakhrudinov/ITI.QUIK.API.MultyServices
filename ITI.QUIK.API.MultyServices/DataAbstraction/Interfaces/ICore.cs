@@ -12,6 +12,7 @@ namespace DataAbstraction.Interfaces
         PubringKeyModelResponse GetKeyFromFile(string filePath);
         Task<ListStringResponseModel> GetResultFromQuikSFTPFileUpload(string fileName);
         Task<ListStringResponseModel> PostNewClientOptionWorkshop(NewClientOptionWorkShopModel newClientModel);
+        void RenewAllClientFile();
         Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByMatrixPortfolio(string clientPortfolio);
         Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByFortsCode(string fortsClientCode);
         Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientCodeModel model);

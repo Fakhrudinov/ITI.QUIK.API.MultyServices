@@ -27,5 +27,7 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> SetNewPubringKeyByFortsClientCode(FortsCodeAndPubringKeyModel model);
         Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientCodeModel model);
         Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model);
+        Task<ListStringResponseModel> GenerateNewFileCurrClnts();
+        Task DownloadNewFileCurrClnts();
     }
 }
