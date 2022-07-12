@@ -32,22 +32,31 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsQuikApiHealthOk Call");
 
-            using (var client = new HttpClient())
-            {
-                var responseMessage = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/HealthState/OK");
+            ListStringResponseModel result = new ListStringResponseModel();
 
-                if (responseMessage.IsSuccessStatusCode)
+            try
+            {
+                using (var client = new HttpClient())
                 {
-                    string responseBody = await responseMessage.Content.ReadAsStringAsync();
-                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsQuikApiHealthOk Ok: " + responseBody);
-                    return Ok(responseBody);
+                    var responseMessage = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/HealthState/OK");
+
+                    if (responseMessage.IsSuccessStatusCode)
+                    {
+                        string responseBody = await responseMessage.Content.ReadAsStringAsync();
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsQuikApiHealthOk Ok: " + responseBody);
+                        return Ok(responseBody);
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsQuikApiHealthOk request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} {_connections.QuikAPIConnectionString} /api/HealthState/OK");
 
-            ListStringResponseModel result = new ListStringResponseModel();
-            result.IsSuccess = false;
-            result.Messages.Add($"(404) HttpGet IsQuikApiHealthOk request url NotFound");
-            result.Messages.Add(_connections.QuikAPIConnectionString + "/api/HealthState/OK");
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpGet IsQuikApiHealthOk request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/HealthState/OK");
+            }           
 
             return Ok(result);
         }
@@ -59,21 +68,29 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
             ListStringResponseModel result = new ListStringResponseModel();
 
-            using (var client = new HttpClient())
+            try
             {
-                var responseMessage = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/HealthState/OK");
-
-                if (responseMessage.IsSuccessStatusCode)
+                using (var client = new HttpClient())
                 {
-                    string responseBody = await responseMessage.Content.ReadAsStringAsync();
-                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsMatrixApiHealthOk Ok: " + responseBody);
-                    return Ok(responseBody);
+                    var responseMessage = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/HealthState/OK");
+
+                    if (responseMessage.IsSuccessStatusCode)
+                    {
+                        string responseBody = await responseMessage.Content.ReadAsStringAsync();
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsMatrixApiHealthOk Ok: " + responseBody);
+                        return Ok(responseBody);
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsMatrixApiHealthOk request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} {_connections.MatrixAPIConnectionString} /api/HealthState/CheckConnections/MatrixDataBase");
 
-            result.IsSuccess = false;
-            result.Messages.Add($"(404) HttpGet IsMatrixApiHealthOk request url NotFound");
-            result.Messages.Add(_connections.MatrixAPIConnectionString + "/api/HealthState/CheckConnections/MatrixDataBase");
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpGet IsMatrixApiHealthOk request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.MatrixAPIConnectionString + "/api/HealthState/CheckConnections/MatrixDataBase");
+            }
 
             return Ok(result);
         }
@@ -85,25 +102,33 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
             ListStringResponseModel result = new ListStringResponseModel();
 
-            using (var client = new HttpClient())
+            try
             {
-                client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var response = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/HealthState/CheckConnections/MatrixDataBase");
-
-                if (response.IsSuccessStatusCode)
+                using (var client = new HttpClient())
                 {
-                    result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+                    client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase succes is {result.IsSuccess}");
-                    return Ok(result);
+                    var response = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/HealthState/CheckConnections/MatrixDataBase");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase succes is {result.IsSuccess}");
+                        return Ok(result);
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} {_connections.MatrixAPIConnectionString} /api/HealthState/CheckConnections/MatrixDataBase");
 
-            result.IsSuccess = false;
-            result.Messages.Add($"(404) HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase request url NotFound");
-            result.Messages.Add(_connections.MatrixAPIConnectionString + "/api/HealthState/CheckConnections/MatrixDataBase");
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpGet IsMatrixApiConnectionOk/ToMatrixDataBase request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.MatrixAPIConnectionString + "/api/HealthState/CheckConnections/MatrixDataBase");
+            }
 
             return Ok(result);
         }
@@ -152,25 +177,33 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         {
             ListStringResponseModel result = new ListStringResponseModel();
 
-            using (var client = new HttpClient())
+            try
             {
-                client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));                
-
-                var response = await client.GetAsync(_connections.QuikAPIConnectionString + apiRequest);
-
-                if (response.IsSuccessStatusCode)
+                using (var client = new HttpClient())
                 {
-                    result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet {apiRequest} succes is {result.IsSuccess}");
-                    return Ok(result);
+                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + apiRequest);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet {apiRequest} succes is {result.IsSuccess}");
+                        return Ok(result);
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} GetResultOfQuikCheckConnection request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} {_connections.QuikAPIConnectionString + apiRequest}");
 
-            result.IsSuccess = false;
-            result.Messages.Add($"(404) HttpGet GetResultOfQuikCheckConnection request url NotFound");
-            result.Messages.Add(_connections.QuikAPIConnectionString + apiRequest);
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpGet GetResultOfQuikCheckConnection request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + apiRequest);
+            }
 
             return Ok(result);
         }
