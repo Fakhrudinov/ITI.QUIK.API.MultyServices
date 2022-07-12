@@ -1,4 +1,5 @@
 ﻿using DataAbstraction.Interfaces;
+using DataAbstraction.Responses;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ITI.QUIK.API.MultyServices.Controllers
@@ -24,6 +25,16 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             _core.RenewAllClientFile();
 
             return Ok();
+        }
+
+        [HttpGet("GetResult/FromQuikSFTP/FileUpload")]
+        public async Task<IActionResult> GetResultFromQuikSFTPFileUpload([FromQuery] string fileName)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet GetResult/FromQuikSFTP/FileUpload Call, file=" + fileName);
+
+            ListStringResponseModel result = await _core.GetResultFromQuikSFTPFileUpload(fileName);
+
+            return Ok(result);
         }
     }
 }

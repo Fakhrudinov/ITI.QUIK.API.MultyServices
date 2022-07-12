@@ -56,16 +56,6 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             return Ok(key);
         }
 
-        [HttpGet("GetResult/FromQuikSFTP/FileUpload")]
-        public async Task<IActionResult> GetResultFromQuikSFTPFileUpload([FromQuery] string fileName)
-        {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet GetResult/FromQuikSFTP/FileUpload Call, file=" + fileName);
-
-            ListStringResponseModel result = await _core.GetResultFromQuikSFTPFileUpload(fileName);
-
-            return Ok(result);
-        }
-
         [HttpPost("Post/NewClient/OptionWorkshop")]
         public async Task<IActionResult> PostNewClientOptionWorkshop([FromBody] NewClientOptionWorkShopModel newClientModel)
         {
