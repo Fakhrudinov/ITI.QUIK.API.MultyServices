@@ -13,12 +13,17 @@ namespace LogicCore
         private ILogger<Core> _logger;
         private IHttpApiRepository _repository;
         private PubringKeyIgnoreWords _ignoreWords;
+        private System.Timers.Timer _timerUpdateFileCurrClnts;
 
         public Core(ILogger<Core> logger, IHttpApiRepository repository, IOptions<PubringKeyIgnoreWords> ignoreWords)
         {
             _logger = logger;
             _repository = repository;
             _ignoreWords = ignoreWords.Value;
+
+            _timerUpdateFileCurrClnts = new System.Timers.Timer(120000);
+            _timerUpdateFileCurrClnts.Elapsed += WaitAndGenerateNewFileCurrClnts;
+            _timerUpdateFileCurrClnts.AutoReset = false;
         }
 
         public async Task<NewClientModelResponse> GetInfoNewUserNonEDP(string clientCode)
@@ -135,11 +140,12 @@ namespace LogicCore
                 ListStringResponseModel searchFileResult = await _repository.GetResultFromQuikSFTPFileUpload(createResponse.Messages[0]);
 
                 createResponse.Messages.AddRange(searchFileResult.Messages);
+
+                _timerUpdateFileCurrClnts.Enabled = true;
             }
 
             return createResponse;
         }
-
 
         public async Task<NewClientCreationResponse> PostNewClient(NewClientModel newClientModel)
         {
@@ -240,6 +246,8 @@ namespace LogicCore
 
                 createResponse.NewClientCreationMessages.Add(createSftpResponse.Messages[0]);
                 createResponse.NewClientCreationMessages.AddRange(searchFileResult.Messages);
+
+                _timerUpdateFileCurrClnts.Enabled = true;
             }
 
             return createResponse;
@@ -528,6 +536,15 @@ namespace LogicCore
         public async Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model)
         {
             return await _repository.SetAllTradesByFortsClientCode(model);
+        }
+
+        private void WaitAndGenerateNewFileCurrClnts(Object source, System.Timers.ElapsedEventArgs e)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore Timer WaitAndGenerateNewFileCurrClnts Called");
+
+            RenewAllClientFile();
+
+            _timerUpdateFileCurrClnts.Stop();
         }
 
         public async void RenewAllClientFile()
