@@ -571,9 +571,9 @@ namespace ChildHttpApiRepository
             }
         }
 
-        public async Task<ListStringResponseModel> GetIsUserAlreadyExistByMatrixPortfolio(string clientPortfolio)
+        public async Task<ListStringResponseModel> GetIsUserAlreadyExistByMatrixClientAccount(string clientAccount)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio Called for {clientPortfolio}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByMatrixClientAccount Called for {clientAccount}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -584,20 +584,20 @@ namespace ChildHttpApiRepository
                     client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/UID/byMatrixCode?MatrixClientCode=" + clientPortfolio);
+                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/UID/byMatrixClientAccount?MatrixClientAccount=" + clientAccount);
 
                     if (response.IsSuccessStatusCode)
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio succes is {result.IsSuccess}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByMatrixClientAccount succes is {result.IsSuccess}");
                     }
                     else
                     {
-                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByMatrixClientAccount response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.IsSuccess = false;
-                        result.Messages.Add($"HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                        result.Messages.Add($"HttpApiRepository GetIsUserAlreadyExistByMatrixClientAccount response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
 
                     return result;
@@ -605,11 +605,11 @@ namespace ChildHttpApiRepository
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByMatrixClientAccount request url NotFound; {ex.Message}");
 
                 result.IsSuccess = false;
-                result.Messages.Add($"(404) HttpApiRepository GetIsUserAlreadyExistByMatrixPortfolio request url NotFound; {ex.Message}");
-                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/UID/byMatrixCode?MatrixClientCode=" + clientPortfolio);
+                result.Messages.Add($"(404) HttpApiRepository GetIsUserAlreadyExistByMatrixClientAccount request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/UID/byMatrixClientAccount?MatrixClientAccount=" + clientAccount);
 
                 return result;
             }

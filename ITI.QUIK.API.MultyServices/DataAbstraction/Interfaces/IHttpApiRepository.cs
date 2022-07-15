@@ -18,7 +18,7 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> AddCdPortfolioToTemplateKomissii(MatrixClientCodeModel code);
         Task<ListStringResponseModel> AddCdPortfolioToTemplatePoPlechu(MatrixClientCodeModel code);
         Task WarmUpBackOfficeDataBase();
-        Task<ListStringResponseModel> GetIsUserAlreadyExistByMatrixPortfolio(string clientPortfolio);
+        Task<ListStringResponseModel> GetIsUserAlreadyExistByMatrixClientAccount(string clientPortfolio);
         Task<ListStringResponseModel> GetIsUserAlreadyExistByFortsCode(string fortsClientCode);
         Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientCodeModel model);
         Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model);

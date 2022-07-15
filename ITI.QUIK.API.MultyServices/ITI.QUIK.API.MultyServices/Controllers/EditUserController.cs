@@ -18,14 +18,14 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             _core = core;
         }
 
-        [HttpGet("Get/IsUser/AlreadyExist/ByMatrixPortfolio/{clientPortfolio}")]
-        public async Task<IActionResult> GetIsUserAlreadyExistByMatrixPortfolio(string clientPortfolio)
+        [HttpGet("Get/IsUser/AlreadyExist/ByMatrixClientAccount/{matrixClientAccount}")]
+        public async Task<IActionResult> GetIsUserAlreadyExistByMatrixPortfolio(string matrixClientAccount)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/ByMatrixPortfolio/{clientPortfolio} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/ByMatrixClientAccount/{matrixClientAccount} Call");
 
             //validate clientPortfolio
 
-            FindedQuikQAdminClientResponse findedUsers = await _core.GetIsUserAlreadyExistByMatrixPortfolio(clientPortfolio);
+            FindedQuikQAdminClientResponse findedUsers = await _core.GetIsUserAlreadyExistByMatrixClientAccount(matrixClientAccount);
 
             return Ok(findedUsers);
         }

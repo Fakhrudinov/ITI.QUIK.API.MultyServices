@@ -371,11 +371,11 @@ namespace LogicCore
             return key;
         }
 
-        public async Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByMatrixPortfolio(string clientPortfolio)
+        public async Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByMatrixClientAccount(string clientPortfolio)
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixPortfolio Called for {clientPortfolio}");
             
-            ListStringResponseModel findedClients = await _repository.GetIsUserAlreadyExistByMatrixPortfolio(clientPortfolio);
+            ListStringResponseModel findedClients = await _repository.GetIsUserAlreadyExistByMatrixClientAccount(clientPortfolio);
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixPortfolio result is {findedClients.IsSuccess}");
 
             FindedQuikQAdminClientResponse findedResponse = new FindedQuikQAdminClientResponse();
