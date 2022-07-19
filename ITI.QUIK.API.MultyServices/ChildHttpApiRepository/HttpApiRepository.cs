@@ -381,7 +381,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> FillCodesIniFile(CodesArrayModel codesArray)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository FillCodesIniFile Called for {codesArray.ClientCodes[0].MatrixClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository FillCodesIniFile Called for {codesArray.MatrixClientPortfolios[0].MatrixClientPortfolio}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -402,7 +402,7 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository FillCodesIniFile success for {codesArray.ClientCodes[0].MatrixClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository FillCodesIniFile success for {codesArray.MatrixClientPortfolios[0].MatrixClientPortfolio}");
                     }
                     else
                     {
@@ -475,9 +475,9 @@ namespace ChildHttpApiRepository
             }
         }
 
-        public async Task<ListStringResponseModel> AddCdPortfolioToTemplateKomissii(MatrixClientCodeModel code)
+        public async Task<ListStringResponseModel> AddCdPortfolioToTemplateKomissii(MatrixClientPortfolioModel code)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplateKomissii Called for {code.MatrixClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplateKomissii Called for {code.MatrixClientPortfolio}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -498,7 +498,7 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplateKomissii success for {code.MatrixClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplateKomissii success for {code.MatrixClientPortfolio}");
                     }
                     else
                     {
@@ -523,9 +523,9 @@ namespace ChildHttpApiRepository
             }
         }
 
-        public async Task<ListStringResponseModel> AddCdPortfolioToTemplatePoPlechu(MatrixClientCodeModel code)
+        public async Task<ListStringResponseModel> AddCdPortfolioToTemplatePoPlechu(MatrixClientPortfolioModel code)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplatePoPlechu Called for {code.MatrixClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplatePoPlechu Called for {code.MatrixClientPortfolio}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -546,7 +546,7 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplatePoPlechu success for {code.MatrixClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddCdPortfolioToTemplatePoPlechu success for {code.MatrixClientPortfolio}");
                     }
                     else
                     {
@@ -659,9 +659,9 @@ namespace ChildHttpApiRepository
             }
         }
 
-        public async Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientCodeModel model)
+        public async Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientPortfolioModel model)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByMatrixClientCode Called for {model.MatrixClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByMatrixClientCode Called for {model.MatrixClientPortfolio}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -682,7 +682,7 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByMatrixClientCode success for {model.MatrixClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository BlockUserByMatrixClientCode success for {model.MatrixClientPortfolio}");
                     }
                     else
                     {
@@ -765,7 +765,7 @@ namespace ChildHttpApiRepository
                     client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/BlockUserBy/UID/" + uid);
+                    var response = await client.DeleteAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/BlockUserBy/UID/" + uid);
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -798,7 +798,7 @@ namespace ChildHttpApiRepository
 
         public async Task<ListStringResponseModel> SetNewPubringKeyByMatrixClientCode(MatrixCodeAndPubringKeyModel model)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNewPubringKeyByMatrixClientCode Called for {model.ClientCode.MatrixClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNewPubringKeyByMatrixClientCode Called for {model.MatrixClientPortfolio.MatrixClientPortfolio}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -818,7 +818,7 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNewPubringKeyByMatrixClientCode success for {model.ClientCode.MatrixClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNewPubringKeyByMatrixClientCode success for {model.MatrixClientPortfolio.MatrixClientPortfolio}");
                     }
                     else
                     {
@@ -890,9 +890,9 @@ namespace ChildHttpApiRepository
             }
         }
 
-        public async Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientCodeModel model)
+        public async Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientPortfolioModel model)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetAllTradesByMatrixClientCode Called for {model.MatrixClientCode}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetAllTradesByMatrixClientCode Called for {model.MatrixClientPortfolio}");
 
             ListStringResponseModel result = new ListStringResponseModel();
 
@@ -912,7 +912,7 @@ namespace ChildHttpApiRepository
                     {
                         result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
 
-                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetAllTradesByMatrixClientCode success for {model.MatrixClientCode}");
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetAllTradesByMatrixClientCode success for {model.MatrixClientPortfolio}");
                     }
                     else
                     {

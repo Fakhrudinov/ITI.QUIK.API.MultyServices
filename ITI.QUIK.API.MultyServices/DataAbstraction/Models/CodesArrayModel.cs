@@ -2,6 +2,6 @@
 {
     public class CodesArrayModel
     {
-        public MatrixClientCodeModel[] ClientCodes { get; set; }
+        public MatrixClientPortfolioModel[] MatrixClientPortfolios { get; set; }
     }
 }

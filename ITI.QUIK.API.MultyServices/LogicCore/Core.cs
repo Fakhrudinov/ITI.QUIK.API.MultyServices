@@ -184,11 +184,11 @@ namespace LogicCore
             {
                 //codes ini
                 CodesArrayModel codesArray = new CodesArrayModel();
-                codesArray.ClientCodes = new MatrixClientCodeModel[newClientModel.CodesMatrix.Length];
+                codesArray.MatrixClientPortfolios = new MatrixClientPortfolioModel[newClientModel.CodesMatrix.Length];
 
                 for (int i = 0; i < newClientModel.CodesMatrix.Length; i++)
                 {
-                    codesArray.ClientCodes[i] = newClientModel.CodesMatrix[i];
+                    codesArray.MatrixClientPortfolios[i] = newClientModel.CodesMatrix[i];
                 }
 
                 ListStringResponseModel fillCodesIniResponse = await _repository.FillCodesIniFile(codesArray);
@@ -200,7 +200,7 @@ namespace LogicCore
                 bool totalSucces = true;
                 foreach (var code in newClientModel.CodesMatrix)
                 {
-                    if (code.MatrixClientCode.Contains("-CD-"))
+                    if (code.MatrixClientPortfolio.Contains("-CD-"))
                     {
                         ListStringResponseModel addCdToKomissiiResponse = await _repository.AddCdPortfolioToTemplateKomissii(code);
                         if (!addCdToKomissiiResponse.IsSuccess)
@@ -505,7 +505,7 @@ namespace LogicCore
         }
 
 
-        public async Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientCodeModel model)
+        public async Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientPortfolioModel model)
         {
             return await _repository.BlockUserByMatrixClientCode(model);
         }
@@ -529,7 +529,7 @@ namespace LogicCore
         }
 
 
-        public async Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientCodeModel model)
+        public async Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientPortfolioModel model)
         {
             return await _repository.SetAllTradesByMatrixClientCode(model);
         }

@@ -15,12 +15,12 @@ namespace DataAbstraction.Interfaces
         void RenewAllClientFile();
         Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByMatrixClientAccount(string clientPortfolio);
         Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByFortsCode(string fortsClientCode);
-        Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientCodeModel model);
+        Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientPortfolioModel model);
         Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model);
         Task<ListStringResponseModel> BlockUserByUID(int uid);
         Task<ListStringResponseModel> SetNewPubringKeyByMatrixClientCode(MatrixCodeAndPubringKeyModel model);
         Task<ListStringResponseModel> SetNewPubringKeyByFortsClientCode(FortsCodeAndPubringKeyModel model);
-        Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientCodeModel model);
+        Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientPortfolioModel model);
         Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model);
     }
 }

@@ -1,4 +1,4 @@
-using DataAbstraction.Interfaces;
+﻿using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
 using DataAbstraction.Responses;
 using DataValidationService;
@@ -56,9 +56,9 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         }
 
         [HttpDelete("BlockUserBy/MatrixClientCode")]
-        public async Task<IActionResult> BlockUserByMatrixClientCode([FromBody] MatrixClientCodeModel model)
+        public async Task<IActionResult> BlockUserByMatrixClientCode([FromBody] MatrixClientPortfolioModel model)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/MatrixClientCode/{model.MatrixClientCode} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/MatrixClientCode/{model.MatrixClientPortfolio} Call");
 
             //validate MatrixClientCodeModel model
 
@@ -93,7 +93,7 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpPut("SetNewPubringKeyBy/MatrixClientCode")]
         public async Task<IActionResult> SetNewPubringKeyByMatrixClientCode([FromBody] MatrixCodeAndPubringKeyModel model)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetNewPubringKey/ByMatrixClientCode Call " + model.ClientCode);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetNewPubringKey/ByMatrixClientCode Call " + model.MatrixClientPortfolio);
 
             ////проверим корректность входных данных
 
@@ -115,9 +115,9 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
 
         [HttpPut("SetAllTrades/ByMatrixClientCode")]
-        public async Task<IActionResult> SetAllTradesByMatrixClientCode([FromBody] MatrixClientCodeModel model)
+        public async Task<IActionResult> SetAllTradesByMatrixClientCode([FromBody] MatrixClientPortfolioModel model)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetAllTrades/ByMatrixClientCode Call " + model.MatrixClientCode);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetAllTrades/ByMatrixClientCode Call " + model.MatrixClientPortfolio);
 
             //проверим корректность входных данных
 
