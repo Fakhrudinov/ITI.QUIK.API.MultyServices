@@ -1,6 +1,7 @@
 ﻿using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
 using DataAbstraction.Responses;
+using DataValidationService;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ITI.QUIK.API.MultyServices.Controllers
@@ -23,7 +24,13 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/ByMatrixClientAccount/{matrixClientAccount} Call");
 
-            //validate clientPortfolio
+            //проверим корректность входных данных
+            ListStringResponseModel result = ValidateData.ValidateMatrixClientAccount(matrixClientAccount);
+            if (!result.IsSuccess)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/ByMatrixClientAccount/{matrixClientAccount} Error: {result.Messages[0]}");
+                return Ok(result);
+            }
 
             FindedQuikQAdminClientResponse findedUsers = await _core.GetIsUserAlreadyExistByMatrixClientAccount(matrixClientAccount);
 

@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ChildHttpApiRepository\ChildHttpApiRepository.csproj" />
     <ProjectReference Include="..\DataAbstraction\DataAbstraction.csproj" />
+    <ProjectReference Include="..\DataValidationService\DataValidationService.csproj" />
     <ProjectReference Include="..\LogicCore\LogicCore.csproj" />
   </ItemGroup>
 
