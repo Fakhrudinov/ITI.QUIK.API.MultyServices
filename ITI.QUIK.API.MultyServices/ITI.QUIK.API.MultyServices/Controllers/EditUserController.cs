@@ -1,4 +1,4 @@
-﻿using DataAbstraction.Interfaces;
+using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
 using DataAbstraction.Responses;
 using DataValidationService;
@@ -42,7 +42,13 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/ByFortsCode/{fortsClientCode} Call");
 
-            //validate fortsClientCode
+            //проверим корректность входных данных
+            ListStringResponseModel result = ValidateData.ValidateMatrixFortsCode(fortsClientCode);
+            if (!result.IsSuccess)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/ByFortsCode/{fortsClientCode} Error: {result.Messages[0]}");
+                return Ok(result);
+            }
 
             FindedQuikQAdminClientResponse findedUsers = await _core.GetIsUserAlreadyExistByFortsCode(fortsClientCode);
 

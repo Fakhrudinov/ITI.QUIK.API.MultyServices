@@ -20,5 +20,20 @@ namespace DataValidationService
 
             return responseList;
         }
+
+        public static ListStringResponseModel ValidateMatrixFortsCode(string fortsClientCode)
+        {
+            MatrixFortsCodeValidator validator = new MatrixFortsCodeValidator();
+            var responseList = new ListStringResponseModel();
+
+            ValidationResult validationResult = validator.Validate(fortsClientCode);
+
+            if (!validationResult.IsValid)
+            {
+                responseList = SetResponseFromValidationResult.SetResponse(validationResult, responseList);
+            }
+
+            return responseList;
+        }
     }
 }
