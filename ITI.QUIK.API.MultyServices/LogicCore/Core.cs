@@ -54,7 +54,7 @@ namespace LogicCore
             MatrixClientCodeModelResponse spotCodes = await _repository.GetClientAllSpotCodesFiltered(clientCode);
             if (spotCodes.Response.IsSuccess)
             {
-                newClient.NewClient.CodesMatrix = spotCodes.MatrixClientCodesList.ToArray();
+                newClient.NewClient.MatrixClientPortfolios = spotCodes.MatrixClientCodesList.ToArray();
             }
             else
             {
@@ -167,7 +167,7 @@ namespace LogicCore
             newMNPClient.isClientResident = newClientModel.isClientResident;
             newMNPClient.Address = newClientModel.Address;
             newMNPClient.RegisterDate = newClientModel.RegisterDate;
-            newMNPClient.CodesMatrix = newClientModel.CodesMatrix;
+            newMNPClient.MatrixClientPortfolios = newClientModel.MatrixClientPortfolios;
             newMNPClient.CodesPairRF = newClientModel.CodesPairRF;
             newMNPClient.Manager = newClientModel.Manager;
             newMNPClient.SubAccount = newClientModel.SubAccount;
@@ -180,15 +180,33 @@ namespace LogicCore
             createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
 
             // codes ini, CD reg
-            if (newClientModel.CodesMatrix != null)
+            if (newClientModel.MatrixClientPortfolios != null)
             {
                 //codes ini
-                CodesArrayModel codesArray = new CodesArrayModel();
-                codesArray.MatrixClientPortfolios = new MatrixClientPortfolioModel[newClientModel.CodesMatrix.Length];
+                //сначала очистим от совпадений по quik кодам клиента, например в codes.ini портфели равны MS=FX
 
-                for (int i = 0; i < newClientModel.CodesMatrix.Length; i++)
+                List<string> portfolios = new List<string>();
+                foreach (var portfolio in newClientModel.MatrixClientPortfolios)
                 {
-                    codesArray.MatrixClientPortfolios[i] = newClientModel.CodesMatrix[i];
+                    string portfolioEqualized = portfolio.MatrixClientPortfolio;
+
+                    if (portfolioEqualized.Contains("-FX-"))
+                    {
+                        portfolioEqualized = portfolioEqualized.Replace("-FX-", "-MS-");
+                    }
+
+                    if (!portfolios.Contains(portfolioEqualized))
+                    {
+                        portfolios.Add(portfolioEqualized);
+                    }
+                }
+
+                CodesArrayModel codesArray = new CodesArrayModel();
+                codesArray.MatrixClientPortfolios = new MatrixClientPortfolioModel[portfolios.Count];
+
+                for (int i = 0; i < portfolios.Count; i++)
+                {
+                    codesArray.MatrixClientPortfolios[i] = new MatrixClientPortfolioModel() { MatrixClientPortfolio = portfolios[i] };
                 }
 
                 ListStringResponseModel fillCodesIniResponse = await _repository.FillCodesIniFile(codesArray);
@@ -198,7 +216,7 @@ namespace LogicCore
 
                 // ? CD reg
                 bool totalSucces = true;
-                foreach (var code in newClientModel.CodesMatrix)
+                foreach (var code in newClientModel.MatrixClientPortfolios)
                 {
                     if (code.MatrixClientPortfolio.Contains("-CD-"))
                     {

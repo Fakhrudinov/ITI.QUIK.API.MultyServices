@@ -11,7 +11,7 @@
         public string Address { get; set; } //A35E3P1, Респ. Казахстан, г. Алматы, ул. Баймагамбетова, д. 206
         public int RegisterDate { get; set; }//20160714 Дата заключения договора.Формат: ГГГГММДД. 
 
-        public MatrixClientPortfolioModel[]? CodesMatrix { get; set; }
+        public MatrixClientPortfolioModel[]? MatrixClientPortfolios { get; set; }
 
         public MatrixToFortsCodesMappingModel[]? CodesPairRF { get; set; }// can be null if MatrixClientCodeModel exist
 
