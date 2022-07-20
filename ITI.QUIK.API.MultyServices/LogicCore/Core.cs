@@ -152,6 +152,7 @@ namespace LogicCore
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore PostNewClient Called for {newClientModel.Client.FirstName}");
 
             NewClientCreationResponse createResponse = new NewClientCreationResponse();
+            createResponse.NewClient = newClientModel;
 
             //SFTP create
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore SFTP register for {newClientModel.Client.FirstName}");
