@@ -81,5 +81,35 @@ namespace DataValidationService
 
             return responseList;
         }
+
+        public static ListStringResponseModel ValidateNewClientOptionWorkShopModel(NewClientOptionWorkShopModel model)
+        {
+            NewClientOptionWorkshopValidationService validator = new NewClientOptionWorkshopValidationService();
+            ListStringResponseModel responseList = new ListStringResponseModel();
+
+            ValidationResult validationResult = validator.Validate(model);
+
+            if (!validationResult.IsValid)
+            {
+                responseList = SetResponseFromValidationResult.SetResponse(validationResult, responseList);
+            }
+
+            return responseList;
+        }
+
+        public static ListStringResponseModel ValidateNewClientModel(NewClientModel model)
+        {
+            NewClientValidationService validator = new NewClientValidationService();
+            ListStringResponseModel responseList = new ListStringResponseModel();
+
+            ValidationResult validationResult = validator.Validate(model);
+
+            if (!validationResult.IsValid)
+            {
+                responseList = SetResponseFromValidationResult.SetResponse(validationResult, responseList);
+            }
+
+            return responseList;
+        }
     }
 }

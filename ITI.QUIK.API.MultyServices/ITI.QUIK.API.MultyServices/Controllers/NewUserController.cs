@@ -78,11 +78,17 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPost Post/NewClient/OptionWorkshop Call for " + newClientModel.Client.FirstName);
 
-            //validate newClientModel
+            //проверим корректность входных данных
+            ListStringResponseModel result = ValidateData.ValidateNewClientOptionWorkShopModel(newClientModel);
+            if (!result.IsSuccess)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPost NewClient/OptionWorkshop Failed with " + result.Messages[0]);
+                return Ok(result);
+            }
 
-            ListStringResponseModel createResponse = await _core.PostNewClientOptionWorkshop(newClientModel);
+            result = await _core.PostNewClientOptionWorkshop(newClientModel);
 
-            return Ok(createResponse);
+            return Ok(result);
         }
 
         [HttpPost("Post/NewClient")]
@@ -90,9 +96,21 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPost Post/NewClient Call for " + newClientModel.Client.FirstName);
 
-            //validate newClientModel
+            NewClientCreationResponse createResponse = new NewClientCreationResponse();
 
-            NewClientCreationResponse createResponse = await _core.PostNewClient(newClientModel);
+            //проверим корректность входных данных
+            ListStringResponseModel validationResult = ValidateData.ValidateNewClientModel(newClientModel);
+            if (!validationResult.IsSuccess)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPost NewClient Failed with " + validationResult.Messages[0]);
+
+                createResponse.IsNewClientCreationSuccess = false;
+                createResponse.NewClientCreationMessages.AddRange(validationResult.Messages);
+
+                return Ok(createResponse);
+            }
+
+            createResponse = await _core.PostNewClient(newClientModel);
 
             return Ok(createResponse);
         }

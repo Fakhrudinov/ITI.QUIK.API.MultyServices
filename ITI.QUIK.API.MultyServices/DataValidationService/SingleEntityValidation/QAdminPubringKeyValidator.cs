@@ -12,9 +12,9 @@ namespace DataValidationService.SingleEntityValidation
                     .WithMessage("{PropertyName} '{PropertyValue}' must be 16 symbols lenght")
                     .WithErrorCode("QK100");
             RuleFor(x => x.Time)
-    .GreaterThan(0)
-        .WithMessage("{PropertyName} '{PropertyValue}' must be Greater Than 0")
-        .WithErrorCode("QK101");
+                .GreaterThan(0)
+                    .WithMessage("{PropertyName} '{PropertyValue}' must be Greater Than 0")
+                    .WithErrorCode("QK101");
             RuleFor(x => x.RSAKey)
                 .Length(64)
                     .WithMessage("{PropertyName} '{PropertyValue}' must be 64 symbols lenght")
