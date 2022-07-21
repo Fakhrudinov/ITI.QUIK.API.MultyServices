@@ -131,7 +131,27 @@ namespace LogicCore
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore PostNewClientOptionWorkshop Called for {newClientModel.Client.FirstName}");
 
-            ListStringResponseModel createResponse = await _repository.CreateNewClientOptionWorkshop(newClientModel);
+            ListStringResponseModel createResponse = new ListStringResponseModel();
+
+            //check if user already exist
+            List<string> clientCodesArray = new List<string>();
+            foreach (var forts in newClientModel.CodesPairRF)
+            {
+                clientCodesArray.Add(forts.FortsClientCode);
+            }
+            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
+
+            if (checkUserExist.IsSuccess)//success - client already exist
+            {
+                createResponse.IsSuccess = false;
+                createResponse.Messages.Add("PostNewClientOptionWorkshop terminated. User already exist.");
+                createResponse.Messages.AddRange(checkUserExist.Messages);
+
+                return createResponse;
+            }
+
+            // create new user
+            createResponse = await _repository.CreateNewClientOptionWorkshop(newClientModel);
 
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore PostNewClientOptionWorkshop result is {createResponse.IsSuccess}");
 
@@ -153,6 +173,36 @@ namespace LogicCore
 
             NewClientCreationResponse createResponse = new NewClientCreationResponse();
             createResponse.NewClient = newClientModel;
+
+            //check if user already exist
+            List<string> clientCodesArray = new List<string>();
+            if (newClientModel.CodesPairRF != null)
+            {
+                foreach (var forts in newClientModel.CodesPairRF)
+                {
+                    clientCodesArray.Add(forts.FortsClientCode);
+                }
+            }
+            if (newClientModel.MatrixClientPortfolios != null)
+            {
+                foreach (var spot in newClientModel.MatrixClientPortfolios)
+                {
+                    clientCodesArray.Add(spot.MatrixClientPortfolio);
+                }
+            }
+
+            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
+
+            if (checkUserExist.IsSuccess)//success - client already exist
+            {
+                createResponse.IsNewClientCreationSuccess = false;
+                createResponse.NewClientCreationMessages.Add("PostNewClientOptionWorkshop terminated. User already exist.");
+                createResponse.NewClientCreationMessages.AddRange(checkUserExist.Messages);
+
+                return createResponse;
+            }
+
+            // create new user
 
             //SFTP create
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore SFTP register for {newClientModel.Client.FirstName}");
@@ -526,10 +576,34 @@ namespace LogicCore
 
         public async Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientPortfolioModel model)
         {
+            //check if user already exist and only 1
+            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.Split('-').First());
+
+            if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
+            {
+                checkUserExist.IsSuccess = false;
+                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+
+                return checkUserExist;
+            }
+
+            // block unique user
             return await _repository.BlockUserByMatrixClientCode(model);
         }
         public async Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model)
         {
+            //check if user already exist and only 1
+            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByFortsCode(model.FortsClientCode);
+
+            if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
+            {
+                checkUserExist.IsSuccess = false;
+                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+
+                return checkUserExist;
+            }
+
+            // block unique user
             return await _repository.BlockUserByFortsClientCode(model);
         }
         public async Task<ListStringResponseModel> BlockUserByUID(int uid)

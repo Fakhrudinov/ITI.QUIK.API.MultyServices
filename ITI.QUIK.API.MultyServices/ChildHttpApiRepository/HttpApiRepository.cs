@@ -615,6 +615,55 @@ namespace ChildHttpApiRepository
             }
         }
 
+        public async Task<ListStringResponseModel> GetIsUserAlreadyExistByCodeArray(string [] clientCodesArray)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByCodeArray Called, first code is {clientCodesArray[0]}");
+
+            string codesAtRequest = "codesArray=" + clientCodesArray[0];
+            for (int i = 1; i < clientCodesArray.Length; i++)
+            {
+                codesAtRequest = codesAtRequest + "&codesArray=" + clientCodesArray[i];
+            }
+
+            ListStringResponseModel result = new ListStringResponseModel();
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/UID/byMatrixCodesArray?" + codesAtRequest);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByCodeArray succes is {result.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByCodeArray response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository GetIsUserAlreadyExistByCodeArray response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByCodeArray request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository GetIsUserAlreadyExistByCodeArray request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/UID/byMatrixCodesArray?" + codesAtRequest);
+
+                return result;
+            }
+        }
+
         public async Task<ListStringResponseModel> GetIsUserAlreadyExistByFortsCode(string fortsClientCode)
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsUserAlreadyExistByFortsCode Called for {fortsClientCode}");

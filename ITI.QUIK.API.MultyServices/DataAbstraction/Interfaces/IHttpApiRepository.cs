@@ -29,5 +29,6 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model);
         Task<ListStringResponseModel> GenerateNewFileCurrClnts();
         Task DownloadNewFileCurrClnts();
+        Task<ListStringResponseModel> GetIsUserAlreadyExistByCodeArray(string[] clientCodes);
     }
 }
