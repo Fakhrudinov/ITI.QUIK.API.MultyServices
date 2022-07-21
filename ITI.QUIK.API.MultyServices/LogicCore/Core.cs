@@ -614,20 +614,64 @@ namespace LogicCore
 
         public async Task<ListStringResponseModel> SetNewPubringKeyByMatrixClientCode(MatrixCodeAndPubringKeyModel model)
         {
+            //check if user already exist and only 1
+            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.MatrixClientPortfolio.Split('-').First());
+
+            if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
+            {
+                checkUserExist.IsSuccess = false;
+                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+
+                return checkUserExist;
+            }
+
             return await _repository.SetNewPubringKeyByMatrixClientCode(model);
         }
         public async Task<ListStringResponseModel> SetNewPubringKeyByFortsClientCode(FortsCodeAndPubringKeyModel model)
         {
+            //check if user already exist and only 1
+            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByFortsCode(model.ClientCode.FortsClientCode);
+
+            if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
+            {
+                checkUserExist.IsSuccess = false;
+                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+
+                return checkUserExist;
+            }
+
             return await _repository.SetNewPubringKeyByFortsClientCode(model);
         }
 
 
         public async Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientPortfolioModel model)
         {
+            //check if user already exist and only 1
+            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.Split('-').First());
+
+            if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
+            {
+                checkUserExist.IsSuccess = false;
+                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+
+                return checkUserExist;
+            }
+
             return await _repository.SetAllTradesByMatrixClientCode(model);
         }
         public async Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model)
         {
+            //check if user already exist and only 1
+            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByFortsCode(model.FortsClientCode);
+
+            if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
+            {
+                checkUserExist.IsSuccess = false;
+                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+
+                return checkUserExist;
+            }
+
             return await _repository.SetAllTradesByFortsClientCode(model);
         }
 
