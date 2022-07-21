@@ -1,6 +1,7 @@
 ﻿using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
 using DataAbstraction.Responses;
+using DataValidationService;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ITI.QUIK.API.MultyServices.Controllers
@@ -18,22 +19,38 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             _core = core;
         }
 
-        [HttpGet("GetInfo/OptionWorkShop/{clientCode}")]
-        public async Task<IActionResult> GetInfoNewUserOptionWorkShop(string clientCode)
+        [HttpGet("GetInfo/OptionWorkShop/{matrixClientAccount}")]
+        public async Task<IActionResult> GetInfoNewUserOptionWorkShop(string matrixClientAccount)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet GetInfo/NewUser/ForOptionWorkShop/{clientCode} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet GetInfo/NewUser/ForOptionWorkShop/{matrixClientAccount} Call");
 
-            NewClientOptionWorkShopModelResponse newClientOW = await _core.GetInfoNewUserOptionWorkShop(clientCode);
+            //проверим корректность входных данных
+            ListStringResponseModel result = ValidateData.ValidateMatrixClientAccount(matrixClientAccount);
+            if (!result.IsSuccess)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet GetInfo/NewUser/ForOptionWorkShop/{matrixClientAccount} Error: {result.Messages[0]}");
+                return Ok(result);
+            }
+
+            NewClientOptionWorkShopModelResponse newClientOW = await _core.GetInfoNewUserOptionWorkShop(matrixClientAccount);
 
             return Ok(newClientOW);
         }
 
-        [HttpGet("GetInfo/{clientCode}")]
-        public async Task<IActionResult> GetInfoNewUserNonEDP(string clientCode)
+        [HttpGet("GetInfo/{matrixClientAccount}")]
+        public async Task<IActionResult> GetInfoNewUserNonEDP(string matrixClientAccount)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet GetInfo/NewUser/NonEDP/{clientCode} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet GetInfo/NewUser/NonEDP/{matrixClientAccount} Call");
 
-            NewClientModelResponse newClient = await _core.GetInfoNewUserNonEDP(clientCode);
+            //проверим корректность входных данных
+            ListStringResponseModel result = ValidateData.ValidateMatrixClientAccount(matrixClientAccount);
+            if (!result.IsSuccess)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet GetInfo/NewUser/NonEDP/{matrixClientAccount} Error: {result.Messages[0]}");
+                return Ok(result);
+            }
+
+            NewClientModelResponse newClient = await _core.GetInfoNewUserNonEDP(matrixClientAccount);
 
             return Ok(newClient);
         }
