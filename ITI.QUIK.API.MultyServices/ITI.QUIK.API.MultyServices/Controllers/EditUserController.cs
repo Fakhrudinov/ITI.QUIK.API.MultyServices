@@ -19,16 +19,16 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             _core = core;
         }
 
-        [HttpGet("Get/IsUser/AlreadyExist/ByMatrixClientAccount/{matrixClientAccount}")]
+        [HttpGet("Get/IsUser/AlreadyExist/inQAdmin/ByMatrixClientAccount/{matrixClientAccount}")]
         public async Task<IActionResult> GetIsUserAlreadyExistByMatrixPortfolio(string matrixClientAccount)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/ByMatrixClientAccount/{matrixClientAccount} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/inQAdmin/ByMatrixClientAccount/{matrixClientAccount} Call");
 
             //проверим корректность входных данных
             ListStringResponseModel result = ValidateData.ValidateMatrixClientAccount(matrixClientAccount);
             if (!result.IsSuccess)
             {
-                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/ByMatrixClientAccount/{matrixClientAccount} Error: {result.Messages[0]}");
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/inQAdmin/ByMatrixClientAccount/{matrixClientAccount} Error: {result.Messages[0]}");
                 return Ok(result);
             }
 
@@ -37,16 +37,16 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             return Ok(findedUsers);
         }
 
-        [HttpGet("Get/IsUser/AlreadyExist/ByFortsCode/{fortsClientCode}")]
+        [HttpGet("Get/IsUser/AlreadyExist/inQAdmin/ByFortsCode/{fortsClientCode}")]
         public async Task<IActionResult> GetIsUserAlreadyExistByFortsCode(string fortsClientCode)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/ByFortsCode/{fortsClientCode} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/inQAdmin/ByFortsCode/{fortsClientCode} Call");
 
             //проверим корректность входных данных
             ListStringResponseModel result = ValidateData.ValidateMatrixFortsCode(fortsClientCode);
             if (!result.IsSuccess)
             {
-                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/ByFortsCode/{fortsClientCode} Error: {result.Messages[0]}");
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/inQAdmin/ByFortsCode/{fortsClientCode} Error: {result.Messages[0]}");
                 return Ok(result);
             }
 
@@ -55,16 +55,16 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             return Ok(findedUsers);
         }
 
-        [HttpDelete("BlockUserBy/MatrixClientPortfolio")]
+        [HttpDelete("BlockUserBy/MatrixClientPortfolio/inQAdmin")]
         public async Task<IActionResult> BlockUserByMatrixClientCode([FromBody] MatrixClientPortfolioModel model)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/MatrixClientPortfolio/{model.MatrixClientPortfolio} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/MatrixClientPortfolio/inQAdmin/{model.MatrixClientPortfolio} Call");
 
             //проверим корректность входных данных
             ListStringResponseModel result = ValidateData.ValidateMatrixClientPortfolioModel(model);
             if (!result.IsSuccess)
             {
-                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/MatrixClientPortfolio/{model.MatrixClientPortfolio} " +
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/MatrixClientPortfolio/inQAdmin/{model.MatrixClientPortfolio} " +
                     $"Error: {result.Messages[0]}");
                 return Ok(result);
             }
@@ -73,16 +73,16 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
             return Ok(result);
         }
-        [HttpDelete("BlockUserBy/FortsClientCode")]
+        [HttpDelete("BlockUserBy/FortsClientCode/inQAdmin")]
         public async Task<IActionResult> BlockUserByFortsClientCode([FromBody] FortsClientCodeModel model)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/FortsClientCode/{model.FortsClientCode} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/FortsClientCode/inQAdmin/{model.FortsClientCode} Call");
 
             //проверим корректность входных данных
             ListStringResponseModel result = ValidateData.ValidateMatrixFortsCode(model.FortsClientCode);
             if (!result.IsSuccess)
             {
-                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/FortsClientCode/{model.FortsClientCode} Error: {result.Messages[0]}");
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/FortsClientCode/inQAdmin/{model.FortsClientCode} Error: {result.Messages[0]}");
                 return Ok(result);
             }
 
@@ -90,10 +90,10 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
             return Ok(result);
         }
-        [HttpDelete("BlockUserBy/UID/{uid}")]
+        [HttpDelete("BlockUserBy/UID/inQAdmin/{uid}")]
         public async Task<IActionResult> BlockUserByUID(int uid)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/UID/{uid} Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete BlockUserBy/UID/inQAdmin/{uid} Call");
 
             //validate uid?
 
@@ -103,16 +103,16 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         }
 
 
-        [HttpPut("SetNewPubringKeyBy/MatrixClientPortfolio")]
+        [HttpPut("SetNewPubringKeyBy/MatrixClientPortfolio/inQAdmin")]
         public async Task<IActionResult> SetNewPubringKeyByMatrixClientCode([FromBody] MatrixCodeAndPubringKeyModel model)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetNewPubringKey/MatrixClientPortfolio Call " + model.MatrixClientPortfolio);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetNewPubringKey/MatrixClientPortfolio/inQAdmin Call " + model.MatrixClientPortfolio);
 
             //проверим корректность входных данных
             ListStringResponseModel result = ValidateData.ValidateMatrixCodeAndPubringKeyModel(model);
             if (!result.IsSuccess)
             {
-                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetNewPubringKey/MatrixClientPortfolio Failed with " + result.Messages[0]);
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetNewPubringKey/MatrixClientPortfolio/inQAdmin Failed with " + result.Messages[0]);
                 return Ok(result);
             }
 
@@ -120,16 +120,16 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
             return Ok(result);
         }
-        [HttpPut("SetNewPubringKeyBy/FortsClientCode")]
+        [HttpPut("SetNewPubringKeyBy/FortsClientCode/inQAdmin")]
         public async Task<IActionResult> SetNewPubringKeyByFortsClientCode([FromBody] FortsCodeAndPubringKeyModel model)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetNewPubringKey/ByFortsClientCode Call " + model.ClientCode);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetNewPubringKey/ByFortsClientCode/inQAdmin Call " + model.ClientCode);
 
             //проверим корректность входных данных
             ListStringResponseModel result = ValidateData.ValidateFortsCodeAndPubringKeyModel(model);
             if (!result.IsSuccess)
             {
-                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetNewPubringKey/ByFortsClientCode Failed with " + result.Messages[0]);
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetNewPubringKey/ByFortsClientCode/inQAdmin Failed with " + result.Messages[0]);
                 return Ok(result);
             }
 
@@ -139,16 +139,16 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         }
 
 
-        [HttpPut("SetAllTrades/ByMatrixClientPortfolio")]
+        [HttpPut("SetAllTrades/ByMatrixClientPortfolio/inQAdmin")]
         public async Task<IActionResult> SetAllTradesByMatrixClientCode([FromBody] MatrixClientPortfolioModel model)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetAllTrades/ByMatrixClientPortfolio Call " + model.MatrixClientPortfolio);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetAllTrades/ByMatrixClientPortfolio/inQAdmin Call " + model.MatrixClientPortfolio);
 
             //проверим корректность входных данных
             ListStringResponseModel result = ValidateData.ValidateMatrixClientPortfolioModel(model);
             if (!result.IsSuccess)
             {
-                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetAllTrades/ByMatrixClientPortfolio/{model.MatrixClientPortfolio} " +
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetAllTrades/ByMatrixClientPortfolio/inQAdmin/{model.MatrixClientPortfolio} " +
                     $"Error: {result.Messages[0]}");
                 return Ok(result);
             }
@@ -158,16 +158,16 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             return Ok(result);
         }
 
-        [HttpPut("SetAllTradesBy/FortsClientCode")]
+        [HttpPut("SetAllTradesBy/FortsClientCode/inQAdmin")]
         public async Task<IActionResult> SetAllTradesByFortsClientCode([FromBody] FortsClientCodeModel model)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetAllTradesBy/FortsClientCode Call " + model.FortsClientCode);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetAllTradesBy/FortsClientCode/inQAdmin Call " + model.FortsClientCode);
 
             //проверим корректность входных данных
             ListStringResponseModel result = ValidateData.ValidateMatrixFortsCode(model.FortsClientCode);
             if (!result.IsSuccess)
             {
-                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetAllTradesBy/FortsClientCode/{model.FortsClientCode} Error: {result.Messages[0]}");
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut SetAllTradesBy/FortsClientCode/inQAdmin/{model.FortsClientCode} Error: {result.Messages[0]}");
                 return Ok(result);
             }
 
