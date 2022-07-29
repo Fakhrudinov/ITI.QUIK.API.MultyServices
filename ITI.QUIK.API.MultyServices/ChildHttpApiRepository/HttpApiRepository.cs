@@ -1,6 +1,7 @@
 ﻿using DataAbstraction.Connections;
 using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
+using DataAbstraction.Models.InstrTw;
 using DataAbstraction.Responses;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -1108,6 +1109,57 @@ namespace ChildHttpApiRepository
             {
                 _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository DownloadNewFileCurrClnts request url NotFound; {ex.Message}");
                 _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} {_connections.QuikAPIConnectionString}/api/QuikSftpServer/DownloadFile/CurrClnts");
+            }
+        }
+
+        public async Task<InstrTWDataBaseRecords> GetRecordsFromInstrTwDataBase(List<string> allportfolios)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetRecordsFromInstrTwDataBase Called for {allportfolios[0]}");
+
+            InstrTWDataBaseRecords result = new InstrTWDataBaseRecords();
+
+            //http://localhost:5146/api/QuikDataBase/Get/RegisteredCodes?codes=string1&codes=string2
+            string codesAtRequest = "codes=" + allportfolios[0];
+            for (int i = 1; i < allportfolios.Count; i++)
+            {
+                codesAtRequest = codesAtRequest + "&codes=" + allportfolios[i];
+            }
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikDataBase/Get/RegisteredCodes?" + codesAtRequest);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<InstrTWDataBaseRecords>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetRecordsFromInstrTwDataBase succes is {result.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetRecordsFromInstrTwDataBase response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository GetRecordsFromInstrTwDataBase response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetRecordsFromInstrTwDataBase request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository GetRecordsFromInstrTwDataBase request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikDataBase/Get/RegisteredCodes?" + codesAtRequest);
+
+                return result;
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using DataAbstraction.Models;
+using DataAbstraction.Models.InstrTw;
 using DataAbstraction.Responses;
 
 namespace DataAbstraction.Interfaces
@@ -30,5 +31,6 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> GenerateNewFileCurrClnts();
         Task DownloadNewFileCurrClnts();
         Task<ListStringResponseModel> GetIsUserAlreadyExistByCodeArray(string[] clientCodes);
+        Task<InstrTWDataBaseRecords> GetRecordsFromInstrTwDataBase(List<string> allportfolios);
     }
 }

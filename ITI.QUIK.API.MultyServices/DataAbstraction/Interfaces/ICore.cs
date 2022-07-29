@@ -21,6 +21,7 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> SetNewPubringKeyByMatrixClientCode(MatrixCodeAndPubringKeyModel model);
         Task<ListStringResponseModel> SetNewPubringKeyByFortsClientCode(FortsCodeAndPubringKeyModel model);
         Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientPortfolioModel model);
+        Task<FindedQuikClientResponse> GetIsUserAlreadyExistInAllQuikByMatrixClientAccount(string matrixClientAccount);
         Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model);
     }
 }

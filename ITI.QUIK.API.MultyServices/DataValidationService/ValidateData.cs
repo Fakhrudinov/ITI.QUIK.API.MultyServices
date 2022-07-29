@@ -21,6 +21,24 @@ namespace DataValidationService
 
             return responseList;
         }
+        public static FindedQuikClientResponse ValidateMatrixClientAccountToFindedQuik(string matrixClientAccount)
+        {
+            MatrixClientAccountValidator validator = new MatrixClientAccountValidator();
+            var result = new FindedQuikClientResponse();
+            var responseList = new ListStringResponseModel();
+
+            ValidationResult validationResult = validator.Validate(matrixClientAccount);
+
+            if (!validationResult.IsValid)
+            {
+                responseList = SetResponseFromValidationResult.SetResponse(validationResult, responseList);
+
+                result.Messages.AddRange(responseList.Messages);
+                result.IsSuccess = false;
+            }
+
+            return result;
+        }
 
         public static ListStringResponseModel ValidateMatrixFortsCode(string fortsClientCode)
         {

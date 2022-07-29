@@ -1,5 +1,6 @@
 ﻿using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
+using DataAbstraction.Models.InstrTw;
 using DataAbstraction.Responses;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -440,12 +441,69 @@ namespace LogicCore
             return key;
         }
 
-        public async Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByMatrixClientAccount(string clientPortfolio)
+        public async Task<FindedQuikClientResponse> GetIsUserAlreadyExistInAllQuikByMatrixClientAccount(string matrixClientAccount)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixPortfolio Called for {clientPortfolio}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount Called for {matrixClientAccount}");
+
+            FindedQuikClientResponse result = new FindedQuikClientResponse();
+
+            // найти все портфели - фильтрованные
+            MatrixClientCodeModelResponse spotCodes = await _repository.GetClientAllSpotCodesFiltered(matrixClientAccount);
+            if (spotCodes.Response.IsSuccess)
+            {
+                result.MatrixClientPortfolios = spotCodes.MatrixClientCodesList.ToArray();
+            }
+            else
+            {
+                result.MatrixClientPortfoliosMessages.AddRange(spotCodes.Response.Messages);
+            }
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount GetClientAllSpotCodesFiltered result {spotCodes.Response.IsSuccess}");
+
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientAllFortsCodes(matrixClientAccount);
+            if (fortsCodes.Response.IsSuccess)
+            {
+                result.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
+            }
+            else
+            {
+                result.CodesPairRFMessages.AddRange(fortsCodes.Response.Messages);
+            }
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount GetClientAllFortsCodes result {fortsCodes.Response.IsSuccess}");
+            // проверить, что хоть какие то портфели вернулись
+            if (result.CodesPairRF is null && result.MatrixClientPortfolios is null)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount (404) no portfolios found for {matrixClientAccount}");
+                result.Messages.Add($"(404) no portfolios found for {matrixClientAccount}");
+                result.IsSuccess = false;
+            }
+
+            // INSTR TW - получить зарегистрированные в бд строки
+            List<string> allportfolios = new List<string>();
+            if (result.MatrixClientPortfolios is not null)
+            {
+                foreach (var portfolio in result.MatrixClientPortfolios)
+                {
+                    allportfolios.Add(portfolio.MatrixClientPortfolio);
+                }
+            }
+            if (result.CodesPairRF is not null)
+            {
+                foreach (var fortsCode in result.CodesPairRF)
+                {
+                    allportfolios.Add(fortsCode.FortsClientCode);
+                }
+            }
+            result.InstrTWDBRecords = await _repository.GetRecordsFromInstrTwDataBase(allportfolios);
+
+            return result;
+        }
+
+        public async Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByMatrixClientAccount(string matrixClientAccount)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixClientAccount Called for {matrixClientAccount}");
             
-            ListStringResponseModel findedClients = await _repository.GetIsUserAlreadyExistByMatrixClientAccount(clientPortfolio);
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixPortfolio result is {findedClients.IsSuccess}");
+            ListStringResponseModel findedClients = await _repository.GetIsUserAlreadyExistByMatrixClientAccount(matrixClientAccount);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixClientAccount result is {findedClients.IsSuccess}");
 
             FindedQuikQAdminClientResponse findedResponse = new FindedQuikQAdminClientResponse();
 

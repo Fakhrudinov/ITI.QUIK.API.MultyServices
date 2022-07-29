@@ -19,8 +19,26 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             _core = core;
         }
 
+        [HttpGet("Get/IsUser/AlreadyExist/inAllQuik/ByMatrixClientAccount/{matrixClientAccount}")]
+        public async Task<IActionResult> GetIsUserAlreadyExistInAllQuikByMatrixClientAccount(string matrixClientAccount)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/inAllQuik/ByMatrixClientAccount/{matrixClientAccount} Call");
+
+            //проверим корректность входных данных
+            FindedQuikClientResponse result = ValidateData.ValidateMatrixClientAccountToFindedQuik(matrixClientAccount);
+            if (!result.IsSuccess)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/inAllQuik/ByMatrixClientAccount/{matrixClientAccount} Error: {result.Messages[0]}");
+                return Ok(result);
+            }
+
+            result = await _core.GetIsUserAlreadyExistInAllQuikByMatrixClientAccount(matrixClientAccount);
+
+            return Ok(result);
+        }
+
         [HttpGet("Get/IsUser/AlreadyExist/inQAdmin/ByMatrixClientAccount/{matrixClientAccount}")]
-        public async Task<IActionResult> GetIsUserAlreadyExistByMatrixPortfolio(string matrixClientAccount)
+        public async Task<IActionResult> GetIsUserAlreadyExistByMatrixClientAccount(string matrixClientAccount)
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/inQAdmin/ByMatrixClientAccount/{matrixClientAccount} Call");
 
