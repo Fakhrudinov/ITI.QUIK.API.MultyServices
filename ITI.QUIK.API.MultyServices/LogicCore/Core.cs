@@ -475,9 +475,11 @@ namespace LogicCore
                 _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount (404) no portfolios found for {matrixClientAccount}");
                 result.Messages.Add($"(404) no portfolios found for {matrixClientAccount}");
                 result.IsSuccess = false;
+
+                return result;
             }
 
-            // INSTR TW - получить зарегистрированные в бд строки
+            //все портфели и коды срочного в список
             List<string> allportfolios = new List<string>();
             if (result.MatrixClientPortfolios is not null)
             {
@@ -493,7 +495,24 @@ namespace LogicCore
                     allportfolios.Add(fortsCode.FortsClientCode);
                 }
             }
+
+            // INSTR TW - получить зарегистрированные в бд строки
             result.InstrTWDBRecords = await _repository.GetRecordsFromInstrTwDataBase(allportfolios);
+            result.InstrTWDBRecordsMessages = result.InstrTWDBRecords.Messages;
+
+            // проверить наличие в файле CurrClients (QAdmin)
+            ListStringResponseModel findedInQadmin = await _repository.GetIsUserAlreadyExistByCodeArray(allportfolios.ToArray());
+            if (findedInQadmin.IsSuccess)
+            {
+                findedInQadmin.IsSuccess = true;
+                result.QuikQAdminClient = GetClientsFromMessages(findedInQadmin.Messages);
+            }
+            else
+            {
+                result.QuikQAdminClientMessages.AddRange(findedInQadmin.Messages);
+            }
+
+
 
             return result;
         }
