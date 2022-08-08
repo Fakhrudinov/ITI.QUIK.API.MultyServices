@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChildHttpApiRepository", "C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogicCore", "LogicCore\LogicCore.csproj", "{F2363ABF-4D5C-4235-9433-745DF3DB84DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataValidationService", "DataValidationService\DataValidationService.csproj", "{7092879B-03A6-4C13-A269-BA699E7510FC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataValidationService", "DataValidationService\DataValidationService.csproj", "{7092879B-03A6-4C13-A269-BA699E7510FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonServices", "CommonServices\CommonServices.csproj", "{EDF13629-9D68-49F6-92E7-ADA102D6CB97}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{7092879B-03A6-4C13-A269-BA699E7510FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7092879B-03A6-4C13-A269-BA699E7510FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7092879B-03A6-4C13-A269-BA699E7510FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EDF13629-9D68-49F6-92E7-ADA102D6CB97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDF13629-9D68-49F6-92E7-ADA102D6CB97}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDF13629-9D68-49F6-92E7-ADA102D6CB97}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDF13629-9D68-49F6-92E7-ADA102D6CB97}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -504,7 +504,7 @@ namespace LogicCore
             ListStringResponseModel findedInQadmin = await _repository.GetIsUserAlreadyExistByCodeArray(allportfolios.ToArray());
             if (findedInQadmin.IsSuccess)
             {
-                findedInQadmin.IsSuccess = true;
+                result.isQuikQAdminClientFinded = true;
                 result.QuikQAdminClient = GetClientsFromMessages(findedInQadmin.Messages);
             }
             else
@@ -512,7 +512,84 @@ namespace LogicCore
                 result.QuikQAdminClientMessages.AddRange(findedInQadmin.Messages);
             }
 
+            // проверить CD портфели - есть ли в шаблонах
+            if (result.MatrixClientPortfolios is not null)
+            {
+                foreach (var portfolio in result.MatrixClientPortfolios)
+                {
+                    if (portfolio.MatrixClientPortfolio.Contains("-CD-"))
+                    {
+                        MatrixPortfolioAtTemplates codeAtTemplates = new MatrixPortfolioAtTemplates() { MatrixClientPortfolios = portfolio };
+                        string quikCdportfolio = CommonServices.PortfoliosConvertingService.GetQuikCdPortfolio(portfolio.MatrixClientPortfolio);
 
+                        string[] tempatesName = new string[]
+                        {
+                            "CD_portfolio", "CD_OnlyClose"
+                        };
+
+                        // ищем в шаблонах по комиссии
+                        for (int i = 0; i < tempatesName.Length; i++)
+                        {
+                            ListStringResponseModel isAddedToTemplate = await _repository.GetAllClientsFromTemplatePoKomissii(tempatesName[i]);
+                            if (isAddedToTemplate.IsSuccess)
+                            {
+                                //search code in result
+                                if (isAddedToTemplate.Messages.Contains(quikCdportfolio))
+                                {
+                                    codeAtTemplates.TemplatePoKomissii = tempatesName[i];
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                result.IsCdPortfoliosAddedToTemplateMessages.AddRange(isAddedToTemplate.Messages);
+                            }
+                        }
+
+                        // ищем в шаблоне по плечу
+                        ListStringResponseModel isAddedToTemplatePoPlechu = await _repository.GetAllClientsFromTemplatePoPlechu(tempatesName[0]);
+                        if (isAddedToTemplatePoPlechu.IsSuccess)
+                        {
+                            //search code in result
+                            if (isAddedToTemplatePoPlechu.Messages.Contains(quikCdportfolio))
+                            {
+                                codeAtTemplates.TemplatePoPlechu = tempatesName[0];
+                            }
+                        }
+                        else
+                        {
+                            result.IsCdPortfoliosAddedToTemplateMessages.AddRange(isAddedToTemplatePoPlechu.Messages);
+                        }
+
+                        result.PortfolioAtTemplates.Add(codeAtTemplates);
+                    }
+                }
+
+                // check is all templates filled. if not - set false at IsCdPortfoliosAddedToTemplates
+                foreach (var cdPortfolio in result.PortfolioAtTemplates)
+                {
+                    if (cdPortfolio.TemplatePoPlechu == null || cdPortfolio.TemplatePoKomissii == null)
+                    {
+                        result.IsCdPortfoliosAddedToTemplates = false;
+                    }
+                }
+            }
+
+            // проверить коды в codes.ini
+            if (result.MatrixClientPortfolios is not null)
+            {
+                List<string> spotPortfolios = new List<string>();
+                foreach (var portfolio in result.MatrixClientPortfolios)
+                {
+                    spotPortfolios.Add(portfolio.MatrixClientPortfolio);
+                }
+
+                BoolResponse isCodesIniFilled = await _repository.GetIsAllSpotPortfoliosPresentInFileCodesIni(spotPortfolios);
+                result.IsCodesIniFilled = isCodesIniFilled.IsTrue;
+                result.IsCodesIniFilledMessages = isCodesIniFilled.Messages;
+            }
+
+            // ? общий анализ ?
 
             return result;
         }

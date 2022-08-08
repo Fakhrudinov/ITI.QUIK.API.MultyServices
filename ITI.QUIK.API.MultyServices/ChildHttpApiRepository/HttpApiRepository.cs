@@ -1162,5 +1162,146 @@ namespace ChildHttpApiRepository
                 return result;
             }
         }
+
+        public async Task<ListStringResponseModel> GetAllClientsFromTemplatePoKomissii(string templateName)
+        {
+            //http://localhost:8753/api/QuikQAdminSpotApi/GetAllClientsFromTemplate/PoKomissii/templateName
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllClientsFromTemplatePoKomissii Called for {templateName}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/GetAllClientsFromTemplate/PoKomissii/" + templateName);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllClientsFromTemplatePoKomissii succes is {result.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllClientsFromTemplatePoKomissii response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository GetAllClientsFromTemplatePoKomissii response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository CheckCdPortfolioExistAtTemplatePoKomissii request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository CheckCdPortfolioExistAtTemplatePoKomissii request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/GetAllClientsFromTemplate/PoKomissii/" + templateName);
+
+                return result;
+            }
+        }
+
+        public async Task<ListStringResponseModel> GetAllClientsFromTemplatePoPlechu(string templateName)
+        {
+            //http://localhost:8753/api/QuikQAdminSpotApi/GetAllClientsFromTemplate/PoPlechu/templateName
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllClientsFromTemplatePoPlechu Called for {templateName}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/GetAllClientsFromTemplate/PoPlechu/" + templateName);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllClientsFromTemplatePoPlechu succes is {result.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllClientsFromTemplatePoPlechu response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository GetAllClientsFromTemplatePoPlechu response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllClientsFromTemplatePoPlechu request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository GetAllClientsFromTemplatePoPlechu request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/GetAllClientsFromTemplate/PoPlechu/" + templateName);
+
+                return result;
+            }
+        }
+
+        public async Task<BoolResponse> GetIsAllSpotPortfoliosPresentInFileCodesIni(List<string> allportfolios)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsAllSpotPortfoliosPresentInFileCodesIni Called for {allportfolios[0]}");
+
+            BoolResponse result = new BoolResponse();
+
+            //http://localhost:5146/api/QuikSftpServer/ClientCodes/IsPresentIn/FileCodesIni?codesArray=string1&codesArray=string2
+            string codesAtRequest = "codesArray=" + allportfolios[0];
+            for (int i = 1; i < allportfolios.Count; i++)
+            {
+                codesAtRequest = codesAtRequest + "&codesArray=" + allportfolios[i];
+            }
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/ClientCodes/IsPresentIn/FileCodesIni?" + codesAtRequest);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<BoolResponse>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsAllSpotPortfoliosPresentInFileCodesIni succes is {result.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsAllSpotPortfoliosPresentInFileCodesIni response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository GetIsAllSpotPortfoliosPresentInFileCodesIni response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsAllSpotPortfoliosPresentInFileCodesIni request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository GetIsAllSpotPortfoliosPresentInFileCodesIni request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/ClientCodes/IsPresentIn/FileCodesIni?" + codesAtRequest);
+
+                return result;
+            }
+        }
     }
 }

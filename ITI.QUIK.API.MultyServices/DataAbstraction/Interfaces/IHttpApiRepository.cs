@@ -32,5 +32,8 @@ namespace DataAbstraction.Interfaces
         Task DownloadNewFileCurrClnts();
         Task<ListStringResponseModel> GetIsUserAlreadyExistByCodeArray(string[] clientCodes);
         Task<InstrTWDataBaseRecords> GetRecordsFromInstrTwDataBase(List<string> allportfolios);
+        Task<ListStringResponseModel> GetAllClientsFromTemplatePoKomissii(string templateName);
+        Task<ListStringResponseModel> GetAllClientsFromTemplatePoPlechu(string templateName);
+        Task<BoolResponse> GetIsAllSpotPortfoliosPresentInFileCodesIni(List<string> allportfolios);
     }
 }

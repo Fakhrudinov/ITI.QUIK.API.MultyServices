@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ChildHttpApiRepository\ChildHttpApiRepository.csproj" />
+    <ProjectReference Include="..\CommonServices\CommonServices.csproj" />
     <ProjectReference Include="..\DataAbstraction\DataAbstraction.csproj" />
   </ItemGroup>
 
