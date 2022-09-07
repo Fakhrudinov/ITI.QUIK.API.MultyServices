@@ -14,6 +14,7 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> PostNewClientOptionWorkshop(NewClientOptionWorkShopModel newClientModel);
         void RenewAllClientFile();
         Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByMatrixClientAccount(string clientPortfolio);
+        Task<ListStringResponseModel> RenewClientsInSpotTemplatesPoKomissii(bool sendReport);
         Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByFortsCode(string fortsClientCode);
         Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientPortfolioModel model);
         Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model);
@@ -21,7 +22,9 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> SetNewPubringKeyByMatrixClientCode(MatrixCodeAndPubringKeyModel model);
         Task<ListStringResponseModel> SetNewPubringKeyByFortsClientCode(FortsCodeAndPubringKeyModel model);
         Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientPortfolioModel model);
+        Task<ListStringResponseModel> RenewClientsInFortsTemplatesPoKomissii(bool sendReport);
         Task<FindedQuikClientResponse> GetIsUserAlreadyExistInAllQuikByMatrixClientAccount(string matrixClientAccount);
         Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model);
+        Task<ListStringResponseModel> RenewRestrictedSecuritiesInTemplatesPoKomissii(bool sendReport);
     }
 }

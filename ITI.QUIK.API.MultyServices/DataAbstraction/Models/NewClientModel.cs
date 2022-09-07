@@ -16,6 +16,8 @@
         public MatrixToFortsCodesMappingModel[]? CodesPairRF { get; set; }// can be null if MatrixClientCodeModel exist
 
         public PubringKeyModel Key { get; set; }
+        
+        public bool isExistanceOverraid { get; set; } = false;// не проверять, имелась ли ранее в QUIK регистрация клиента
 
         public string? Manager { get; set; } = null;//NULL Содержит имя менеджера, соответствующего данному договору обслуживания.
         //public string? Number { get; set; } //Дог.BP17178  Номер договора.

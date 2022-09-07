@@ -13,7 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogicCore", "LogicCore\Logi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataValidationService", "DataValidationService\DataValidationService.csproj", "{7092879B-03A6-4C13-A269-BA699E7510FC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonServices", "CommonServices\CommonServices.csproj", "{EDF13629-9D68-49F6-92E7-ADA102D6CB97}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonServices", "CommonServices\CommonServices.csproj", "{EDF13629-9D68-49F6-92E7-ADA102D6CB97}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailService", "MailService\MailService.csproj", "{208F4D89-1397-4FEF-9C5D-32E80687B62F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{EDF13629-9D68-49F6-92E7-ADA102D6CB97}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDF13629-9D68-49F6-92E7-ADA102D6CB97}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDF13629-9D68-49F6-92E7-ADA102D6CB97}.Release|Any CPU.Build.0 = Release|Any CPU
+		{208F4D89-1397-4FEF-9C5D-32E80687B62F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{208F4D89-1397-4FEF-9C5D-32E80687B62F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{208F4D89-1397-4FEF-9C5D-32E80687B62F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{208F4D89-1397-4FEF-9C5D-32E80687B62F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

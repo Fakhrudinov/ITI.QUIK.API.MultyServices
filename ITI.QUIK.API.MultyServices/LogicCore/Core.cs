@@ -1,5 +1,7 @@
-﻿using DataAbstraction.Interfaces;
+﻿using CommonServices;
+using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
+using DataAbstraction.Models.EMail;
 using DataAbstraction.Models.InstrTw;
 using DataAbstraction.Responses;
 using Microsoft.Extensions.Logging;
@@ -13,18 +15,20 @@ namespace LogicCore
     {
         private ILogger<Core> _logger;
         private IHttpApiRepository _repository;
-        private PubringKeyIgnoreWords _ignoreWords;
+        private CoreSettings _settings;
         private System.Timers.Timer _timerUpdateFileCurrClnts;
+        private IEMail _sender;
 
-        public Core(ILogger<Core> logger, IHttpApiRepository repository, IOptions<PubringKeyIgnoreWords> ignoreWords)
+        public Core(ILogger<Core> logger, IHttpApiRepository repository, IOptions<CoreSettings> settings, IEMail sender)
         {
             _logger = logger;
             _repository = repository;
-            _ignoreWords = ignoreWords.Value;
+            _settings = settings.Value;
 
             _timerUpdateFileCurrClnts = new System.Timers.Timer(120000);
             _timerUpdateFileCurrClnts.Elapsed += WaitAndGenerateNewFileCurrClnts;
             _timerUpdateFileCurrClnts.AutoReset = false;
+            _sender=sender;
         }
 
         public async Task<NewClientModelResponse> GetInfoNewUserNonEDP(string clientCode)
@@ -194,13 +198,17 @@ namespace LogicCore
 
             ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
 
-            if (checkUserExist.IsSuccess)//success - client already exist
+            if (checkUserExist.IsSuccess && newClientModel.isExistanceOverraid == false)//success - client already exist and no overrraid option selected
             {
                 createResponse.IsNewClientCreationSuccess = false;
                 createResponse.NewClientCreationMessages.Add("PostNewClientOptionWorkshop terminated. User already exist.");
                 createResponse.NewClientCreationMessages.AddRange(checkUserExist.Messages);
 
                 return createResponse;
+            }
+            else
+            {
+                createResponse.NewClientCreationMessages.AddRange(checkUserExist.Messages);
             }
 
             // create new user
@@ -377,8 +385,7 @@ namespace LogicCore
             keyText = keyText.Replace("\t", " ");
 
             //чистим от списка слов из appsettings.json секция PubringKeyIgnoreWords
-            var deleteWordsArray = _ignoreWords.RemoveText.Split(" ");
-            foreach (string deleteWord in deleteWordsArray)
+            foreach (string deleteWord in _settings.RemoveTextArray)
             {
                 keyText = keyText.Replace(deleteWord, "");
             }
@@ -896,6 +903,620 @@ namespace LogicCore
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore DownloadNewFileCurrClnts Called");
 
             await _repository.DownloadNewFileCurrClnts();
+        }
+
+        public async Task<ListStringResponseModel> RenewClientsInSpotTemplatesPoKomissii(bool sendReport)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii Called");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+            NewEMail message = new NewEMail();
+            message.Subject = "QUIK обновление шаблонов 'По комиссии' в Qadmin MC0138200000 библиотеке";
+            message.Body = "<html><body><h2>QUIK обновление шаблонов По комиссии спот</h2>";
+
+            //установка MS и FX портфелей
+            string[] templateNames = new string[]
+            {
+                "Foe_NoRsdnt", // 0 список злых нерезов
+                "Frnd_NoRsdnt",// 1 список добрых нерезов
+                "KSUR_NeKval", // 2 список неквалов КСУР
+                "KPUR_NeKval", // 3 список неквалов КПУР
+                "KPUR_Kval",   // 4 список квалов КПУР
+                "CD_Restrict", // 5 для CD портфелей все нерезы, дружественные и не дружественные.
+                "CD_portfolio" // 6 для CD портфелей все кпур и ксур клиенты, квалы и не квалы
+            };
+
+            for (int i = 0; i < templateNames.Length; i++)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii work with {templateNames[i]}");
+
+                message.Body = message.Body + $"<h3>Установка в шаблон {templateNames[i]}</h3>";
+                //запросить список клиентов в БД матрицы
+                MatrixClientCodeModelResponse clientportfolios = new MatrixClientCodeModelResponse();
+                switch (i)
+                {
+                    case 0://запросить список злых нерезов
+                        clientportfolios = await _repository.GetAllEnemyNonResidentSpotPortfolios();
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы вражеских нерезидентов спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
+                        break;
+                    case 1://запросить список добрых нерезов
+                        clientportfolios = await _repository.GetAllFrendlyNonResidentSpotPortfolios();
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы Дружественных нерезидентов спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
+                        break;
+                    case 2://запросить список неквалов КСУР
+                        clientportfolios = await _repository.GetAllNonKvalKsurUsersSpotPortfolios();
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы Неквалов КСУР спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
+                        break;
+                    case 3://запросить список неквалов КПУР
+                        clientportfolios = await _repository.GetAllNonKvalKpurUsersSpotPortfolios();
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы Неквалов КПУР спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
+                        break;
+                    case 4://запросить список квалов КПУР
+                        clientportfolios = await _repository.GetAllKvalKpurUsersSpotPortfolios();
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы Квалов КПУР спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
+                        break;
+                    case 5://запрет торговли на валюте - для всех нерезидентов, дружественных и не дружественных.
+                        MatrixClientCodeModelResponse frendlyNeRez = await _repository.GetAllFrendlyNonResidentCdPortfolios();//запросить список добрых нерезов
+                        MatrixClientCodeModelResponse enemyNeRez = await _repository.GetAllEnemyNonResidentCdPortfolios();//запросить список злых нерезов
+                        
+                        message.Body = message.Body + 
+                            $"<p>Найдено в БД Матрицы " +
+                            $"<br />Вражеских нерезидентов CD портфелей {enemyNeRez.MatrixClientCodesList.Count}" +
+                            $"<br />Дружественных нерезидентов CD портфелей {frendlyNeRez.MatrixClientCodesList.Count}</p>";
+
+                        //объеденить списки в общий список clientportfolios
+                        if (frendlyNeRez.Response.IsSuccess)
+                        {
+                            if (frendlyNeRez.MatrixClientCodesList is not null)
+                            {
+                                clientportfolios.MatrixClientCodesList.AddRange(frendlyNeRez.MatrixClientCodesList);
+                            }
+                        }
+                        else
+                        {
+                            result.IsSuccess = false;
+                            result.Messages.AddRange(frendlyNeRez.Response.Messages);
+                        }
+
+                        if (enemyNeRez.Response.IsSuccess)
+                        {
+                            if (enemyNeRez.MatrixClientCodesList is not null)
+                            {
+                                clientportfolios.MatrixClientCodesList.AddRange(enemyNeRez.MatrixClientCodesList);
+                            }
+                        }
+                        else
+                        {
+                            result.IsSuccess = false;
+                            result.Messages.AddRange(enemyNeRez.Response.Messages);
+                        }
+
+                        break;
+
+                    case 6:// все кпур и ксур клиенты, квалы и не квалы - в общий список Cd портфелей
+                        MatrixClientCodeModelResponse kvalKPUR = await _repository.GetAllKvalKpurUsersCdPortfolios();//запросить список квалов КПУР
+                        MatrixClientCodeModelResponse kvalKSUR = await _repository.GetAllKvalKsurUsersCdPortfolios();//запросить список квалов КСУР
+                        MatrixClientCodeModelResponse nonKvalKPUR = await _repository.GetAllNonKvalKpurUsersCdPortfolios();//запросить список НЕ квалов КПУР
+                        MatrixClientCodeModelResponse nonKvalKSUR = await _repository.GetAllNonKvalKsurUsersCdPortfolios();//запросить список НЕ квалов КСУР
+
+                        message.Body = message.Body +
+                            $"<p>Найдено в БД Матрицы " +
+                            $"<br />Квалов КПУР CD портфелей {kvalKPUR.MatrixClientCodesList.Count}" +
+                            $"<br />Квалов КСУР CD портфелей {kvalKSUR.MatrixClientCodesList.Count}" +
+                            $"<br />НЕ квалов КПУР CD портфелей {nonKvalKPUR.MatrixClientCodesList.Count}" +
+                            $"<br />НЕ квалов КСУР CD портфелей {nonKvalKSUR.MatrixClientCodesList.Count}</p>";
+
+                        //объеденить списки в общий список clientportfolios
+                        if (kvalKPUR.Response.IsSuccess)
+                        {
+                            if (kvalKPUR.MatrixClientCodesList is not null)
+                            {
+                                clientportfolios.MatrixClientCodesList.AddRange(kvalKPUR.MatrixClientCodesList);
+                            }
+                        }
+                        else
+                        {
+                            clientportfolios.Response.IsSuccess = false;
+                            clientportfolios.Response.Messages.AddRange(kvalKPUR.Response.Messages);
+                        }
+
+                        if (kvalKSUR.Response.IsSuccess)
+                        {
+                            if (kvalKSUR.MatrixClientCodesList is not null)
+                            {
+                                clientportfolios.MatrixClientCodesList.AddRange(kvalKSUR.MatrixClientCodesList);
+                            }
+                        }
+                        else
+                        {
+                            clientportfolios.Response.IsSuccess = false;
+                            clientportfolios.Response.Messages.AddRange(kvalKSUR.Response.Messages);
+                        }
+
+                        if (nonKvalKPUR.Response.IsSuccess)
+                        {
+                            if (nonKvalKPUR.MatrixClientCodesList is not null)
+                            {
+                                clientportfolios.MatrixClientCodesList.AddRange(nonKvalKPUR.MatrixClientCodesList);
+                            }
+                        }
+                        else
+                        {
+                            clientportfolios.Response.IsSuccess = false;
+                            clientportfolios.Response.Messages.AddRange(nonKvalKPUR.Response.Messages);
+                        }
+
+                        if (nonKvalKSUR.Response.IsSuccess)
+                        {
+                            if (nonKvalKSUR.MatrixClientCodesList is not null)
+                            {
+                                clientportfolios.MatrixClientCodesList.AddRange(nonKvalKSUR.MatrixClientCodesList);
+                            }
+                        }
+                        else
+                        {
+                            clientportfolios.Response.IsSuccess = false;
+                            clientportfolios.Response.Messages.AddRange(nonKvalKSUR.Response.Messages);
+                        }
+                        break;
+                }
+
+                //установить список в шаблон по комиссии Quik БРЛ
+                message.Body = message.Body + $"<h4>Установка списка в БРЛ шаблон  по комиссии {templateNames[i]}</h4>";
+
+                if (clientportfolios.Response.IsSuccess)
+                {
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii " +
+                        $"clientportfolios count {clientportfolios.MatrixClientCodesList.Count}");
+
+                    // это нужно чтобы затереть старые данные любым кодом клиента
+                    if (clientportfolios.MatrixClientCodesList.Count < 1)
+                    {
+                        message.Body = message.Body + $"<p>Пустой список заменяем на подставного клиента BP00001-MS-99, для перезаписи ранее установленного списка</p>";
+                        _logger.LogDebug($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii " +
+                            $"Пустой список заменяем на подставного клиента BP00001-MS-99");
+                        clientportfolios.MatrixClientCodesList.Add(
+                            new MatrixClientPortfolioModel() 
+                            { 
+                                MatrixClientPortfolio = "BP00001-MS-99"
+                            });
+                    }
+
+                    TemplateAndMatrixCodesModel templateAndMatrixCodes = new TemplateAndMatrixCodesModel()
+                    {
+                        MatrixClientPortfolio = clientportfolios.MatrixClientCodesList.ToArray(),
+                        Template = templateNames[i]
+                    };
+
+                    ListStringResponseModel setCodeToTemplatePoKomissii = await _repository.SetClientsToTemplatePoKomissii(templateAndMatrixCodes);
+                    if (setCodeToTemplatePoKomissii.IsSuccess == false)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii " +
+                            $"Ошибка установки списка клиентов в шаблон {templateNames[i]} ");
+
+                        foreach (var text in setCodeToTemplatePoKomissii.Messages)
+                        {
+                            _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} - {text}");
+                            message.Body = message.Body + $"<p style='color:red'>Ошибка установки в {templateNames[i]}: {text}</p>";
+                        }
+
+                        result.IsSuccess = false;
+                        result.Messages.AddRange(setCodeToTemplatePoKomissii.Messages);
+                    }
+                    else
+                    {
+                        message.Body = message.Body + $"<p>Установка в {templateNames[i]} успешна</p>";
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii Ошибка запроса списка клиентов ");
+
+                    foreach (var text in clientportfolios.Response.Messages)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} - {text}");
+                        message.Body = message.Body + $"<p style='color:red'>Ошибка запроса списка клиентов {text}</p>";
+                    }
+
+                    result.IsSuccess = false;
+                    result.Messages.AddRange(clientportfolios.Response.Messages);
+                }
+            }
+
+            message.Body = message.Body + "</body></html>";
+
+            if (sendReport)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii отправляем почту");
+                await _sender.Send(message);
+            }
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii all done");
+            return result;
+        }
+
+        private List<string> RemoveCodeIfFinded(List<string> codesFromCurrClntsXML, List<FortsClientCodeModel> source)
+        {
+            //идем от конца, чтобы удалять из list можно было без ошибок
+            for (int i = codesFromCurrClntsXML.Count - 1; i >= 0; i--)
+            {
+                string matrixCode = PortfoliosConvertingService.GetMatrixFortsCode(codesFromCurrClntsXML[i]);
+
+                foreach (var code in source)
+                {
+                    if (code.FortsClientCode.Equals(matrixCode))
+                    {
+                        codesFromCurrClntsXML.RemoveAt(i);
+                    }
+                }
+            }
+
+            return codesFromCurrClntsXML;
+        }
+
+        private List<string> GetFortsCodesFromCurrClntsXml(string filePathToCurrClntsXml)
+        {
+            List<string> result = new List<string>();
+
+            XmlDocument xDoc = new XmlDocument();
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            using (var sr = new StreamReader(filePathToCurrClntsXml, Encoding.GetEncoding("windows-1251"))) xDoc.Load(sr);
+            // получим корневой элемент
+            XmlElement xRoot = xDoc.DocumentElement;
+            // обход всех узлов в корневом элементе
+            foreach (XmlNode xnode in xRoot)
+            {
+                string futCodes = "";
+
+                // обходим все дочерние узлы
+                foreach (XmlNode childnode in xnode.ChildNodes)
+                {
+                    if (childnode.Name == "Classes")
+                    {
+                        if (childnode.Attributes.GetNamedItem("FirmID").Value.Contains("SPBFUT"))
+                        {
+                            if (!childnode.InnerText.Equals("INSTR_RF"))
+                            {
+                                futCodes = childnode.Attributes.GetNamedItem("ClientCodes").Value;
+
+                                if (futCodes.Length > 0)
+                                {
+                                    string[] codesSplitted = futCodes.Split(", ");
+                                    foreach (string code in codesSplitted)
+                                    {
+                                        if (code.Contains("SPBFUT"))
+                                        {
+                                            if (!result.Contains(code))
+                                            {
+                                                result.Add(code);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> RenewClientsInFortsTemplatesPoKomissii(bool sendReport)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Called");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+            NewEMail message = new NewEMail();
+            message.Subject = "QUIK обновление шаблонов 'По комиссии' в Qadmin SPBFUT библиотеке";
+            message.Body = "<html><body><h2>QUIK обновление шаблона По комиссии фортс 'RF_Restrict'</h2>";
+
+            // запрет торговли по срочному рынку
+
+            // Все QUIK коды срочки берутся из файла xml
+
+            // 1. берем список ВСЕХ вражеских нерезов не зависимо от Q и оставляем только те что есть в XML
+            // должен остаться allEnemyNonResident(list) с кодами встреченными в codesFromCurrClntsXML
+            // 2. берем всех
+            //      квалов
+            //      неквалов сдавших тест 16
+            // и вычитаем эти коды из файла xml - должен остаться codesFromCurrClntsXML без кодов квалов и тестированных
+            // остатки 1 и 2 объеденяем и загружаем в шаблон RF_Restrict
+
+            string filePathToCurrClntsXml = _settings.PathToCurrClntsXml;
+            if (!File.Exists(filePathToCurrClntsXml))
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} Error! File CurrClnts.xml not found at " + filePathToCurrClntsXml);
+                message.Body = message.Body + $"<p style='color:red'>Error! File CurrClnts.xml not found at {filePathToCurrClntsXml}</p>";
+            }
+            else
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii " +
+                    $"CurrClnts.xml from {File.GetCreationTime(filePathToCurrClntsXml)} finded");
+                message.Body = message.Body + $"<p>Файл CurrClnts.xml created: {File.GetCreationTime(filePathToCurrClntsXml)} </p>";
+                List<string> codesFromCurrClntsXML = GetFortsCodesFromCurrClntsXml(filePathToCurrClntsXml);//список всех кодов срочки из CurrClnts.xml
+                message.Body = message.Body + $"<p>Найдено кодов срочного рынка в CurrClnts.xml: {codesFromCurrClntsXML.Count}</p>";
+
+                //1
+                FortsClientCodeModelResponse allEnemyNonResident = await _repository.GetAllEnemyNonResidentFortsCodes();// список ВСЕХ вражеских нерезов не зависимо от Q
+                //2
+                FortsClientCodeModelResponse allKvalClientsFortsCodes = await _repository.GetAllKvalClientsFortsCodes();//всех квалов фортс                                                                                                                 //      квалов
+                FortsClientCodeModelResponse allNonKvalWithTest16FortsCodes = await _repository.GetAllNonKvalWithTest16FortsCodes();//всех неквалов фортс сдавших тест 16
+
+                if (allEnemyNonResident.Response.IsSuccess)
+                {
+                    message.Body = message.Body + $"<p>Найдено кодов срочного рынка всех вражеских нерезов не зависимо от торговой системы: " +
+                        $"{allEnemyNonResident.FortsClientCodesList.Count}</p>";
+                }
+                else
+                {
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInTemplatesPoKomissii Ошибка " +
+                        $"при получении кодов срочного рынка ВСЕХ вражеских нерезов не зависимо от торговой системы");
+
+                    message.Body = message.Body + $"<p style='color:red'>Ошибка при получении кодов срочного рынка ВСЕХ вражеских нерезов не зависимо от торговой системы</p>";
+                    foreach (var text in allEnemyNonResident.Response.Messages)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка = {text}");
+                        message.Body = message.Body + $"<p style='color:red'> - {text}</p>";
+                    }
+                }
+
+                if (allKvalClientsFortsCodes.Response.IsSuccess)
+                {
+                    message.Body = message.Body + $"<p>Найдено кодов срочного рынка всех квалов фортс не зависимо от торговой системы: " +
+                        $"{allKvalClientsFortsCodes.FortsClientCodesList.Count}</p>";
+                }
+                else
+                {
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка " +
+                        $"при получении кодов срочного рынка всех квалов фортс не зависимо от торговой системы");
+
+                    message.Body = message.Body + $"<p style='color:red'>Ошибка при получении кодов срочного рынка всех квалов фортс не зависимо от торговой системы</p>";
+                    foreach (var text in allKvalClientsFortsCodes.Response.Messages)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка = {text}");
+                        message.Body = message.Body + $"<p style='color:red'> - {text}</p>";
+                    }
+                }
+
+                if (allNonKvalWithTest16FortsCodes.Response.IsSuccess)
+                {
+                    message.Body = message.Body + $"<p>Найдено кодов срочного рынка всех неквалов фортс сдавших тест 16 не зависимо от торговой системы: " +
+                        $"{allNonKvalWithTest16FortsCodes.FortsClientCodesList.Count}</p>";
+                }
+                else
+                {
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка " +
+                        $"при получении кодов срочного рынка всех неквалов фортс сдавших тест 16 не зависимо от торговой системы");
+
+                    message.Body = message.Body + $"<p style='color:red'>Ошибка при получении кодов срочного рынка всех неквалов фортс сдавших тест 16 не зависимо от торговой системы</p>";
+                    foreach (var text in allNonKvalWithTest16FortsCodes.Response.Messages)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка = {text}");
+                        message.Body = message.Body + $"<p style='color:red'> - {text}</p>";
+                    }
+                }
+
+                if (allEnemyNonResident.Response.IsSuccess && allKvalClientsFortsCodes.Response.IsSuccess && allNonKvalWithTest16FortsCodes.Response.IsSuccess)
+                {
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii all db request is ok, work with data");
+
+                    message.Body = message.Body + $"<h3>Обработка полученных из БД матрицы данных</h3>";
+                    // 1. берем список ВСЕХ вражеских нерезов не зависимо от Q и оставляем только те что есть в XML
+                    //идем от конца, чтобы удалять из list можно было без ошибок
+                    for (int i = allEnemyNonResident.FortsClientCodesList.Count - 1; i >= 0; i--)
+                    {
+                        //переведем в формат Q для сравнения
+                        string quikCode = PortfoliosConvertingService.GetQuikFortsCode(allEnemyNonResident.FortsClientCodesList[i].FortsClientCode);
+
+                        //если кода нет, удаляем, нам он не интересен
+                        if (!codesFromCurrClntsXML.Contains(quikCode))
+                        {
+                            allEnemyNonResident.FortsClientCodesList.RemoveAt(i);
+                        }
+                    }
+
+                    message.Body = message.Body + $"<p>Совпадений всех вражеских нерезов с CurrClnts.xml: {allEnemyNonResident.FortsClientCodesList.Count}</p>";
+
+                    // 2. берем всех
+                    //      квалов
+                    //      неквалов сдавших тест 16
+                    // и вычитаем эти коды из файла xml - должен остаться codesFromCurrClntsXML без кодов квалов и тестированных
+                    codesFromCurrClntsXML = RemoveCodeIfFinded(codesFromCurrClntsXML, allKvalClientsFortsCodes.FortsClientCodesList);
+                    message.Body = message.Body + $"<p>Осталось в CurrClnts.xml после удаления кодов всех квалов: {codesFromCurrClntsXML.Count}</p>";
+                    codesFromCurrClntsXML = RemoveCodeIfFinded(codesFromCurrClntsXML, allNonKvalWithTest16FortsCodes.FortsClientCodesList);
+                    message.Body = message.Body + $"<p>Осталось в CurrClnts.xml после удаления кодов всех неквалов с тестом 16: {codesFromCurrClntsXML.Count}</p>";
+
+                    //коды quik формата заменяем на формат матрицы
+                    for (int i = 0; i < codesFromCurrClntsXML.Count; i++)
+                    {
+                        codesFromCurrClntsXML[i] = PortfoliosConvertingService.GetMatrixFortsCode(codesFromCurrClntsXML[i]);
+                    }
+
+                    //объеденяем списки
+                    foreach (var code in codesFromCurrClntsXML)
+                    {
+                        FortsClientCodeModel model = new FortsClientCodeModel();
+                        model.FortsClientCode = code;
+                        allEnemyNonResident.FortsClientCodesList.Add(model);
+                    }
+
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii отправляем список с кодами " +
+                        $"{allEnemyNonResident.FortsClientCodesList.Count} в QUIK БРЛ SPBEX");
+                    message.Body = message.Body + $"<p>В общем списке запрещенных кодов: {allEnemyNonResident.FortsClientCodesList.Count}</p>";                    
+
+                    //выгружаем результат в forts шаблон по комиссии RF_Restrict
+                    TemplateAndMatrixFortsCodesModel templateAndMatrixFortsCodesModel = new TemplateAndMatrixFortsCodesModel();
+                    templateAndMatrixFortsCodesModel.Template = "RF_Restrict";
+                    templateAndMatrixFortsCodesModel.FortsClientCodes = allEnemyNonResident.FortsClientCodesList.ToArray();
+                    message.Body = message.Body + $"<h3>Выгрузка в QUIK БРЛ SPBFUT шаблон ео комиссии {templateAndMatrixFortsCodesModel.Template}</h3>";
+
+                    ListStringResponseModel setCodeToTemplatePoKomissii = await _repository.SetClientsToFortsTemplatePoKomissii(templateAndMatrixFortsCodesModel);
+                    if (setCodeToTemplatePoKomissii.IsSuccess == false)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка " +
+                            $"при установке кодов в Forts шаблон по комиссии {templateAndMatrixFortsCodesModel.Template}");
+
+                        foreach (var text in setCodeToTemplatePoKomissii.Messages)
+                        {
+                            _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка = {text}");
+
+                            message.Body = message.Body + $"<p style='color:red'>Ошибка установки в forts BRL RF_Restrict: {text}</p>";
+                        }
+
+                        result.IsSuccess = false;
+                        result.Messages.AddRange(setCodeToTemplatePoKomissii.Messages);
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii в forts BRL RF_Restrict успешна");
+                        message.Body = message.Body + $"<p>Установка в forts BRL RF_Restrict успешна</p>";
+                    }
+                }
+            }
+
+            message.Body = message.Body + "</body></html>";
+
+            if (sendReport)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Send message");
+                await _sender.Send(message);
+            }
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii all done");
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> RenewRestrictedSecuritiesInTemplatesPoKomissii(bool sendReport)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii Called");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+            NewEMail message = new NewEMail();
+            message.Subject = "QUIK обновление списков запрещенных для неквалов инструментов в шаблонах 'По комиссии' в Qadmin MC013820000 библиотеке";
+            message.Body = "<html><body>";
+
+            // запросить список инструментов в бд матрицы
+            SecurityAndBoardResponse secAndBoards = await _repository.GetRestrictedSecuritiesAndBoards();// список ВСЕХ запрещенных нерезам бумаг
+            if (secAndBoards.Response.IsSuccess)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii " +
+                    $"Найдено запрещенных для неквалов инструментов: {secAndBoards.SecurityAndBoardList.Count}");
+
+                message.Body = message.Body + $"<p>Найдено запрещенных для неквалов инструментов: " +
+                    $"{secAndBoards.SecurityAndBoardList.Count}</p>";
+            }
+            else
+            {
+                result.IsSuccess = false;
+
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii " +
+                    $"Ошибка получения запрещенных для неквалов инструментов:");
+
+                message.Body = message.Body + $"<p style='color:red'>Ошибка получения запрещенных для неквалов инструментов</p>";
+                foreach (var text in secAndBoards.Response.Messages)
+                {
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} - {text}");
+                    message.Body = message.Body + $"<p style='color:red'> - {text}</p>";
+                    result.Messages.Add(text);
+                }
+
+                return result;
+            }
+
+            //разбить список по бордам, формируя отдельные RestrictedSecuritiesArraySetForBoardInTemplatesModel
+            List<RestrictedSecuritiesArraySetForBoardInTemplatesModel> secAndBoardsSeparatesList = GenerateRestrictedSecuritiesArraySetForBoard(secAndBoards.SecurityAndBoardList);
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii " +
+                $"после сортировки количество бордов {secAndBoardsSeparatesList.Count}");
+
+            message.Body = message.Body + $"<p>После сортировки количество бордов {secAndBoardsSeparatesList.Count}</p>";
+
+            //если не пустой, выгрузить в QUIK
+            string[] templateNames = new string[]
+            {
+                "KSUR_NeKval", // 0 список неквалов КСУР
+                "KPUR_NeKval", // 1 список неквалов КПУР
+            };
+
+            foreach (string template in templateNames)
+            {
+                foreach (RestrictedSecuritiesArraySetForBoardInTemplatesModel board in secAndBoardsSeparatesList)
+                {
+                    board.TemplateName = template;
+
+                    ListStringResponseModel setRestrictedSecurityes = await _repository.SetRestrictedSecuritiesInTemplatesPoKomissii(board);
+
+                    if (setRestrictedSecurityes.IsSuccess == false)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii Ошибка " +
+                            $"отправки списка в {board.TemplateName} {board.SecBoard} с количеством {board.Securities.Count}:");
+
+                        message.Body = message.Body + $"<p style='color:red'> Ошибка отправки списка в {board.TemplateName} {board.SecBoard} с количеством {board.Securities.Count}:</p>";
+
+                        foreach (var text in setRestrictedSecurityes.Messages)
+                        {
+                            _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} - {text}");
+
+                            message.Body = message.Body + $"<p style='color:red'> - {text}</p>";
+                        }
+
+                        result.IsSuccess = false;
+                        result.Messages.AddRange(setRestrictedSecurityes.Messages);
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii " +
+                            $"Отправка списка в {board.TemplateName} {board.SecBoard} с количеством {board.Securities.Count} успешна");
+
+                        message.Body = message.Body + $"<p>Отправка списка в {board.TemplateName} {board.SecBoard} с количеством {board.Securities.Count} успешна</p>";
+                    }
+                }
+            }
+
+
+            message.Body = message.Body + "</body></html>";
+
+            if (sendReport)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Send message");
+                await _sender.Send(message);
+            }
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii all done");
+            return result;
+        }
+
+        private List<RestrictedSecuritiesArraySetForBoardInTemplatesModel> GenerateRestrictedSecuritiesArraySetForBoard(List<SecurityAndBoardModel> securityAndBoardList)
+        {
+            List<RestrictedSecuritiesArraySetForBoardInTemplatesModel> result = new List<RestrictedSecuritiesArraySetForBoardInTemplatesModel>();
+            foreach (SecurityAndBoardModel securityAndBoard in securityAndBoardList)
+            {
+                //сначала смотрим есть ли такой борд в листе result.
+                bool boardIsPresent = false;
+                foreach(var model in result)
+                {
+                    if (model.SecBoard.Contains(securityAndBoard.Board))
+                    {
+                        //просто добавим бумагу в этот список
+                        model.Securities.Add(securityAndBoard.Secutity);
+                        boardIsPresent = true;
+                        break;
+                    }
+                }
+
+                // не нашли такого борда, добавляем новый в список
+                if (!boardIsPresent)
+                {
+                    RestrictedSecuritiesArraySetForBoardInTemplatesModel newModel = new RestrictedSecuritiesArraySetForBoardInTemplatesModel();
+                    newModel.SecBoard = securityAndBoard.Board;
+                    newModel.Securities.Add(securityAndBoard.Secutity);
+                    
+                    result.Add(newModel);
+                }
+            }
+
+            return result;
         }
     }
 }

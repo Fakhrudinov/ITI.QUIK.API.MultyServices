@@ -20,9 +20,11 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> AddCdPortfolioToTemplatePoPlechu(MatrixClientPortfolioModel code);
         Task WarmUpBackOfficeDataBase();
         Task<ListStringResponseModel> GetIsUserAlreadyExistByMatrixClientAccount(string clientPortfolio);
+        Task<MatrixClientCodeModelResponse> GetAllKvalSpotPortfolios();
         Task<ListStringResponseModel> GetIsUserAlreadyExistByFortsCode(string fortsClientCode);
         Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientPortfolioModel model);
         Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model);
+        Task<ListStringResponseModel> SetKvalClientsToComplexProductRestrictions(CodesArrayModel model);
         Task<ListStringResponseModel> BlockUserByUID(int uid);
         Task<ListStringResponseModel> SetNewPubringKeyByMatrixClientCode(MatrixCodeAndPubringKeyModel model);
         Task<ListStringResponseModel> SetNewPubringKeyByFortsClientCode(FortsCodeAndPubringKeyModel model);
@@ -35,5 +37,25 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> GetAllClientsFromTemplatePoKomissii(string templateName);
         Task<ListStringResponseModel> GetAllClientsFromTemplatePoPlechu(string templateName);
         Task<BoolResponse> GetIsAllSpotPortfoliosPresentInFileCodesIni(List<string> allportfolios);
+        Task<MatrixClientCodeModelResponse> GetAllEnemyNonResidentSpotPortfolios();
+        Task<MatrixClientCodeModelResponse> GetAllFrendlyNonResidentSpotPortfolios();
+        Task<MatrixClientCodeModelResponse> GetAllNonKvalKsurUsersSpotPortfolios();
+        Task<MatrixClientCodeModelResponse> GetAllNonKvalKpurUsersSpotPortfolios();
+        Task<ListStringResponseModel> SetClientsToTemplatePoKomissii(TemplateAndMatrixCodesModel templateAndMatrixCodes);
+        Task<MatrixClientCodeModelResponse> GetAllFrendlyNonResidentCdPortfolios();
+        Task<MatrixClientCodeModelResponse> GetAllEnemyNonResidentCdPortfolios();
+        Task<MatrixClientCodeModelResponse> GetAllKvalKpurUsersCdPortfolios();
+        Task<MatrixClientCodeModelResponse> GetAllKvalKsurUsersCdPortfolios();
+        Task<PortfoliosAndTestForComplexProductResponse> GetAllNonKvalWithTestsSpotPortfolios();
+        Task<MatrixClientCodeModelResponse> GetAllNonKvalKpurUsersCdPortfolios();
+        Task<MatrixClientCodeModelResponse> GetAllNonKvalKsurUsersCdPortfolios();
+        Task<MatrixClientCodeModelResponse> GetAllKvalKpurUsersSpotPortfolios();
+        Task<FortsClientCodeModelResponse> GetAllEnemyNonResidentFortsCodes();
+        Task<FortsClientCodeModelResponse> GetAllKvalClientsFortsCodes();
+        Task<FortsClientCodeModelResponse> GetAllNonKvalWithTest16FortsCodes();
+        Task<ListStringResponseModel> SetClientsToFortsTemplatePoKomissii(TemplateAndMatrixFortsCodesModel templateAndMatrixFortsCodesModel);
+        Task<ListStringResponseModel> SetNonKvalClientsWithTestsToComplexProductRestrictions(QCodeAndListOfComplexProductsTestsModel[] qCodeAndListOfComplexProductsTestsModels);
+        Task<SecurityAndBoardResponse> GetRestrictedSecuritiesAndBoards();
+        Task<ListStringResponseModel> SetRestrictedSecuritiesInTemplatesPoKomissii(RestrictedSecuritiesArraySetForBoardInTemplatesModel board);
     }
 }

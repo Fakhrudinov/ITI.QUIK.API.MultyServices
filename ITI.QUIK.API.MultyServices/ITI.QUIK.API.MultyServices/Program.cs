@@ -3,6 +3,7 @@ using DataAbstraction.Connections;
 using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
 using LogicCore;
+using MailService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,13 +20,20 @@ builder.Services.Configure<HttpConfigurations>(
 
 // add child APIs repository
 builder.Services.AddTransient<IHttpApiRepository, HttpApiRepository>();
+builder.Services.AddTransient<IHTTPQMonitorRepository, HTTPQMonitorRepository>();
 
 // add core level
 builder.Services.AddTransient<ICore, Core>();
+builder.Services.AddTransient<ICoreKval, CoreKval>();
+
+// add Email sender
+builder.Services.AddTransient<IEMail, EMail>();
+builder.Services.Configure<SMTPMailConfig>(
+    builder.Configuration.GetSection("SMTPMailConfigurations"));
 
 // add string for pubring.txk key cleaning
-builder.Services.Configure<PubringKeyIgnoreWords>(
-    builder.Configuration.GetSection("PubringKeyIgnoreWords"));
+builder.Services.Configure<CoreSettings>(
+    builder.Configuration.GetSection("CoreSettings"));
 
 var app = builder.Build();
 

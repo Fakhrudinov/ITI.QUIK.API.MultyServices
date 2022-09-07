@@ -20,6 +20,7 @@
     <ProjectReference Include="..\DataAbstraction\DataAbstraction.csproj" />
     <ProjectReference Include="..\DataValidationService\DataValidationService.csproj" />
     <ProjectReference Include="..\LogicCore\LogicCore.csproj" />
+    <ProjectReference Include="..\MailService\MailService.csproj" />
   </ItemGroup>
 
 </Project>

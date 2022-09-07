@@ -50,8 +50,6 @@ namespace ChildHttpApiRepository
                         result.Response.IsSuccess = false;
                         result.Response.Messages.Add($"HttpApiRepository GetClientInformation response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -61,9 +59,9 @@ namespace ChildHttpApiRepository
                 result.Response.IsSuccess = false;
                 result.Response.Messages.Add($"(404) HttpApiRepository GetClientInformation request url NotFound; {ex.Message}");
                 result.Response.Messages.Add(_connections.MatrixAPIConnectionString + "/api/DBClient/GetUser/PersonalInfo/" + clientCode);
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<MatrixToFortsCodesMappingResponse> GetClientNonEdpFortsCodes(string clientCode)
@@ -106,8 +104,6 @@ namespace ChildHttpApiRepository
                         result.Response.IsSuccess = false;
                         result.Response.Messages.Add($"HttpApiRepository GetClientsFortsCodes response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -117,9 +113,9 @@ namespace ChildHttpApiRepository
                 result.Response.IsSuccess = false;
                 result.Response.Messages.Add($"(404) HttpApiRepository GetClientsFortsCodes request url NotFound; {ex.Message}");
                 result.Response.Messages.Add(_connections.MatrixAPIConnectionString + request);
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task WarmUpBackOfficeDataBase()
@@ -180,8 +176,6 @@ namespace ChildHttpApiRepository
                         result.Response.IsSuccess = false;
                         result.Response.Messages.Add($"HttpApiRepository GetClientBOInformation response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -191,9 +185,9 @@ namespace ChildHttpApiRepository
                 result.Response.IsSuccess = false;
                 result.Response.Messages.Add($"(404) HttpApiRepository GetClientBOInformation request url NotFound;  {ex.Message}");
                 result.Response.Messages.Add(_connections.MatrixAPIConnectionString + "/api/DBClient/GetUser/PersonalInfo/BackOffice/" + clientCode);
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<MatrixClientCodeModelResponse> GetClientAllSpotCodesFiltered(string clientCode)
@@ -224,8 +218,6 @@ namespace ChildHttpApiRepository
                         result.Response.IsSuccess = false;
                         result.Response.Messages.Add($"HttpApiRepository GetClientAllSpotCodesFiltered response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -235,9 +227,9 @@ namespace ChildHttpApiRepository
                 result.Response.IsSuccess = false;
                 result.Response.Messages.Add($"(404) HttpApiRepository GetClientAllSpotCodesFiltered request url NotFound; {ex.Message}");
                 result.Response.Messages.Add(_connections.MatrixAPIConnectionString + "/api/DBClient/GetUser/SpotPortfolios/Filtered/" + clientCode);
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> CreateNewClientOptionWorkshop(NewClientOptionWorkShopModel newClientModel)
@@ -272,8 +264,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository CreateNewClientOptionWorkshop response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -283,9 +273,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository CreateNewClientOptionWorkshop request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/NewClient/OptionWorkshop");
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> CreateNewClient(NewClientModel newClientModel)
@@ -320,8 +310,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository CreateNewClient response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -331,9 +319,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository CreateNewClient request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/NewClient");
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> GetResultFromQuikSFTPFileUpload(string file)
@@ -364,8 +352,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository GetResultFromQuikSFTPFileUpload response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -375,9 +361,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository GetResultFromQuikSFTPFileUpload request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/GetResultOfXMLFileUpload?file=" + file);
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> FillCodesIniFile(CodesArrayModel codesArray)
@@ -412,8 +398,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository FillCodesIniFile response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -423,9 +407,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository FillCodesIniFile request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/AddClientCodesToFileCodesIni");
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> FillDataBaseInstrTW(NewMNPClientModel newMNPClient)
@@ -460,8 +444,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository FillDataBaseInstrTW response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -471,9 +453,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository FillDataBaseInstrTW request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikDataBase/Set/NewClient/ToMNP");
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> AddCdPortfolioToTemplateKomissii(MatrixClientPortfolioModel code)
@@ -508,8 +490,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository AddCdPortfolioToTemplateKomissii response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -519,9 +499,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository AddCdPortfolioToTemplateKomissii request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/AddMatrixClientPortfolioTo/KomissiiTemplate/CD_portfolio");
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> AddCdPortfolioToTemplatePoPlechu(MatrixClientPortfolioModel code)
@@ -556,8 +536,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository AddCdPortfolioToTemplatePoPlechu response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -567,9 +545,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository AddCdPortfolioToTemplatePoPlechu request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/AddMatrixClientPortfolioTo/PoPlechuTemplate/CD_portfolio");
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> GetIsUserAlreadyExistByMatrixClientAccount(string clientAccount)
@@ -600,8 +578,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository GetIsUserAlreadyExistByMatrixClientAccount response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -611,9 +587,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository GetIsUserAlreadyExistByMatrixClientAccount request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/UID/byMatrixClientAccount?MatrixClientAccount=" + clientAccount);
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> GetIsUserAlreadyExistByCodeArray(string [] clientCodesArray)
@@ -649,8 +625,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository GetIsUserAlreadyExistByCodeArray response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -660,9 +634,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository GetIsUserAlreadyExistByCodeArray request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/UID/byMatrixCodesArray?" + codesAtRequest);
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> GetIsUserAlreadyExistByFortsCode(string fortsClientCode)
@@ -693,8 +667,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository GetIsUserAlreadyExistByFortsCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -704,9 +676,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository GetIsUserAlreadyExistByFortsCode request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/UID/byFortsCode?FortsClientCode=" + fortsClientCode);
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientPortfolioModel model)
@@ -741,8 +713,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository BlockUserByMatrixClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -752,9 +722,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository BlockUserByMatrixClientCode request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/BlockUserBy/MatrixClientCode");
-
-                return result;
             }
+
+            return result;
         }
         public async Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model)
         {
@@ -788,8 +758,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository BlockUserByFortsClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -799,9 +767,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository BlockUserByFortsClientCode request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/BlockUserBy/FortsClientCode");
-
-                return result;
             }
+
+            return result;
         }
         public async Task<ListStringResponseModel> BlockUserByUID(int uid)
         {
@@ -830,8 +798,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository BlockUserByUID response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -841,9 +807,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository BlockUserByUID request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/BlockUserBy/UID/" + uid);
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> SetNewPubringKeyByMatrixClientCode(MatrixCodeAndPubringKeyModel model)
@@ -877,8 +843,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository SetNewPubringKeyByMatrixClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -888,9 +852,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository SetNewPubringKeyByMatrixClientCode request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/SetNewPubringKeyBy/MatrixClientCode");
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> SetNewPubringKeyByFortsClientCode(FortsCodeAndPubringKeyModel model)
@@ -924,8 +888,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository SetNewPubringKeyByFortsClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -935,9 +897,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository SetNewPubringKeyByFortsClientCode request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/SetNewPubringKeyBy/FortsClientCode");
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientPortfolioModel model)
@@ -971,8 +933,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository SetAllTradesByMatrixClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -982,9 +942,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository SetAllTradesByMatrixClientCode request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/SetAllTrades/ByMatrixClientCode");
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model)
@@ -1018,8 +978,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository SetAllTradesByFortsClientCode response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -1029,9 +987,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository SetAllTradesByFortsClientCode request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/SetAllTradesBy/FortsClientCode");
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> GenerateNewFileCurrClnts()
@@ -1062,8 +1020,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository GenerateNewFileCurrClnts response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -1073,9 +1029,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository GenerateNewFileCurrClnts request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/RequestFile/CurrClnts");
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task DownloadNewFileCurrClnts()
@@ -1147,8 +1103,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository GetRecordsFromInstrTwDataBase response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -1158,9 +1112,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository GetRecordsFromInstrTwDataBase request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikDataBase/Get/RegisteredCodes?" + codesAtRequest);
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> GetAllClientsFromTemplatePoKomissii(string templateName)
@@ -1192,8 +1146,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository GetAllClientsFromTemplatePoKomissii response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -1203,9 +1155,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository CheckCdPortfolioExistAtTemplatePoKomissii request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/GetAllClientsFromTemplate/PoKomissii/" + templateName);
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<ListStringResponseModel> GetAllClientsFromTemplatePoPlechu(string templateName)
@@ -1237,8 +1189,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository GetAllClientsFromTemplatePoPlechu response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -1248,9 +1198,9 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository GetAllClientsFromTemplatePoPlechu request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/GetAllClientsFromTemplate/PoPlechu/" + templateName);
-
-                return result;
             }
+
+            return result;
         }
 
         public async Task<BoolResponse> GetIsAllSpotPortfoliosPresentInFileCodesIni(List<string> allportfolios)
@@ -1288,8 +1238,6 @@ namespace ChildHttpApiRepository
                         result.IsSuccess = false;
                         result.Messages.Add($"HttpApiRepository GetIsAllSpotPortfoliosPresentInFileCodesIni response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
-
-                    return result;
                 }
             }
             catch (Exception ex)
@@ -1299,9 +1247,548 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository GetIsAllSpotPortfoliosPresentInFileCodesIni request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/ClientCodes/IsPresentIn/FileCodesIni?" + codesAtRequest);
-
-                return result;
             }
+
+            return result;
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllEnemyNonResidentSpotPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllEnemyNonResidentSpotPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/Enemy/NonResident/Spot/Portfolios");
+
+            return result;
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllFrendlyNonResidentSpotPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllFrendlyNonResidentSpotPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/Frendly/NonResident/Spot/Portfolios");
+
+            return result;
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllNonKvalKsurUsersSpotPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllNonKvalKsurUsersSpotPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/NonKvalUsers/KSUR/Spot/Portfolios");
+
+            return result;
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllNonKvalKpurUsersSpotPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllNonKvalKpurUsersSpotPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/NonKvalUsers/KPUR/Spot/Portfolios");
+
+            return result;           
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllFrendlyNonResidentCdPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllFrendlyNonResidentCdPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/Frendly/NonResident/Cd/Portfolios");
+
+            return result;
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllEnemyNonResidentCdPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllEnemyNonResidentCdPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/Enemy/NonResident/Cd/Portfolios");
+
+            return result;
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllKvalKpurUsersSpotPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllKvalKpurUsersSpotPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/KvalUsers/KPUR/Spot/Portfolios");
+
+            return result;
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllKvalKpurUsersCdPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllKvalKpurUsersCdPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/KvalUsers/KPUR/Cd/Portfolios");
+
+            return result;
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllKvalKsurUsersCdPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllKvalKsurUsersCdPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/KvalUsers/KSUR/Cd/Portfolios");
+
+            return result;
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllNonKvalKpurUsersCdPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllNonKvalKpurUsersCdPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/NonKvalUsers/KPUR/Cd/Portfolios");
+
+            return result;
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllNonKvalKsurUsersCdPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllNonKvalKsurUsersCdPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/NonKvalUsers/KSUR/Cd/Portfolios");
+
+            return result;
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllKvalSpotPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllKvalSpotPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/KvalUsers/Spot/Portfolios");
+
+            return result;
+        }
+
+        private async Task<MatrixClientCodeModelResponse> GetPortfoliosByApiLink(string apiLink)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetPortfoliosByApiLink Called for {apiLink}");
+
+            MatrixClientCodeModelResponse result = new MatrixClientCodeModelResponse();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.MatrixAPIConnectionString + apiLink);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<MatrixClientCodeModelResponse>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetPortfoliosByApiLink {apiLink} succes is {result.Response.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetPortfoliosByApiLink response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.Response.IsSuccess = false;
+                        result.Response.Messages.Add($"HttpApiRepository GetMsPortfoliosByApiLink response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetPortfoliosByApiLink request url {apiLink} NotFound; {ex.Message}");
+
+                result.Response.IsSuccess = false;
+                result.Response.Messages.Add($"(404) HttpApiRepository GetMsPortfoliosByApiLink request url {apiLink} NotFound; {ex.Message}");
+                result.Response.Messages.Add(_connections.MatrixAPIConnectionString + apiLink);
+            }
+
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> SetClientsToTemplatePoKomissii(TemplateAndMatrixCodesModel templateAndMatrixCodes)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetClientsToTemplatePoKomissii Called for {templateAndMatrixCodes.Template}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    string bodyJson = JsonSerializer.Serialize(templateAndMatrixCodes);
+                    StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/ReplaceAllCodesMatrixInTemplate/PoKomisii", stringContent);
+
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetClientsToTemplatePoKomissii success for {templateAndMatrixCodes.Template}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetClientsToTemplatePoKomissii response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository SetClientsToTemplatePoKomissii response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetClientsToTemplatePoKomissii request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository SetClientsToTemplatePoKomissii request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/ReplaceAllCodesMatrixInTemplate/PoKomisii");
+            }
+
+            return result;
+        }
+
+        public async Task<FortsClientCodeModelResponse> GetAllEnemyNonResidentFortsCodes()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllEnemyNonResidentFortsCodes Called");
+
+            FortsClientCodeModelResponse result = await GetFortsPortfoliosByApiLink("/api/KvalInvestors/GetAll/Enemy/NonResident/Forts/Codes");
+
+            return result;
+        }
+
+        public async Task<FortsClientCodeModelResponse> GetAllKvalClientsFortsCodes()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllKvalClientsFortsCodes Called");
+
+            FortsClientCodeModelResponse result = await GetFortsPortfoliosByApiLink("/api/KvalInvestors/GetAll/KvalUsers/Forts/Codes");
+
+            return result;
+        }
+
+        public async Task<FortsClientCodeModelResponse> GetAllNonKvalWithTest16FortsCodes()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllNonKvalWithTest16FortsCodes Called");
+
+            FortsClientCodeModelResponse result = await GetFortsPortfoliosByApiLink("/api/KvalInvestors/GetAll/NonKvalUsers/WithTest16/Forts/Codes");
+
+            return result;
+        }
+
+        private async Task<FortsClientCodeModelResponse> GetFortsPortfoliosByApiLink(string apiLink)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetFortsPortfoliosByApiLink Called for {apiLink}");
+
+            FortsClientCodeModelResponse result = new FortsClientCodeModelResponse();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.MatrixAPIConnectionString + apiLink);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<FortsClientCodeModelResponse>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetFortsPortfoliosByApiLink {apiLink} succes is {result.Response.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetFortsPortfoliosByApiLink response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.Response.IsSuccess = false;
+                        result.Response.Messages.Add($"HttpApiRepository GetFortsPortfoliosByApiLink response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetFortsPortfoliosByApiLink request url {apiLink} NotFound; {ex.Message}");
+
+                result.Response.IsSuccess = false;
+                result.Response.Messages.Add($"(404) HttpApiRepository GetFortsPortfoliosByApiLink request url {apiLink} NotFound; {ex.Message}");
+                result.Response.Messages.Add(_connections.MatrixAPIConnectionString + apiLink);
+            }
+
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> SetClientsToFortsTemplatePoKomissii(TemplateAndMatrixFortsCodesModel model)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetClientsToFortsTemplatePoKomissii Called for {model.Template}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    string bodyJson = JsonSerializer.Serialize(model);
+                    StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync(_connections.QuikAPIConnectionString + "/api/QuikQAdminFortsApi/ReplaceAll/MatrixFortsCode/InTemplate/PoKomisii", stringContent);
+
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetClientsToFortsTemplatePoKomissii success for {model.Template}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetClientsToFortsTemplatePoKomissii response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository SetClientsToFortsTemplatePoKomissii response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetClientsToFortsTemplatePoKomissii request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository SetClientsToFortsTemplatePoKomissii request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikQAdminFortsApi/ReplaceAll/MatrixFortsCode/InTemplate/PoKomisii");
+            }
+
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> SetKvalClientsToComplexProductRestrictions(CodesArrayModel model)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetKvalClientsToComplexProductRestrictions Called");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    string bodyJson = JsonSerializer.Serialize(model);
+                    StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync(_connections.QuikAPIConnectionString + "/api/KvalAndTests/Replace/KvalInvestorsList", stringContent);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetKvalClientsToComplexProductRestrictions success");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetKvalClientsToComplexProductRestrictions response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository SetKvalClientsToComplexProductRestrictions response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetKvalClientsToComplexProductRestrictions request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository SetKvalClientsToComplexProductRestrictions request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/KvalAndTests/Replace/KvalInvestorsList");
+            }
+
+            return result;
+        }
+
+        public async Task<PortfoliosAndTestForComplexProductResponse> GetAllNonKvalWithTestsSpotPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllNonKvalWithTestsSpotPortfolios Called");
+
+            PortfoliosAndTestForComplexProductResponse result = new PortfoliosAndTestForComplexProductResponse();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/KvalInvestors/GetAll/NonKvalUsers/SpotPortfolios/and/TestForComplexProduct");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<PortfoliosAndTestForComplexProductResponse>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllNonKvalWithTestsSpotPortfolios succes is {result.Response.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllNonKvalWithTestsSpotPortfolios response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.Response.IsSuccess = false;
+                        result.Response.Messages.Add($"HttpApiRepository GetAllNonKvalWithTestsSpotPortfolios response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllNonKvalWithTestsSpotPortfolios request url NotFound; {ex.Message}");
+
+                result.Response.IsSuccess = false;
+                result.Response.Messages.Add($"(404) HttpApiRepository GetAllNonKvalWithTestsSpotPortfolios request url NotFound; {ex.Message}");
+                result.Response.Messages.Add(_connections.MatrixAPIConnectionString + "/api/KvalInvestors/GetAll/NonKvalUsers/SpotPortfolios/and/TestForComplexProduct");
+            }
+
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> SetNonKvalClientsWithTestsToComplexProductRestrictions(QCodeAndListOfComplexProductsTestsModel[] model)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNonKvalClientsWithTestsToComplexProductRestrictions Called");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    string bodyJson = JsonSerializer.Serialize(model);
+                    StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync(_connections.QuikAPIConnectionString + "/api/KvalAndTests/Replace/NonKvalInvestorsWithTestsArray", stringContent);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNonKvalClientsWithTestsToComplexProductRestrictions success");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNonKvalClientsWithTestsToComplexProductRestrictions response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository SetNonKvalClientsWithTestsToComplexProductRestrictions response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetNonKvalClientsWithTestsToComplexProductRestrictions request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository SetNonKvalClientsWithTestsToComplexProductRestrictions request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/KvalAndTests/Replace/NonKvalInvestorsWithTestsArray");
+            }
+
+            return result;
+        }
+
+        public async Task<SecurityAndBoardResponse> GetRestrictedSecuritiesAndBoards()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetRestrictedSecuritiesAndBoards Called");
+
+            SecurityAndBoardResponse result = new SecurityAndBoardResponse();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/Securities/Get/Securities/SpotBlackList/ForNekval");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<SecurityAndBoardResponse>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetRestrictedSecuritiesAndBoards succes is {result.Response.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetRestrictedSecuritiesAndBoards response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.Response.IsSuccess = false;
+                        result.Response.Messages.Add($"HttpApiRepository GetRestrictedSecuritiesAndBoards response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetRestrictedSecuritiesAndBoards request url NotFound; {ex.Message}");
+
+                result.Response.IsSuccess = false;
+                result.Response.Messages.Add($"(404) HttpApiRepository GetRestrictedSecuritiesAndBoards request url NotFound; {ex.Message}");
+                result.Response.Messages.Add(_connections.MatrixAPIConnectionString + "/api/Securities/Get/Securities/SpotBlackList/ForNekval");
+            }
+
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> SetRestrictedSecuritiesInTemplatesPoKomissii(RestrictedSecuritiesArraySetForBoardInTemplatesModel model)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetRestrictedSecuritiesInTemplatesPoKomissii Called");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    string bodyJson = JsonSerializer.Serialize(model);
+                    StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/ReplaceAll/RestrictedSecurities/InTemplate/PoKomisii", stringContent);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetRestrictedSecuritiesInTemplatesPoKomissii success");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetRestrictedSecuritiesInTemplatesPoKomissii response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository SetRestrictedSecuritiesInTemplatesPoKomissii response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository SetRestrictedSecuritiesInTemplatesPoKomissii request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository SetRestrictedSecuritiesInTemplatesPoKomissii request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/ReplaceAll/RestrictedSecurities/InTemplate/PoKomisii");
+            }
+
+            return result;
         }
     }
 }
