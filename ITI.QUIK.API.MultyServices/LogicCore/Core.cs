@@ -1233,7 +1233,7 @@ namespace LogicCore
             {
                 _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii " +
                     $"CurrClnts.xml from {File.GetCreationTime(filePathToCurrClntsXml)} finded");
-                message.Body = message.Body + $"<p>Файл CurrClnts.xml created: {File.GetCreationTime(filePathToCurrClntsXml)} </p>";
+                message.Body = message.Body + $"<p>Файл CurrClnts.xml создан: {File.GetLastWriteTime(filePathToCurrClntsXml)}</p>";
                 List<string> codesFromCurrClntsXML = GetFortsCodesFromCurrClntsXml(filePathToCurrClntsXml);//список всех кодов срочки из CurrClnts.xml
                 message.Body = message.Body + $"<p>Найдено кодов срочного рынка в CurrClnts.xml: {codesFromCurrClntsXML.Count}</p>";
 
@@ -1393,9 +1393,9 @@ namespace LogicCore
 
             ListStringResponseModel result = new ListStringResponseModel();
             NewEMail message = new NewEMail();
-            message.Subject = "QUIK обновление списков запрещенных для неквалов инструментов в шаблонах 'По комиссии' в Qadmin MC013820000 библиотеке";
+            message.Subject = "QUIK обновление запрещенных для неквалов инструментов в шаблонах 'По комиссии' в Qadmin MC013820000";
             message.Body = "<html><body>";
-
+            message.Body = message.Body + $"<h3>Получение данных по бумагам/бордам из матрицы</h3>";
             // запросить список инструментов в бд матрицы
             SecurityAndBoardResponse secAndBoards = await _repository.GetRestrictedSecuritiesAndBoards();// список ВСЕХ запрещенных нерезам бумаг
             if (secAndBoards.Response.IsSuccess)
@@ -1441,6 +1441,8 @@ namespace LogicCore
 
             foreach (string template in templateNames)
             {
+                message.Body = message.Body + $"<h3> Отправка списков в шаблон {template}</h3>";
+
                 foreach (RestrictedSecuritiesArraySetForBoardInTemplatesModel board in secAndBoardsSeparatesList)
                 {
                     board.TemplateName = template;

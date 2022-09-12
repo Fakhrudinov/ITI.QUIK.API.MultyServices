@@ -22,9 +22,11 @@ namespace MailService
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} EMail Send Called, Subj={email.Subject}");
 
+            string Host = System.Net.Dns.GetHostName();
+
             using (MailMessage message = new MailMessage
             {
-                To = 
+                To =
                 {
                     new MailAddress(
                         _connections.MainReciever,
@@ -32,7 +34,7 @@ namespace MailService
                 },
                 Sender = new MailAddress(_connections.SenderEmail, _connections.SenderEmailAlias),
                 From = new MailAddress(_connections.SenderEmail, _connections.SenderEmailAlias),
-                Subject = email.Subject,
+                Subject = $"{Host} ({_connections.ServerType}) {email.Subject}" ,
                 Body = email.Body,
                 IsBodyHtml = true
             })

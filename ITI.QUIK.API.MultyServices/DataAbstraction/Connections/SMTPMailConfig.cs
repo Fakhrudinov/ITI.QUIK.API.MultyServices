@@ -14,5 +14,7 @@
         public string SenderEmailAlias { get; set; }
 
         public string [] CCReceiversEmail { get; set; }
+
+        public string ServerType { get; set; } = "Undefined";
     }
 }
