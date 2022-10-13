@@ -25,13 +25,14 @@ builder.Services.AddTransient<IHTTPQMonitorRepository, HTTPQMonitorRepository>()
 // add core level
 builder.Services.AddTransient<ICore, Core>();
 builder.Services.AddTransient<ICoreKval, CoreKval>();
+builder.Services.AddTransient<ICoreSingleServices, CoreSingleServices>(); 
 
 // add Email sender
 builder.Services.AddTransient<IEMail, EMail>();
 builder.Services.Configure<SMTPMailConfig>(
     builder.Configuration.GetSection("SMTPMailConfigurations"));
 
-// add string for pubring.txk key cleaning
+// add string for pubring.txk key cleaning and paths to files
 builder.Services.Configure<CoreSettings>(
     builder.Configuration.GetSection("CoreSettings"));
 

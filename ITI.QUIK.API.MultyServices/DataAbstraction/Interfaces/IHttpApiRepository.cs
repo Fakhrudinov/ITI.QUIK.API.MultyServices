@@ -1,5 +1,6 @@
 ﻿using DataAbstraction.Models;
 using DataAbstraction.Models.InstrTw;
+using DataAbstraction.Models.MoneyAndDepo;
 using DataAbstraction.Responses;
 
 namespace DataAbstraction.Interfaces
@@ -33,12 +34,14 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> GenerateNewFileCurrClnts();
         Task DownloadNewFileCurrClnts();
         Task<ListStringResponseModel> GetIsUserAlreadyExistByCodeArray(string[] clientCodes);
+        Task<ClientAndMoneyResponse> GetClientsSpotPortfoliosWhoTradesYesterday(int i);
         Task<InstrTWDataBaseRecords> GetRecordsFromInstrTwDataBase(List<string> allportfolios);
         Task<ListStringResponseModel> GetAllClientsFromTemplatePoKomissii(string templateName);
         Task<ListStringResponseModel> GetAllClientsFromTemplatePoPlechu(string templateName);
+        Task<ListStringResponseModel> GetSftpFileLastWriteTime(string nameOrPath);
         Task<BoolResponse> GetIsAllSpotPortfoliosPresentInFileCodesIni(List<string> allportfolios);
         Task<MatrixClientCodeModelResponse> GetAllEnemyNonResidentSpotPortfolios();
-        Task<MatrixClientCodeModelResponse> GetAllFrendlyNonResidentSpotPortfolios();
+        //Task<MatrixClientCodeModelResponse> GetAllFrendlyNonResidentSpotPortfolios();
         Task<MatrixClientCodeModelResponse> GetAllNonKvalKsurUsersSpotPortfolios();
         Task<MatrixClientCodeModelResponse> GetAllNonKvalKpurUsersSpotPortfolios();
         Task<ListStringResponseModel> SetClientsToTemplatePoKomissii(TemplateAndMatrixCodesModel templateAndMatrixCodes);
@@ -55,7 +58,14 @@ namespace DataAbstraction.Interfaces
         Task<FortsClientCodeModelResponse> GetAllNonKvalWithTest16FortsCodes();
         Task<ListStringResponseModel> SetClientsToFortsTemplatePoKomissii(TemplateAndMatrixFortsCodesModel templateAndMatrixFortsCodesModel);
         Task<ListStringResponseModel> SetNonKvalClientsWithTestsToComplexProductRestrictions(QCodeAndListOfComplexProductsTestsModel[] qCodeAndListOfComplexProductsTestsModels);
+        Task<ClientDepoPositionsResponse> GetClientsPositionsByMatrixPortfolioList(string portfoliosToHTTPRequestDepoPositions);
         Task<SecurityAndBoardResponse> GetRestrictedSecuritiesAndBoards();
         Task<ListStringResponseModel> SetRestrictedSecuritiesInTemplatesPoKomissii(RestrictedSecuritiesArraySetForBoardInTemplatesModel board);
+        Task<MatrixClientCodeModelResponse> GetAllFrendlyNonResidentKvalSpotPortfolios();
+        Task<MatrixClientCodeModelResponse> GetAllFrendlyNonResidentNonKvalSpotPortfolios();
+        Task<BoolResponse> GetIsClientHasOptionWorkshop(string clientCode);
+        Task<ListStringResponseModel> DownloadLimLimFile();
+        Task<MatrixClientCodeModelResponse> GetAllRestrictedCDPortfolios();
+        Task<MatrixClientCodeModelResponse> GetAllAllowedCDPortfolios();
     }
 }

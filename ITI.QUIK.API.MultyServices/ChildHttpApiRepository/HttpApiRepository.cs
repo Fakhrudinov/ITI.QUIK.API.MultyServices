@@ -2,6 +2,7 @@
 using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
 using DataAbstraction.Models.InstrTw;
+using DataAbstraction.Models.MoneyAndDepo;
 using DataAbstraction.Responses;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -59,6 +60,48 @@ namespace ChildHttpApiRepository
                 result.Response.IsSuccess = false;
                 result.Response.Messages.Add($"(404) HttpApiRepository GetClientInformation request url NotFound; {ex.Message}");
                 result.Response.Messages.Add(_connections.MatrixAPIConnectionString + "/api/DBClient/GetUser/PersonalInfo/" + clientCode);
+            }
+
+            return result;
+        }
+
+        public async Task<BoolResponse> GetIsClientHasOptionWorkshop(string clientCode)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsClientHasOptionWorkshop '{clientCode}' Called");
+
+            BoolResponse result = new BoolResponse();
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/ClientBOServices/Get/IsUserHave/OptionWorkshop/" + clientCode);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<BoolResponse>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsClientHasOptionWorkshop '{clientCode}' succes is {result.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsClientHasOptionWorkshop response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository GetIsClientHasOptionWorkshop response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetIsClientHasOptionWorkshop request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository GetIsClientHasOptionWorkshop request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.MatrixAPIConnectionString + "/api/ClientBOServices/Get/IsUserHave/OptionWorkshop/" + clientCode);
             }
 
             return result;
@@ -1068,6 +1111,49 @@ namespace ChildHttpApiRepository
             }
         }
 
+        public async Task<ListStringResponseModel> DownloadLimLimFile()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository DownloadLimLimFile Called");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/DownloadFile/LimLim");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository DownloadLimLimFile succes is {result.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository DownloadLimLimFile response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository DownloadLimLimFile response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository DownloadLimLimFile request url NotFound; {ex.Message}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} {_connections.QuikAPIConnectionString}/api/QuikSftpServer/DownloadFile/LimLim");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository DownloadLimLimFile request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/DownloadFile/LimLim");
+            }
+
+            return result;
+        }
+
         public async Task<InstrTWDataBaseRecords> GetRecordsFromInstrTwDataBase(List<string> allportfolios)
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetRecordsFromInstrTwDataBase Called for {allportfolios[0]}");
@@ -1261,11 +1347,29 @@ namespace ChildHttpApiRepository
             return result;
         }
 
-        public async Task<MatrixClientCodeModelResponse> GetAllFrendlyNonResidentSpotPortfolios()
-        {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllFrendlyNonResidentSpotPortfolios Called");
+        //public async Task<MatrixClientCodeModelResponse> GetAllFrendlyNonResidentSpotPortfolios()
+        //{
+        //    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllFrendlyNonResidentSpotPortfolios Called");
 
-            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/Frendly/NonResident/Spot/Portfolios");
+        //    MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/Frendly/NonResident/Spot/Portfolios");
+
+        //    return result;
+        //}
+
+        public async Task<MatrixClientCodeModelResponse> GetAllFrendlyNonResidentKvalSpotPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllFrendlyNonResidentKvalSpotPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/Frendly/NonResident/Kval/Spot/Portfolios");
+
+            return result;
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllFrendlyNonResidentNonKvalSpotPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllFrendlyNonResidentKvalSpotPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/Frendly/NonResident/NonKval/Spot/Portfolios");
 
             return result;
         }
@@ -1347,6 +1451,24 @@ namespace ChildHttpApiRepository
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllNonKvalKsurUsersCdPortfolios Called");
 
             MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/KvalInvestors/GetAll/NonKvalUsers/KSUR/Cd/Portfolios");
+
+            return result;
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllRestrictedCDPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllRestrictedCDPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/TemplatesPoKomissii/GetAll/Restricted/CD/Portfolios/ForCD_Restrict");
+
+            return result;
+        }
+
+        public async Task<MatrixClientCodeModelResponse> GetAllAllowedCDPortfolios()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetAllAllowedCDPortfolios Called");
+
+            MatrixClientCodeModelResponse result = await GetPortfoliosByApiLink("/api/TemplatesPoKomissii/GetAll/Allowed/CD/Portfolios/ForCD_portfolio");
 
             return result;
         }
@@ -1786,6 +1908,141 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository SetRestrictedSecuritiesInTemplatesPoKomissii request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikQAdminSpotApi/ReplaceAll/RestrictedSecurities/InTemplate/PoKomisii");
+            }
+
+            return result;
+        }
+
+        public async Task<ClientAndMoneyResponse> GetClientsSpotPortfoliosWhoTradesYesterday(int daysShift)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsSpotPortfoliosWhoTradesYesterday '{daysShift}' Called");
+
+            ClientAndMoneyResponse result = new ClientAndMoneyResponse();
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/ClientMoney/GetClients/WhoTrade/SpotPortfoliosAndMoney/" + daysShift);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ClientAndMoneyResponse>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsSpotPortfoliosWhoTradesYesterday '{daysShift}' " +
+                            $"succes is {result.Response.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsSpotPortfoliosWhoTradesYesterday response is" +
+                            $" {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.Response.IsSuccess = false;
+                        result.Response.Messages.Add($"HttpApiRepository GetClientsSpotPortfoliosWhoTradesYesterday response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsSpotPortfoliosWhoTradesYesterday " +
+                    $"request url NotFound; {ex.Message}");
+
+                result.Response.IsSuccess = false;
+                result.Response.Messages.Add($"(404) HttpApiRepository GetClientsSpotPortfoliosWhoTradesYesterday request url NotFound; {ex.Message}");
+                result.Response.Messages.Add(_connections.MatrixAPIConnectionString + "/api/ClientMoney/GetClients/WhoTrade/SpotPortfoliosAndMoney/" + daysShift);
+            }
+
+            return result;
+        }
+
+        public async Task<ClientDepoPositionsResponse> GetClientsPositionsByMatrixPortfolioList(string portfoliosToRequest)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsPositionsByMatrixPortfolioList Called with " + portfoliosToRequest);
+
+            ClientDepoPositionsResponse result = new ClientDepoPositionsResponse();
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/ClientMoney/GetClients/Positions/ByMatrixPortfolioList?" + portfoliosToRequest);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ClientDepoPositionsResponse>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsPositionsByMatrixPortfolioList " +
+                            $"succes is {result.Response.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsPositionsByMatrixPortfolioList response is" +
+                            $" {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.Response.IsSuccess = false;
+                        result.Response.Messages.Add($"HttpApiRepository GetClientsPositionsByMatrixPortfolioList response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsPositionsByMatrixPortfolioList " +
+                    $"request url NotFound; {ex.Message}");
+
+                result.Response.IsSuccess = false;
+                result.Response.Messages.Add($"(404) HttpApiRepository GetClientsPositionsByMatrixPortfolioList request url NotFound; {ex.Message}");
+                result.Response.Messages.Add(_connections.MatrixAPIConnectionString + "/api/ClientMoney/GetClients/Positions/ByMatrixPortfolioList?" + portfoliosToRequest);
+            }
+
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> GetSftpFileLastWriteTime(string fileNameOrPath)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetSftpFileLastWriteTime Called with " + fileNameOrPath);
+
+            ListStringResponseModel result = new ListStringResponseModel();
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/Get/FileInfo/ByPath/" + fileNameOrPath);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetSftpFileLastWriteTime " +
+                            $"succes is {result.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetSftpFileLastWriteTime response is" +
+                            $" {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository GetSftpFileLastWriteTime response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetSftpFileLastWriteTime " +
+                    $"request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository GetSftpFileLastWriteTime request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/Get/FileInfo/ByPath/" + fileNameOrPath);
             }
 
             return result;

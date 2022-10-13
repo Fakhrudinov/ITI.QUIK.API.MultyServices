@@ -15,6 +15,7 @@ namespace DataAbstraction.Interfaces
         void RenewAllClientFile();
         Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByMatrixClientAccount(string clientPortfolio);
         Task<ListStringResponseModel> RenewClientsInSpotTemplatesPoKomissii(bool sendReport);
+        Task<ListStringResponseModel> RenewLimLimFile();
         Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByFortsCode(string fortsClientCode);
         Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientPortfolioModel model);
         Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model);

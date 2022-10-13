@@ -2,7 +2,6 @@
 using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
 using DataAbstraction.Models.EMail;
-using DataAbstraction.Models.InstrTw;
 using DataAbstraction.Responses;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -128,6 +127,10 @@ namespace LogicCore
                 newClientOW.Response.Messages.AddRange(fortsCodes.Response.Messages);
             }
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserOptionWorkShop GetClientNonEdpFortsCodes result {fortsCodes.Response.IsSuccess}");
+
+            BoolResponse isClientHasOptionWorkshop = await _repository.GetIsClientHasOptionWorkshop(clientCode);
+            newClientOW.NewOWClient.HasOptionWorkShop = isClientHasOptionWorkshop.IsTrue;
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserOptionWorkShop isClientHasOptionWorkshop is {isClientHasOptionWorkshop.IsTrue}");
 
             return newClientOW;
         }
@@ -898,6 +901,13 @@ namespace LogicCore
             }
         }
 
+        public async Task<ListStringResponseModel> RenewLimLimFile()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewLimLimFile Called");
+
+            return await _repository.DownloadLimLimFile();
+        }
+
         private async Task DownloadNewFileCurrClnts()
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore DownloadNewFileCurrClnts Called");
@@ -915,15 +925,17 @@ namespace LogicCore
             message.Body = "<html><body><h2>QUIK обновление шаблонов По комиссии спот</h2>";
 
             //установка MS и FX портфелей
+
             string[] templateNames = new string[]
             {
-                "Foe_NoRsdnt", // 0 список злых нерезов
-                "Frnd_NoRsdnt",// 1 список добрых нерезов
-                "KSUR_NeKval", // 2 список неквалов КСУР
-                "KPUR_NeKval", // 3 список неквалов КПУР
-                "KPUR_Kval",   // 4 список квалов КПУР
-                "CD_Restrict", // 5 для CD портфелей все нерезы, дружественные и не дружественные.
-                "CD_portfolio" // 6 для CD портфелей все кпур и ксур клиенты, квалы и не квалы
+                "FoeNeRes", // 0 список злых нерезов
+                "FrnNeResKval",// 1 список добрых нерезов квалов 
+                "FrnNeResNeKv",// 2 список добрых нерезов Не квалов 
+                "KSUR_NeKval", // 3 список неквалов КСУР
+                "KPUR_NeKval", // 4 список неквалов КПУР
+                "KPUR_Kval",   // 5 список квалов КПУР
+                "CD_Restrict", // 6 для CD портфелей все нерезы-не дружественные.
+                "CD_portfolio" // 7 для CD портфелей все кпур и ксур клиенты, нерезы-дружественные, квалы и не квалы
             };
 
             for (int i = 0; i < templateNames.Length; i++)
@@ -939,131 +951,157 @@ namespace LogicCore
                         clientportfolios = await _repository.GetAllEnemyNonResidentSpotPortfolios();
                         message.Body = message.Body + $"<p>Найдено в БД Матрицы вражеских нерезидентов спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
                         break;
-                    case 1://запросить список добрых нерезов
-                        clientportfolios = await _repository.GetAllFrendlyNonResidentSpotPortfolios();
-                        message.Body = message.Body + $"<p>Найдено в БД Матрицы Дружественных нерезидентов спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
+                    case 1://запросить список добрых нерезов квалов
+                        clientportfolios = await _repository.GetAllFrendlyNonResidentKvalSpotPortfolios();
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы Дружественных нерезидентов квалов спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
                         break;
-                    case 2://запросить список неквалов КСУР
+                    case 2://запросить список добрых нерезов не квалов
+                        clientportfolios = await _repository.GetAllFrendlyNonResidentNonKvalSpotPortfolios();
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы Дружественных нерезидентов не квалов спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
+                        break;
+                    case 3://запросить список неквалов КСУР
                         clientportfolios = await _repository.GetAllNonKvalKsurUsersSpotPortfolios();
                         message.Body = message.Body + $"<p>Найдено в БД Матрицы Неквалов КСУР спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
                         break;
-                    case 3://запросить список неквалов КПУР
+                    case 4://запросить список неквалов КПУР
                         clientportfolios = await _repository.GetAllNonKvalKpurUsersSpotPortfolios();
                         message.Body = message.Body + $"<p>Найдено в БД Матрицы Неквалов КПУР спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
                         break;
-                    case 4://запросить список квалов КПУР
+                    case 5://запросить список квалов КПУР
                         clientportfolios = await _repository.GetAllKvalKpurUsersSpotPortfolios();
                         message.Body = message.Body + $"<p>Найдено в БД Матрицы Квалов КПУР спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
                         break;
-                    case 5://запрет торговли на валюте - для всех нерезидентов, дружественных и не дружественных.
-                        MatrixClientCodeModelResponse frendlyNeRez = await _repository.GetAllFrendlyNonResidentCdPortfolios();//запросить список добрых нерезов
-                        MatrixClientCodeModelResponse enemyNeRez = await _repository.GetAllEnemyNonResidentCdPortfolios();//запросить список злых нерезов
-                        
-                        message.Body = message.Body + 
-                            $"<p>Найдено в БД Матрицы " +
-                            $"<br />Вражеских нерезидентов CD портфелей {enemyNeRez.MatrixClientCodesList.Count}" +
-                            $"<br />Дружественных нерезидентов CD портфелей {frendlyNeRez.MatrixClientCodesList.Count}</p>";
+                    case 6://6 запрет торговли на валюте для CD портфелей
+                        //clientportfolios = await _repository.GetAllEnemyNonResidentCdPortfolios();//запросить список злых нерезов
+                        clientportfolios = await _repository.GetAllRestrictedCDPortfolios();//запросить список портфелей для шаблона CD_Restrict
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы CD портфелей для шаблона CD_Restrict: {clientportfolios.MatrixClientCodesList.Count}</p>";
 
-                        //объеденить списки в общий список clientportfolios
-                        if (frendlyNeRez.Response.IsSuccess)
-                        {
-                            if (frendlyNeRez.MatrixClientCodesList is not null)
-                            {
-                                clientportfolios.MatrixClientCodesList.AddRange(frendlyNeRez.MatrixClientCodesList);
-                            }
-                        }
-                        else
-                        {
-                            result.IsSuccess = false;
-                            result.Messages.AddRange(frendlyNeRez.Response.Messages);
-                        }
+                        //6 запрет торговли на валюте - для всех нерезидентов, дружественных и не дружественных.
+                        //MatrixClientCodeModelResponse frendlyNeRez = await _repository.GetAllFrendlyNonResidentCdPortfolios();//запросить список добрых нерезов
+                        //MatrixClientCodeModelResponse enemyNeRez = await _repository.GetAllEnemyNonResidentCdPortfolios();//запросить список злых нерезов
 
-                        if (enemyNeRez.Response.IsSuccess)
-                        {
-                            if (enemyNeRez.MatrixClientCodesList is not null)
-                            {
-                                clientportfolios.MatrixClientCodesList.AddRange(enemyNeRez.MatrixClientCodesList);
-                            }
-                        }
-                        else
-                        {
-                            result.IsSuccess = false;
-                            result.Messages.AddRange(enemyNeRez.Response.Messages);
-                        }
+                        //message.Body = message.Body + 
+                        //    $"<p>Найдено в БД Матрицы " +
+                        //    $"<br />Вражеских нерезидентов CD портфелей {enemyNeRez.MatrixClientCodesList.Count}" +
+                        //    $"<br />Дружественных нерезидентов CD портфелей {frendlyNeRez.MatrixClientCodesList.Count}</p>";
+
+                        ////объеденить списки в общий список clientportfolios
+                        //if (frendlyNeRez.Response.IsSuccess)
+                        //{
+                        //    if (frendlyNeRez.MatrixClientCodesList is not null)
+                        //    {
+                        //        clientportfolios.MatrixClientCodesList.AddRange(frendlyNeRez.MatrixClientCodesList);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    result.IsSuccess = false;
+                        //    result.Messages.AddRange(frendlyNeRez.Response.Messages);
+                        //}
+
+                        //if (enemyNeRez.Response.IsSuccess)
+                        //{
+                        //    if (enemyNeRez.MatrixClientCodesList is not null)
+                        //    {
+                        //        clientportfolios.MatrixClientCodesList.AddRange(enemyNeRez.MatrixClientCodesList);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    result.IsSuccess = false;
+                        //    result.Messages.AddRange(enemyNeRez.Response.Messages);
+                        //}
 
                         break;
 
-                    case 6:// все кпур и ксур клиенты, квалы и не квалы - в общий список Cd портфелей
-                        MatrixClientCodeModelResponse kvalKPUR = await _repository.GetAllKvalKpurUsersCdPortfolios();//запросить список квалов КПУР
-                        MatrixClientCodeModelResponse kvalKSUR = await _repository.GetAllKvalKsurUsersCdPortfolios();//запросить список квалов КСУР
-                        MatrixClientCodeModelResponse nonKvalKPUR = await _repository.GetAllNonKvalKpurUsersCdPortfolios();//запросить список НЕ квалов КПУР
-                        MatrixClientCodeModelResponse nonKvalKSUR = await _repository.GetAllNonKvalKsurUsersCdPortfolios();//запросить список НЕ квалов КСУР
+                    case 7://7 все CD портфели с разрешением торговать
+                        clientportfolios = await _repository.GetAllAllowedCDPortfolios();//запросить список портфелей для шаблона CD_portfolio
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы CD портфелей для шаблона CD_portfolio: {clientportfolios.MatrixClientCodesList.Count}</p>";
+                        // все кпур и ксур клиенты, добрые нерезы квалы и не квалы - в общий список Cd портфелей
+                        //MatrixClientCodeModelResponse kvalKPUR = await _repository.GetAllKvalKpurUsersCdPortfolios();//запросить список квалов КПУР
+                        //MatrixClientCodeModelResponse kvalKSUR = await _repository.GetAllKvalKsurUsersCdPortfolios();//запросить список квалов КСУР
+                        //MatrixClientCodeModelResponse nonKvalKPUR = await _repository.GetAllNonKvalKpurUsersCdPortfolios();//запросить список НЕ квалов КПУР
+                        //MatrixClientCodeModelResponse nonKvalKSUR = await _repository.GetAllNonKvalKsurUsersCdPortfolios();//запросить список НЕ квалов КСУР
+                        //MatrixClientCodeModelResponse frendlyNeRez = await _repository.GetAllFrendlyNonResidentCdPortfolios();//запросить список добрых нерезов
 
-                        message.Body = message.Body +
-                            $"<p>Найдено в БД Матрицы " +
-                            $"<br />Квалов КПУР CD портфелей {kvalKPUR.MatrixClientCodesList.Count}" +
-                            $"<br />Квалов КСУР CD портфелей {kvalKSUR.MatrixClientCodesList.Count}" +
-                            $"<br />НЕ квалов КПУР CD портфелей {nonKvalKPUR.MatrixClientCodesList.Count}" +
-                            $"<br />НЕ квалов КСУР CD портфелей {nonKvalKSUR.MatrixClientCodesList.Count}</p>";
+                        //message.Body = message.Body +
+                        //    $"<p>Найдено в БД Матрицы " +
+                        //    $"<br />Квалов КПУР CD портфелей {kvalKPUR.MatrixClientCodesList.Count}" +
+                        //    $"<br />Квалов КСУР CD портфелей {kvalKSUR.MatrixClientCodesList.Count}" +
+                        //    $"<br />НЕ квалов КПУР CD портфелей {nonKvalKPUR.MatrixClientCodesList.Count}" +
+                        //    $"<br />НЕ квалов КСУР CD портфелей {nonKvalKSUR.MatrixClientCodesList.Count}" +
+                        //    $"<br />всех дружественных нерезидентов CD портфелей {frendlyNeRez.MatrixClientCodesList.Count}</p>";
 
-                        //объеденить списки в общий список clientportfolios
-                        if (kvalKPUR.Response.IsSuccess)
-                        {
-                            if (kvalKPUR.MatrixClientCodesList is not null)
-                            {
-                                clientportfolios.MatrixClientCodesList.AddRange(kvalKPUR.MatrixClientCodesList);
-                            }
-                        }
-                        else
-                        {
-                            clientportfolios.Response.IsSuccess = false;
-                            clientportfolios.Response.Messages.AddRange(kvalKPUR.Response.Messages);
-                        }
+                        ////объеденить списки в общий список clientportfolios
+                        //if (kvalKPUR.Response.IsSuccess)
+                        //{
+                        //    if (kvalKPUR.MatrixClientCodesList is not null)
+                        //    {
+                        //        clientportfolios.MatrixClientCodesList.AddRange(kvalKPUR.MatrixClientCodesList);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    clientportfolios.Response.IsSuccess = false;
+                        //    clientportfolios.Response.Messages.AddRange(kvalKPUR.Response.Messages);
+                        //}
 
-                        if (kvalKSUR.Response.IsSuccess)
-                        {
-                            if (kvalKSUR.MatrixClientCodesList is not null)
-                            {
-                                clientportfolios.MatrixClientCodesList.AddRange(kvalKSUR.MatrixClientCodesList);
-                            }
-                        }
-                        else
-                        {
-                            clientportfolios.Response.IsSuccess = false;
-                            clientportfolios.Response.Messages.AddRange(kvalKSUR.Response.Messages);
-                        }
+                        //if (kvalKSUR.Response.IsSuccess)
+                        //{
+                        //    if (kvalKSUR.MatrixClientCodesList is not null)
+                        //    {
+                        //        clientportfolios.MatrixClientCodesList.AddRange(kvalKSUR.MatrixClientCodesList);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    clientportfolios.Response.IsSuccess = false;
+                        //    clientportfolios.Response.Messages.AddRange(kvalKSUR.Response.Messages);
+                        //}
 
-                        if (nonKvalKPUR.Response.IsSuccess)
-                        {
-                            if (nonKvalKPUR.MatrixClientCodesList is not null)
-                            {
-                                clientportfolios.MatrixClientCodesList.AddRange(nonKvalKPUR.MatrixClientCodesList);
-                            }
-                        }
-                        else
-                        {
-                            clientportfolios.Response.IsSuccess = false;
-                            clientportfolios.Response.Messages.AddRange(nonKvalKPUR.Response.Messages);
-                        }
+                        //if (nonKvalKPUR.Response.IsSuccess)
+                        //{
+                        //    if (nonKvalKPUR.MatrixClientCodesList is not null)
+                        //    {
+                        //        clientportfolios.MatrixClientCodesList.AddRange(nonKvalKPUR.MatrixClientCodesList);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    clientportfolios.Response.IsSuccess = false;
+                        //    clientportfolios.Response.Messages.AddRange(nonKvalKPUR.Response.Messages);
+                        //}
 
-                        if (nonKvalKSUR.Response.IsSuccess)
-                        {
-                            if (nonKvalKSUR.MatrixClientCodesList is not null)
-                            {
-                                clientportfolios.MatrixClientCodesList.AddRange(nonKvalKSUR.MatrixClientCodesList);
-                            }
-                        }
-                        else
-                        {
-                            clientportfolios.Response.IsSuccess = false;
-                            clientportfolios.Response.Messages.AddRange(nonKvalKSUR.Response.Messages);
-                        }
+                        //if (nonKvalKSUR.Response.IsSuccess)
+                        //{
+                        //    if (nonKvalKSUR.MatrixClientCodesList is not null)
+                        //    {
+                        //        clientportfolios.MatrixClientCodesList.AddRange(nonKvalKSUR.MatrixClientCodesList);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    clientportfolios.Response.IsSuccess = false;
+                        //    clientportfolios.Response.Messages.AddRange(nonKvalKSUR.Response.Messages);
+                        //}
+
+                        //if (frendlyNeRez.Response.IsSuccess)
+                        //{
+                        //    if (frendlyNeRez.MatrixClientCodesList is not null)
+                        //    {
+                        //        clientportfolios.MatrixClientCodesList.AddRange(frendlyNeRez.MatrixClientCodesList);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    clientportfolios.Response.IsSuccess = false;
+                        //    clientportfolios.Response.Messages.AddRange(frendlyNeRez.Response.Messages);
+                        //}
+
                         break;
                 }
 
                 //установить список в шаблон по комиссии Quik БРЛ
-                message.Body = message.Body + $"<h4>Установка списка в БРЛ шаблон  по комиссии {templateNames[i]}</h4>";
-
                 if (clientportfolios.Response.IsSuccess)
                 {
                     _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii " +
@@ -1201,7 +1239,7 @@ namespace LogicCore
 
             return result;
         }
-
+        
         public async Task<ListStringResponseModel> RenewClientsInFortsTemplatesPoKomissii(bool sendReport)
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Called");
@@ -1387,6 +1425,8 @@ namespace LogicCore
             return result;
         }
 
+
+
         public async Task<ListStringResponseModel> RenewRestrictedSecuritiesInTemplatesPoKomissii(bool sendReport)
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii Called");
@@ -1437,6 +1477,7 @@ namespace LogicCore
             {
                 "KSUR_NeKval", // 0 список неквалов КСУР
                 "KPUR_NeKval", // 1 список неквалов КПУР
+                "FrnNeResNeKv" // 2 список неквалов дружественных нерезов
             };
 
             foreach (string template in templateNames)
@@ -1476,16 +1517,15 @@ namespace LogicCore
                 }
             }
 
-
             message.Body = message.Body + "</body></html>";
 
             if (sendReport)
             {
-                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Send message");
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii Send message");
                 await _sender.Send(message);
             }
 
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii all done");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii all done");
             return result;
         }
 

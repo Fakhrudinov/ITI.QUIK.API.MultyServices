@@ -27,6 +27,16 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             return Ok();
         }
 
+        [HttpGet("Renew/LimLimFile")]
+        public async Task<IActionResult> RenewLimLimFile()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Renew/LimLimFile Call");
+
+            ListStringResponseModel result = await _core.RenewLimLimFile();
+
+            return Ok(result);
+        }
+
         [HttpGet("GetResult/FromQuikSFTP/FileUpload")]
         public async Task<IActionResult> GetResultFromQuikSFTPFileUpload([FromQuery] string fileName)
         {
