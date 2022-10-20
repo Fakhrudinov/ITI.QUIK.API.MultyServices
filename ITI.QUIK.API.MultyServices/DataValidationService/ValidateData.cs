@@ -129,5 +129,24 @@ namespace DataValidationService
 
             return responseList;
         }
+
+        public static NewClientCreationResponse ValidateNewMatrixPortfolioToExistingClientModel(MatrixClientPortfolioModel model)
+        {
+            MatrixClientPortfolioMoMsFxRsCdValidator validator = new MatrixClientPortfolioMoMsFxRsCdValidator();
+            var responseList = new ListStringResponseModel();
+
+            ValidationResult validationResult = validator.Validate(model.MatrixClientPortfolio);
+
+            if (!validationResult.IsValid)
+            {
+                responseList = SetResponseFromValidationResult.SetResponse(validationResult, responseList);
+            }
+
+            NewClientCreationResponse response = new NewClientCreationResponse();
+            response.IsNewClientCreationSuccess = responseList.IsSuccess;
+            response.NewClientCreationMessages.AddRange(responseList.Messages);
+
+            return response;
+        }
     }
 }

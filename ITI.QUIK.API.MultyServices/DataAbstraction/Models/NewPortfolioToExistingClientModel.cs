@@ -1,6 +1,6 @@
 ﻿namespace DataAbstraction.Models
 {
-    public class NewPortfolioToExistingClientModel
+    public class NewMatrixPortfolioToExistingClientModel
     {
         public MatrixClientPortfolioModel MatrixPortfolio { get; set; }
         public int UID { get; set; }

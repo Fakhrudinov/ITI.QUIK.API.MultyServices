@@ -104,14 +104,14 @@ namespace LogicCore
                 return result;
             }
 
-            message.Body = message.Body + $"<p>В матрице найдено {matrixClients.Count} клиентов, торговавших вчера</p>";
+            message.Body = message.Body + $"<p>В матрице найдено {matrixClients.Count} портфелей от клиентов, торговавших вчера</p>";
 
             //запросить позиции из матрицы у клиентов с сделками
             await AddPositionsToClientsWhoTradeYesterday(matrixClients, portfoliosToHTTPRequestDepoPositions);
 
             List<ClientAssetsModel> limlimClients = await GetClientLimitsFromLimLim(matrixClients, fileLimLim, result, message);
 
-            message.Body = message.Body + $"<p>Получили {limlimClients.Count} клиентов из файла lim.lim</p>";
+            message.Body = message.Body + $"<p>Получили {limlimClients.Count} портфелей от клиентов из файла lim.lim</p>";
             message.Body = message.Body + $"<h3>Сравниваем результаты</h3>";
             //сравниваем данные матрицы и файла lim.lim
             CompareMatrixAndLimlimAndRemoveEquals(matrixClients, limlimClients);

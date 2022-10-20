@@ -1564,7 +1564,7 @@ namespace LogicCore
             return result;
         }
 
-        public async Task<NewClientCreationResponse> AddNewMatrixPortfolioToExistingClientByUID(NewPortfolioToExistingClientModel model)
+        public async Task<NewClientCreationResponse> AddNewMatrixPortfolioToExistingClientByUID(NewMatrixPortfolioToExistingClientModel model)
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewMatrixPortfolioToExistingClientByUID Called, " +
                 $"UID={model.UID} portfolio={model.MatrixPortfolio.MatrixClientPortfolio}");

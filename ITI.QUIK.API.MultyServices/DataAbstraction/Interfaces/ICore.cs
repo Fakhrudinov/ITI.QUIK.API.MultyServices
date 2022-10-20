@@ -27,6 +27,6 @@ namespace DataAbstraction.Interfaces
         Task<FindedQuikClientResponse> GetIsUserAlreadyExistInAllQuikByMatrixClientAccount(string matrixClientAccount);
         Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model);
         Task<ListStringResponseModel> RenewRestrictedSecuritiesInTemplatesPoKomissii(bool sendReport);
-        Task<NewClientCreationResponse> AddNewMatrixPortfolioToExistingClientByUID(NewPortfolioToExistingClientModel model);
+        Task<NewClientCreationResponse> AddNewMatrixPortfolioToExistingClientByUID(NewMatrixPortfolioToExistingClientModel model);
     }
 }
