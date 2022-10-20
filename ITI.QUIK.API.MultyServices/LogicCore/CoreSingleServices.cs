@@ -367,6 +367,13 @@ namespace LogicCore
             //сравниваем данные матрицы и файла lim.lim
             for (int i = matrixClients.Count - 1; i >= 0; i--)
             {
+                // для дебага - ловить конкретного клиента
+                //if (matrixClients[i].ClientPortfolio.MatrixClientPortfolio.Equals("BC64582-MO-20"))
+                //{
+                //    Console.WriteLine();
+                //}
+
+
                 if (limlimClients.FindIndex(r =>
                                     r.ClientPortfolio.MatrixClientPortfolio == matrixClients[i].ClientPortfolio.MatrixClientPortfolio) == -1)
                 {
@@ -473,13 +480,15 @@ namespace LogicCore
             for (int i = matrixClients.Count - 1; i >= 0; i--)
             {
                 string tag = "EQTV";
-                string tks = "L01+00000F00";
-                if (!matrixClients[i].ClientPortfolio.MatrixClientPortfolio.Contains("-MS-"))
+                string tks = matrixClients[i].TKS;
+                
+                if (!matrixClients[i].ClientPortfolio.MatrixClientPortfolio.Contains("-MS-") &&
+                    !matrixClients[i].ClientPortfolio.MatrixClientPortfolio.Contains("-MO-")) // тут придется харкодить, мне не известно что в МО портфеле торговали.
                 {
                     tag = "EUSR";
-                    tks = "MB0138204947";
                 }
 
+                // пусть будет пока. хотя ткс из позиции по идее должно быть = ткс из портфеля.
                 if (matrixClients[i].Positions.Count > 0)
                 {
                     tks = matrixClients[i].Positions[0].TKS;
@@ -556,7 +565,13 @@ namespace LogicCore
                     newDepoPosition.OpenBalance = position.OpenBalance;
                     newDepoPosition.TKS = position.TKS;
 
-                    matrixClients[matrixClients.FindIndex(r => r.ClientPortfolio.MatrixClientPortfolio == position.MatrixClientPortfolio)].Positions.Add(newDepoPosition);
+                    int indexOfMatrixClient = matrixClients.FindIndex(r => r.ClientPortfolio.MatrixClientPortfolio == position.MatrixClientPortfolio);
+                    if (indexOfMatrixClient == -1)
+                    {
+                        indexOfMatrixClient = matrixClients.FindIndex(r => r.ClientPortfolio.MatrixClientPortfolio == position.MatrixClientPortfolio.Replace("-MS-", "-MO-"));
+                    }
+
+                    matrixClients[indexOfMatrixClient].Positions.Add(newDepoPosition);
                 }
             }
         }
@@ -582,10 +597,22 @@ namespace LogicCore
             //добавить найденных в модель List<ClientAssetsModel> matrixClients
             foreach (ClientAndMoneyModel client in matrixclientAndMoney.Clients)
             {
-                ClientAssetsModel newClient = new ClientAssetsModel();
-                newClient.ClientPortfolio = new MatrixClientPortfolioModel { MatrixClientPortfolio = client.MatrixClientPortfolio };
-                ClientAssetsMoneyPositionModel clientMoneyPosition = new ClientAssetsMoneyPositionModel { Balance = client.Money };
-                if (newClient.ClientPortfolio.MatrixClientPortfolio.Contains("-MS-"))
+                ClientAssetsModel newClient = new ClientAssetsModel
+                {
+                    TKS = client.TKS
+                };
+
+                newClient.ClientPortfolio = new MatrixClientPortfolioModel 
+                { 
+                    MatrixClientPortfolio = client.MatrixClientPortfolio,
+                };
+
+                ClientAssetsMoneyPositionModel clientMoneyPosition = new ClientAssetsMoneyPositionModel 
+                { 
+                    Balance = client.Money
+                };
+                if (newClient.ClientPortfolio.MatrixClientPortfolio.Contains("-MS-") || 
+                    newClient.ClientPortfolio.MatrixClientPortfolio.Contains("-MO-")) // тут придется харкодить, мне не известно что в МО портфеле торговали.
                 {
                     clientMoneyPosition.Tag = "EQTV";
                 }
@@ -598,7 +625,7 @@ namespace LogicCore
 
                 matrixClients.Add(newClient);
 
-                portfoliosToHTTPRequestDepoPositions = portfoliosToHTTPRequestDepoPositions + $"&portfolios={client.MatrixClientPortfolio}";
+                portfoliosToHTTPRequestDepoPositions = portfoliosToHTTPRequestDepoPositions + $"&portfolios={client.MatrixClientPortfolio.Replace("-MO-", "-MS-")}";
             }
 
             return portfoliosToHTTPRequestDepoPositions;
@@ -705,9 +732,12 @@ namespace LogicCore
                 else
                 {
                     //DEPO:  FIRM_ID = MC0138200000; SECCODE = SPBE; CLIENT_CODE =BP33736/01; OPEN_BALANCE = 300; OPEN_LIMIT = 0; TRDACCID =L01+00000F00; WA_POSITION_PRICE=93.400000; LIMIT_KIND = 2;
-                    if (!clientInLimLim[i].Contains(tks))
+                    if (!tks.Equals("")) // если пустое - ничего не удаляем.
                     {
-                        clientInLimLim.RemoveAt(i);
+                        if (!clientInLimLim[i].Contains(tks))
+                        {
+                            clientInLimLim.RemoveAt(i);
+                        }
                     }
                 }
             }
@@ -719,7 +749,7 @@ namespace LogicCore
 
             foreach (string line in fileLimLim)
             {
-                if (line.Contains(matrixPortfolio))
+                if (line.Contains(matrixPortfolio + ";"))
                 {
                     string lineNoSpaces = line.Replace(" ", "");
 

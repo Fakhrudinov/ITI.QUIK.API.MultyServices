@@ -467,7 +467,8 @@ namespace LogicCore
             {
                 result.MatrixClientPortfoliosMessages.AddRange(spotCodes.Response.Messages);
             }
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount GetClientAllSpotCodesFiltered result {spotCodes.Response.IsSuccess}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount " +
+                $"GetClientAllSpotCodesFiltered result {spotCodes.Response.IsSuccess}");
 
             MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientAllFortsCodes(matrixClientAccount);
             if (fortsCodes.Response.IsSuccess)
@@ -478,11 +479,13 @@ namespace LogicCore
             {
                 result.CodesPairRFMessages.AddRange(fortsCodes.Response.Messages);
             }
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount GetClientAllFortsCodes result {fortsCodes.Response.IsSuccess}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount " +
+                $"GetClientAllFortsCodes result {fortsCodes.Response.IsSuccess}");
             // проверить, что хоть какие то портфели вернулись
             if (result.CodesPairRF is null && result.MatrixClientPortfolios is null)
             {
-                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount (404) no portfolios found for {matrixClientAccount}");
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount " +
+                    $"(404) no portfolios found for {matrixClientAccount}");
                 result.Messages.Add($"(404) no portfolios found for {matrixClientAccount}");
                 result.IsSuccess = false;
 
@@ -762,7 +765,7 @@ namespace LogicCore
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
                 checkUserExist.IsSuccess = false;
-                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+                checkUserExist.Messages.Insert(0, "BlockUserByFortsClientCode terminated. Founded more then one user:");
 
                 return checkUserExist;
             }
@@ -784,7 +787,7 @@ namespace LogicCore
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
                 checkUserExist.IsSuccess = false;
-                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+                checkUserExist.Messages.Insert(0, "SetNewPubringKeyByMatrixClientCode terminated. Founded more then one user:");
 
                 return checkUserExist;
             }
@@ -799,7 +802,7 @@ namespace LogicCore
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
                 checkUserExist.IsSuccess = false;
-                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+                checkUserExist.Messages.Insert(0, "SetNewPubringKeyByFortsClientCode terminated. Founded more then one user:");
 
                 return checkUserExist;
             }
@@ -816,7 +819,7 @@ namespace LogicCore
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
                 checkUserExist.IsSuccess = false;
-                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+                checkUserExist.Messages.Insert(0, "SetAllTradesByMatrixClientCode terminated. Founded more then one user:");
 
                 return checkUserExist;
             }
@@ -831,7 +834,7 @@ namespace LogicCore
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
                 checkUserExist.IsSuccess = false;
-                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+                checkUserExist.Messages.Insert(0, "SetAllTradesByFortsClientCode terminated. Founded more then one user:");
 
                 return checkUserExist;
             }
@@ -1559,6 +1562,150 @@ namespace LogicCore
             }
 
             return result;
+        }
+
+        public async Task<NewClientCreationResponse> AddNewMatrixPortfolioToExistingClientByUID(NewPortfolioToExistingClientModel model)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewMatrixPortfolioToExistingClientByUID Called, " +
+                $"UID={model.UID} portfolio={model.MatrixPortfolio.MatrixClientPortfolio}");
+
+            MatrixClientPortfolioModel[] newMatrixPortfolioArray = new MatrixClientPortfolioModel[1];
+            newMatrixPortfolioArray[0] = model.MatrixPortfolio;
+
+            string clientAccount = model.MatrixPortfolio.MatrixClientPortfolio.Split("-").First();
+
+            NewClientCreationResponse createResponse = new NewClientCreationResponse();
+
+            // проверить - совпадает ли клиент в UID
+            if (model.checkIsUserHaveEqualsPortfolio)
+            {
+                FindedQuikQAdminClientResponse findedInQ = await GetIsUserAlreadyExistByMatrixClientAccount(clientAccount);
+
+                if (findedInQ.QuikQAdminClient != null)
+                {
+                    QuikQAdminClientModel isClienExist = findedInQ.QuikQAdminClient.Find(x => x.UID.Equals(model.UID));
+
+                    if (isClienExist==null)
+                    {
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewMatrixPortfolioToExistingClientByUID " +
+                            $"SFTP: UID {model.UID} not contain any porfolios for account {clientAccount}");
+
+                        createResponse.IsSftpUploadSuccess = false;
+                        createResponse.SftpUploadMessages.Add($"Присланный UID {model.UID} не имеет ранее присвоенных портфелей клиента {clientAccount}. " +
+                            $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID");
+
+                        return createResponse;
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewMatrixPortfolioToExistingClientByUID " + 
+                        $"SFTP: for account {clientAccount} not found any UID in CurrClnt");
+
+                    createResponse.IsSftpUploadSuccess = false;
+                    createResponse.SftpUploadMessages.Add($"Присланный портфель клиента {clientAccount} не найден во всем файле CurrClnt. " +
+                        $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID {model.UID}");
+
+                    return createResponse;
+                }
+            }
+
+            //SFTP update - добавить портфель
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewMatrixPortfolioToExistingClientByUID " +
+                $"SFTP for {model.UID} added porfolio {model.MatrixPortfolio.MatrixClientPortfolio}");
+
+            MatrixPortfolioAndUidModel matrixPortfolioAndUid = new MatrixPortfolioAndUidModel
+            {
+                MatrixPortfolio = model.MatrixPortfolio,
+                UID = model.UID
+            };
+
+            ListStringResponseModel createSftpResponse = await _repository.AddNewMatrixPortfolioToExistingClientByUID(matrixPortfolioAndUid);
+            createResponse.IsSftpUploadSuccess = createSftpResponse.IsSuccess;
+            createResponse.SftpUploadMessages = createSftpResponse.Messages;
+
+
+            //InstrTw register
+            ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientAccount);
+            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientAccount);
+
+            NewMNPClientModel newMNPClient = new NewMNPClientModel();
+
+            if (clientInformation.Response.IsSuccess)
+            {
+                newMNPClient.Client = clientInformation.ClientInformation;
+                createResponse.NewClient.Client = newMNPClient.Client;
+            }
+
+            if (clientBOInformation.Response.IsSuccess)
+            {
+                newMNPClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
+                newMNPClient.Address = clientBOInformation.ClientBOInformation.Address;
+                newMNPClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
+                newMNPClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
+
+                createResponse.NewClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
+                createResponse.NewClient.Address = clientBOInformation.ClientBOInformation.Address;
+                createResponse.NewClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
+                createResponse.NewClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
+            }
+            
+
+            if (clientInformation.Response.IsSuccess && clientBOInformation.Response.IsSuccess)
+            {
+                newMNPClient.MatrixClientPortfolios = newMatrixPortfolioArray;
+
+                ListStringResponseModel fillDataBaseInstrTWResponse = await _repository.FillDataBaseInstrTW(newMNPClient);
+                createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
+                createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
+            }
+            else
+            {
+                createResponse.InstrTwMessages.AddRange(clientInformation.Response.Messages);
+                createResponse.InstrTwMessages.AddRange(clientBOInformation.Response.Messages);
+
+                createResponse.IsInstrTwSuccess = false;
+            }
+
+            // codes ini, CD reg
+            //codes ini
+            CodesArrayModel codesArray = new CodesArrayModel() { MatrixClientPortfolios = newMatrixPortfolioArray };
+
+            ListStringResponseModel fillCodesIniResponse = await _repository.FillCodesIniFile(codesArray);
+            createResponse.IsCodesIniSuccess = fillCodesIniResponse.IsSuccess;
+            createResponse.CodesIniMessages = fillCodesIniResponse.Messages;
+
+            // ? CD reg
+            bool totalSucces = true;
+
+            if (model.MatrixPortfolio.MatrixClientPortfolio.Contains("-CD-"))
+            {
+                ListStringResponseModel addCdToKomissiiResponse = await _repository.AddCdPortfolioToTemplateKomissii(model.MatrixPortfolio);
+                if (!addCdToKomissiiResponse.IsSuccess)
+                {
+                    totalSucces = false;
+                }
+                createResponse.AddToTemplatesMessages.AddRange(addCdToKomissiiResponse.Messages);
+
+                ListStringResponseModel addCdToPoPlechuResponse = await _repository.AddCdPortfolioToTemplatePoPlechu(model.MatrixPortfolio);
+                if (!addCdToPoPlechuResponse.IsSuccess)
+                {
+                    totalSucces = false;
+                }
+                createResponse.AddToTemplatesMessages.AddRange(addCdToPoPlechuResponse.Messages);
+            }
+            if (totalSucces)
+            {
+                createResponse.IsAddToTemplatesSuccess = true;
+            }
+
+            //IsSuccess total ?
+            if (createResponse.IsSftpUploadSuccess && createResponse.IsCodesIniSuccess && createResponse.IsAddToTemplatesSuccess && createResponse.IsInstrTwSuccess)
+            {
+                createResponse.IsNewClientCreationSuccess = true;
+            }
+
+            return createResponse;
         }
     }
 }

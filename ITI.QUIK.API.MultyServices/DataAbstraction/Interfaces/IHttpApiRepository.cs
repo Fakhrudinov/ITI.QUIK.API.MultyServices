@@ -67,5 +67,6 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> DownloadLimLimFile();
         Task<MatrixClientCodeModelResponse> GetAllRestrictedCDPortfolios();
         Task<MatrixClientCodeModelResponse> GetAllAllowedCDPortfolios();
+        Task<ListStringResponseModel> AddNewMatrixPortfolioToExistingClientByUID(MatrixPortfolioAndUidModel matrixPortfolioAndUid);
     }
 }

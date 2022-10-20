@@ -2047,5 +2047,55 @@ namespace ChildHttpApiRepository
 
             return result;
         }
+
+        public async Task<ListStringResponseModel> AddNewMatrixPortfolioToExistingClientByUID(MatrixPortfolioAndUidModel matrixPortfolioAndUid)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddNewMatrixPortfolioToExistingClientByUID Called for " +
+                $"UID={matrixPortfolioAndUid.UID} portfolio={matrixPortfolioAndUid.MatrixPortfolio.MatrixClientPortfolio}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    string bodyJson = JsonSerializer.Serialize(matrixPortfolioAndUid);
+                    StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                    var response = await client.PutAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/AddNew/MatrixPortfolio/ToExistClient/ByUID", stringContent);
+
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddNewMatrixPortfolioToExistingClientByUID success for " +
+                            $"UID={matrixPortfolioAndUid.UID} portfolio={matrixPortfolioAndUid.MatrixPortfolio.MatrixClientPortfolio}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddNewMatrixPortfolioToExistingClientByUID " +
+                            $"response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository AddNewMatrixPortfolioToExistingClientByUID response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddNewMatrixPortfolioToExistingClientByUID request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository AddNewMatrixPortfolioToExistingClientByUID request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/AddNew/MatrixPortfolio/ToExistClient/ByUID");
+            }
+
+            return result;
+        }
     }
 }
