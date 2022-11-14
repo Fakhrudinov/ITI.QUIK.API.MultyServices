@@ -148,5 +148,24 @@ namespace DataValidationService
 
             return response;
         }
+
+        public static NewClientCreationResponse ValidateNewFortsPortfolioToExistingClientModel(MatrixToFortsCodesMappingModel model)
+        {
+            MatrixToFortsCodesMappingModelValidationService validator = new MatrixToFortsCodesMappingModelValidationService();
+            var responseList = new ListStringResponseModel();
+
+            ValidationResult validationResult = validator.Validate(model);
+
+            if (!validationResult.IsValid)
+            {
+                responseList = SetResponseFromValidationResult.SetResponse(validationResult, responseList);
+            }
+
+            NewClientCreationResponse response = new NewClientCreationResponse();
+            response.IsNewClientCreationSuccess = responseList.IsSuccess;
+            response.NewClientCreationMessages.AddRange(responseList.Messages);
+
+            return response;
+        }
     }
 }

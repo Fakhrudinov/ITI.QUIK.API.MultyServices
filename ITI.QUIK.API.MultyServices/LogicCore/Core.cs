@@ -1577,38 +1577,53 @@ namespace LogicCore
             NewClientCreationResponse createResponse = new NewClientCreationResponse();
 
             // проверить - совпадает ли клиент в UID
-            if (model.checkIsUserHaveEqualsPortfolio)
+            if (model.CheckIsUserHaveEqualsPortfolio)
             {
-                FindedQuikQAdminClientResponse findedInQ = await GetIsUserAlreadyExistByMatrixClientAccount(clientAccount);
+                BoolResponse isExist = await CheckIsUserAlreadyExistAtUID(model.UID, clientAccount);
 
-                if (findedInQ.QuikQAdminClient != null)
+                // если клиента нет в UID - отказываем
+                if (isExist.IsTrue == false)
                 {
-                    QuikQAdminClientModel isClienExist = findedInQ.QuikQAdminClient.Find(x => x.UID.Equals(model.UID));
-
-                    if (isClienExist==null)
-                    {
-                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewMatrixPortfolioToExistingClientByUID " +
-                            $"SFTP: UID {model.UID} not contain any porfolios for account {clientAccount}");
-
-                        createResponse.IsSftpUploadSuccess = false;
-                        createResponse.SftpUploadMessages.Add($"Присланный UID {model.UID} не имеет ранее присвоенных портфелей клиента {clientAccount}. " +
-                            $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID");
-
-                        return createResponse;
-                    }
-                }
-                else
-                {
-                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewMatrixPortfolioToExistingClientByUID " + 
-                        $"SFTP: for account {clientAccount} not found any UID in CurrClnt");
-
                     createResponse.IsSftpUploadSuccess = false;
-                    createResponse.SftpUploadMessages.Add($"Присланный портфель клиента {clientAccount} не найден во всем файле CurrClnt. " +
-                        $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID {model.UID}");
+                    createResponse.SftpUploadMessages.AddRange(isExist.Messages);
 
                     return createResponse;
                 }
             }
+
+            //// проверить - совпадает ли клиент в UID
+            //if (model.CheckIsUserHaveEqualsPortfolio)
+            //{
+            //    FindedQuikQAdminClientResponse findedInQ = await GetIsUserAlreadyExistByMatrixClientAccount(clientAccount);
+
+            //    if (findedInQ.QuikQAdminClient != null)
+            //    {
+            //        QuikQAdminClientModel isClienExist = findedInQ.QuikQAdminClient.Find(x => x.UID.Equals(model.UID));
+
+            //        if (isClienExist==null)
+            //        {
+            //            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewMatrixPortfolioToExistingClientByUID " +
+            //                $"SFTP: UID {model.UID} not contain any porfolios for account {clientAccount}");
+
+            //            createResponse.IsSftpUploadSuccess = false;
+            //            createResponse.SftpUploadMessages.Add($"Присланный UID {model.UID} не имеет ранее присвоенных портфелей клиента {clientAccount}. " +
+            //                $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID");
+
+            //            return createResponse;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewMatrixPortfolioToExistingClientByUID " + 
+            //            $"SFTP: for account {clientAccount} not found any UID in CurrClnt");
+
+            //        createResponse.IsSftpUploadSuccess = false;
+            //        createResponse.SftpUploadMessages.Add($"Присланный портфель клиента {clientAccount} не найден во всем файле CurrClnt. " +
+            //            $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID {model.UID}");
+
+            //        return createResponse;
+            //    }
+            //}
 
             //SFTP update - добавить портфель
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewMatrixPortfolioToExistingClientByUID " +
@@ -1626,46 +1641,65 @@ namespace LogicCore
 
 
             //InstrTw register
-            ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientAccount);
-            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientAccount);
-
-            NewMNPClientModel newMNPClient = new NewMNPClientModel();
-
-            if (clientInformation.Response.IsSuccess)
+            NewMNPClientModel newMNPClient = new NewMNPClientModel()
             {
-                newMNPClient.Client = clientInformation.ClientInformation;
-                createResponse.NewClient.Client = newMNPClient.Client;
-            }
+                MatrixClientPortfolios = newMatrixPortfolioArray
+            };
 
-            if (clientBOInformation.Response.IsSuccess)
+            ListStringResponseModel clientInfoRequest = await GetClientInformationForInstrTwRegister(newMNPClient, createResponse.NewClient, clientAccount);
+            if (clientInfoRequest.IsSuccess)
             {
-                newMNPClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
-                newMNPClient.Address = clientBOInformation.ClientBOInformation.Address;
-                newMNPClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
-                newMNPClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
-
-                createResponse.NewClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
-                createResponse.NewClient.Address = clientBOInformation.ClientBOInformation.Address;
-                createResponse.NewClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
-                createResponse.NewClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
-            }
-            
-
-            if (clientInformation.Response.IsSuccess && clientBOInformation.Response.IsSuccess)
-            {
-                newMNPClient.MatrixClientPortfolios = newMatrixPortfolioArray;
-
                 ListStringResponseModel fillDataBaseInstrTWResponse = await _repository.FillDataBaseInstrTW(newMNPClient);
                 createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
                 createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
             }
             else
             {
-                createResponse.InstrTwMessages.AddRange(clientInformation.Response.Messages);
-                createResponse.InstrTwMessages.AddRange(clientBOInformation.Response.Messages);
-
+                createResponse.InstrTwMessages.AddRange(clientInfoRequest.Messages);
                 createResponse.IsInstrTwSuccess = false;
             }
+
+            ////InstrTw register
+            //ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientAccount);
+            //ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientAccount);
+
+            //NewMNPClientModel newMNPClient = new NewMNPClientModel();
+
+            //if (clientInformation.Response.IsSuccess)
+            //{
+            //    newMNPClient.Client = clientInformation.ClientInformation;
+            //    createResponse.NewClient.Client = newMNPClient.Client;
+            //}
+
+            //if (clientBOInformation.Response.IsSuccess)
+            //{
+            //    newMNPClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
+            //    newMNPClient.Address = clientBOInformation.ClientBOInformation.Address;
+            //    newMNPClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
+            //    newMNPClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
+
+            //    createResponse.NewClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
+            //    createResponse.NewClient.Address = clientBOInformation.ClientBOInformation.Address;
+            //    createResponse.NewClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
+            //    createResponse.NewClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
+            //}
+
+
+            //if (clientInformation.Response.IsSuccess && clientBOInformation.Response.IsSuccess)
+            //{
+            //    newMNPClient.MatrixClientPortfolios = newMatrixPortfolioArray;
+
+            //    ListStringResponseModel fillDataBaseInstrTWResponse = await _repository.FillDataBaseInstrTW(newMNPClient);
+            //    createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
+            //    createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
+            //}
+            //else
+            //{
+            //    createResponse.InstrTwMessages.AddRange(clientInformation.Response.Messages);
+            //    createResponse.InstrTwMessages.AddRange(clientBOInformation.Response.Messages);
+
+            //    createResponse.IsInstrTwSuccess = false;
+            //}
 
             // codes ini, CD reg
             //codes ini
@@ -1706,6 +1740,232 @@ namespace LogicCore
             }
 
             return createResponse;
+        }
+
+        public async Task<NewClientCreationResponse> AddNewFortsPortfolioToExistingClientByUID(NewFortsPortfolioToExistingClientModel model)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID Called, " +
+                $"UID={model.UID} portfolio={model.MatrixToFortsCodes.MatrixClientCode}");
+
+            MatrixToFortsCodesMappingModel[] newMatrixPortfolioArray = new MatrixToFortsCodesMappingModel[1];
+            newMatrixPortfolioArray[0] = model.MatrixToFortsCodes;
+
+            string clientAccount = model.MatrixToFortsCodes.MatrixClientCode.Split("-").First();
+
+            NewClientCreationResponse createResponse = new NewClientCreationResponse();
+
+            // проверить - совпадает ли клиент в UID
+            if (model.CheckIsUserHaveEqualsPortfolio)
+            {
+                BoolResponse isExist = await CheckIsUserAlreadyExistAtUID(model.UID, clientAccount);
+
+                // если клиента нет в UID - отказываем
+                if (isExist.IsTrue == false)
+                {
+                    createResponse.IsSftpUploadSuccess = false;
+                    createResponse.SftpUploadMessages.AddRange(isExist.Messages);
+
+                    return createResponse;
+                }
+            }
+
+            //SFTP update - добавить портфель
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " +
+                $"SFTP for {model.UID} added code {model.MatrixToFortsCodes.FortsClientCode} from porfolio {model.MatrixToFortsCodes.MatrixClientCode}");
+
+            FortsCodeAndUidModel fortsCodeAndUid = new FortsCodeAndUidModel
+            {
+                MatrixFortsCode = model.MatrixToFortsCodes.FortsClientCode,
+                UID = model.UID
+            };
+
+            ListStringResponseModel createSftpResponse = await _repository.AddNewFortsPortfolioToExistingClientByUID(fortsCodeAndUid);
+            createResponse.IsSftpUploadSuccess = createSftpResponse.IsSuccess;
+            createResponse.SftpUploadMessages = createSftpResponse.Messages;
+
+            //InstrTw register
+            NewMNPClientModel newMNPClient = new NewMNPClientModel()
+            {
+                CodesPairRF = newMatrixPortfolioArray
+            };
+
+            ListStringResponseModel clientInfoRequest = await GetClientInformationForInstrTwRegister(newMNPClient, createResponse.NewClient, clientAccount);
+            if (clientInfoRequest.IsSuccess)
+            {
+                ListStringResponseModel fillDataBaseInstrTWResponse = await _repository.FillDataBaseInstrTW(newMNPClient);
+                createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
+                createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
+            }
+            else
+            {
+                createResponse.InstrTwMessages.AddRange(clientInfoRequest.Messages);
+                createResponse.IsInstrTwSuccess = false;
+            }
+
+            // codes ini, CD reg - no actions needed, skip
+            createResponse.IsCodesIniSuccess = true;
+            createResponse.IsAddToTemplatesSuccess = true;
+
+
+            //IsSuccess total ?
+            if (createResponse.IsSftpUploadSuccess && createResponse.IsCodesIniSuccess && createResponse.IsAddToTemplatesSuccess && createResponse.IsInstrTwSuccess)
+            {
+                createResponse.IsNewClientCreationSuccess = true;
+            }
+
+            return createResponse;
+        }
+
+        private async Task<ListStringResponseModel> GetClientInformationForInstrTwRegister(NewMNPClientModel newMNPClient, NewClientModel newClient, string clientAccount)
+        {
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientAccount);
+            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientAccount);
+
+            if (clientInformation.Response.IsSuccess)
+            {
+                newMNPClient.Client = clientInformation.ClientInformation;
+                newClient.Client = newMNPClient.Client;
+            }
+
+            if (clientBOInformation.Response.IsSuccess)
+            {
+                newMNPClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
+                newMNPClient.Address = clientBOInformation.ClientBOInformation.Address;
+                newMNPClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
+                newMNPClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
+
+                newClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
+                newClient.Address = clientBOInformation.ClientBOInformation.Address;
+                newClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
+                newClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
+            }
+
+            if (clientInformation.Response.IsSuccess && clientBOInformation.Response.IsSuccess)
+            {
+                result.IsSuccess = true;
+            }
+            else
+            {
+                result.Messages.AddRange(clientInformation.Response.Messages);
+                result.Messages.AddRange(clientBOInformation.Response.Messages);
+
+                result.IsSuccess = false;
+            }
+
+            return result;
+        }
+
+        private async Task<BoolResponse> CheckIsUserAlreadyExistAtUID(int uID, string clientAccount)
+        {
+            BoolResponse isExist = new BoolResponse();
+            
+            // список портфелей и кодов клиента для поиска по UID
+            List<string> clientCodesArray = new List<string>();
+
+            // получим портфели спот
+            MatrixClientCodeModelResponse spotCodes = await _repository.GetClientAllSpotCodesFiltered(clientAccount);
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " +
+                $"GetClientAllSpotCodesFiltered result {spotCodes.Response.IsSuccess}");
+
+            if (spotCodes.MatrixClientCodesList.Count > 0)
+            {
+                foreach (var spot in spotCodes.MatrixClientCodesList)
+                {
+                    clientCodesArray.Add(spot.MatrixClientPortfolio);
+                }
+            }
+
+            // получим портфели фортс
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientAllFortsCodes(clientAccount);
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " +
+                $"GetClientAllFortsCodes result {fortsCodes.Response.IsSuccess}");
+
+            if (fortsCodes.MatrixToFortsCodesList.Count > 0)
+            {
+                foreach (var forts in fortsCodes.MatrixToFortsCodesList)
+                {
+                    clientCodesArray.Add(forts.FortsClientCode);
+                }
+            }
+
+            // если портфелей нет - вернем ответ
+            if (clientCodesArray.Count == 0)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " + 
+                    $" return false, not any portfolios found in matrix for {clientAccount}");
+
+                isExist.Messages.Add($"Портфели клиента {clientAccount} не найдены во всем файле CurrClnt. " +
+                    $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID {uID}");
+
+                isExist.IsTrue = false;
+                return isExist;
+            }
+
+            // запросим UID
+            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
+
+            if (checkUserExist.IsSuccess == false)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID GetIsUserAlreadyExistByCodeArray " +
+                    $" return IsSuccess false");
+
+                isExist.IsSuccess = false;
+                isExist.IsTrue = false;
+                isExist.Messages.AddRange(checkUserExist.Messages);                
+                return isExist;
+            }
+
+            foreach (string xmlClient in checkUserExist.Messages)
+            {
+                if (xmlClient.Contains("UID=\"" + uID + "\""))
+                {
+                    isExist.IsTrue = true;
+                    return isExist;
+                }
+            }
+
+            isExist.IsTrue = false;
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " +
+                    $"Account {clientAccount} not found at UID {uID}. ");
+            isExist.Messages.Add($"Портфели клиента {clientAccount} не найдены в UID {uID}. " +
+                    $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID {uID}");
+
+
+            //if (findedInQ.QuikQAdminClient != null)
+            //{
+            //    QuikQAdminClientModel isClienExist = findedInQ.QuikQAdminClient.Find(x => x.UID.Equals(model.UID));
+
+            //    if (isClienExist==null)
+            //    {
+            //        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " +
+            //            $"SFTP: UID {model.UID} not contain any porfolios for account {clientAccount}");
+
+            //        createResponse.IsSftpUploadSuccess = false;
+            //        createResponse.SftpUploadMessages.Add($"Присланный UID {model.UID} не имеет ранее присвоенных портфелей клиента {clientAccount}. " +
+            //            $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID");
+
+            //        return createResponse;
+            //    }
+            //}
+            //else
+            //{
+            //    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " +
+            //        $"SFTP: for account {clientAccount} not found any UID in CurrClnt");
+
+            //    createResponse.IsSftpUploadSuccess = false;
+            //    createResponse.SftpUploadMessages.Add($"Присланный портфель клиента {clientAccount} не найден во всем файле CurrClnt. " +
+            //        $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID {model.UID}");
+
+            //    return createResponse;
+            //}
+
+
+            return isExist;
         }
     }
 }

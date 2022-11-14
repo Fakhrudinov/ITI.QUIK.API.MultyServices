@@ -68,5 +68,6 @@ namespace DataAbstraction.Interfaces
         Task<MatrixClientCodeModelResponse> GetAllRestrictedCDPortfolios();
         Task<MatrixClientCodeModelResponse> GetAllAllowedCDPortfolios();
         Task<ListStringResponseModel> AddNewMatrixPortfolioToExistingClientByUID(MatrixPortfolioAndUidModel matrixPortfolioAndUid);
+        Task<ListStringResponseModel> AddNewFortsPortfolioToExistingClientByUID(FortsCodeAndUidModel fortsCodeAndUid);
     }
 }

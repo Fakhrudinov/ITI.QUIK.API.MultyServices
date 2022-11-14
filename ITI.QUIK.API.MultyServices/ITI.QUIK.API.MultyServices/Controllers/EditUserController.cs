@@ -213,5 +213,25 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
             return Ok(result);
         }
+
+        [HttpPut("AddNew/FortsPortfolio/ToExistingClient/ByUID")]
+        public async Task<IActionResult> AddNewFortsPortfolioToExistingClientByUID([FromBody] NewFortsPortfolioToExistingClientModel model)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut AddNew/FortsPortfolio/ToExistingClient/ByUID Call, " +
+                $"UID={model.UID} portfolio={model.MatrixToFortsCodes.MatrixClientCode}");
+
+            //проверим корректность входных данных
+            NewClientCreationResponse result = ValidateData.ValidateNewFortsPortfolioToExistingClientModel(model.MatrixToFortsCodes);
+            if (!result.IsNewClientCreationSuccess)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut AddNew/FortsPortfolio/ToExistingClient/ByUID " +
+                    $" {model.UID} {model.MatrixToFortsCodes.MatrixClientCode} Error: {result.NewClientCreationMessages[0]} ");
+                return Ok(result);
+            }
+
+            result = await _core.AddNewFortsPortfolioToExistingClientByUID(model);
+
+            return Ok(result);
+        }
     }
 }

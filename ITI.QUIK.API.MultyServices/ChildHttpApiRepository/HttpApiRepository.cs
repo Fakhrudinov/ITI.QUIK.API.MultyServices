@@ -2097,5 +2097,55 @@ namespace ChildHttpApiRepository
 
             return result;
         }
+
+        public async Task<ListStringResponseModel> AddNewFortsPortfolioToExistingClientByUID(FortsCodeAndUidModel fortsCodeAndUid)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddNewFortsPortfolioToExistingClientByUID Called for " +
+                $"UID={fortsCodeAndUid.UID} portfolio={fortsCodeAndUid.MatrixFortsCode}");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    string bodyJson = JsonSerializer.Serialize(fortsCodeAndUid);
+                    StringContent stringContent = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+                    var response = await client.PutAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/AddNew/MatrixFortsCode/ToExistClient/ByUID", stringContent);
+
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<ListStringResponseModel>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddNewFortsPortfolioToExistingClientByUID success for " +
+                            $"UID={fortsCodeAndUid.UID} portfolio={fortsCodeAndUid.MatrixFortsCode}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddNewFortsPortfolioToExistingClientByUID " +
+                            $"response is {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository AddNewMatrixPortfolioToExistingClientByUID response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository AddNewFortsPortfolioToExistingClientByUID request url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository AddNewFortsPortfolioToExistingClientByUID request url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/AddNew/MatrixFortsCode/ToExistClient/ByUID");
+            }
+
+            return result;
+        }
     }
 }

@@ -28,5 +28,6 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model);
         Task<ListStringResponseModel> RenewRestrictedSecuritiesInTemplatesPoKomissii(bool sendReport);
         Task<NewClientCreationResponse> AddNewMatrixPortfolioToExistingClientByUID(NewMatrixPortfolioToExistingClientModel model);
+        Task<NewClientCreationResponse> AddNewFortsPortfolioToExistingClientByUID(NewFortsPortfolioToExistingClientModel model);
     }
 }
