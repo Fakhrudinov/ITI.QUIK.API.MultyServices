@@ -30,9 +30,20 @@ namespace ITI.QUIK.API.MultyServices.Controllers
         [HttpGet("Check/IsFileCorrect/LimLim/{sendReport}")]
         public async Task<IActionResult> CheckIsFileCorrectLimLim(bool sendReport)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Check/IsFileCorrect/LimLim Call");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Check/IsFileCorrect/LimLim/{sendReport} Call");
 
-            BoolResponse result = await _core.CheckIsFileCorrectLimLim(sendReport);
+            BoolResponse result = await _core.CheckIsFileCorrectLimLim(sendReport, false);//this method used in monitoring - so checkExactMoney always false
+
+            return Ok(result);
+        }
+
+        [HttpGet("Check/IsFileCorrect/LimLim/SendReport/{sendReport}/CheckExactMoney/{checkExactMoney}")]
+        public async Task<IActionResult> CheckIsFileCorrectLimLim(bool sendReport, bool checkExactMoney)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet " +
+                $"Check/IsFileCorrect/LimLim/SendReport/{sendReport}/CheckExactMoney/{checkExactMoney} Call");
+
+            BoolResponse result = await _core.CheckIsFileCorrectLimLim(sendReport, checkExactMoney);
 
             return Ok(result);
         }

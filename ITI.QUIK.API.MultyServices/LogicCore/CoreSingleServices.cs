@@ -13,14 +13,21 @@ namespace LogicCore
     {
         private ILogger<CoreSingleServices> _logger;
         private IHttpApiRepository _repository;
-        private CoreSettings _settings;
+        private CoreSettings _coreSettings;
+        private LimLImCreationSettings _limSettings;
         private IEMail _sender;
 
-        public CoreSingleServices(ILogger<CoreSingleServices> logger, IHttpApiRepository repository, IOptions<CoreSettings> settings, IEMail sender)
+        public CoreSingleServices(
+            ILogger<CoreSingleServices> logger, 
+            IHttpApiRepository repository, 
+            IOptions<CoreSettings> coreSettings,
+            IOptions<LimLImCreationSettings> limSettings,
+            IEMail sender)
         {
             _logger = logger;
             _repository = repository;
-            _settings = settings.Value;
+            _coreSettings = coreSettings.Value;
+            _limSettings = limSettings.Value;
             _sender=sender;
         }
 
@@ -35,32 +42,38 @@ namespace LogicCore
             return Task.FromResult(result);
         }
 
-        public async Task<BoolResponse> CheckIsFileCorrectLimLim(bool sendReport)
+        public async Task<BoolResponse> CheckIsFileCorrectLimLim(bool sendReport, bool checkExactMoney)
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICoreSingleServices CheckIsFileCorrectLimLim Called");
 
             BoolResponse result = new BoolResponse();
-
             NewEMail message = new NewEMail();
-            message.Subject = "QUIK проверка корректности (заранее скачанного) файла лимитов lim.lim";
-            message.Body = "<html><body><h2>Проверка корректности файла лимитов lim.lim</h2>";
+
+            string check = "Проверка";
+            if (checkExactMoney)
+            {
+                check = "Точная проверка";
+            }
+
+            message.Body = $"<html><body><h2>{check} корректности файла лимитов lim.lim</h2>";
 
             // проверить что файл lim.lim есть
-            if (!File.Exists(_settings.PathToLimLim))
+            if (!File.Exists(_coreSettings.PathToLimLim))
             {
-                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} Error! File lim.lim not found at " + _settings.PathToLimLim);
-                result.Messages.Add($"Error! File lim.lim not found at {_settings.PathToLimLim}");
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} Error! File lim.lim not found at " + _coreSettings.PathToLimLim);
+                result.Messages.Add($"Error! File lim.lim not found at {_coreSettings.PathToLimLim}");
                 result.IsSuccess = false;
                 result.IsTrue = false;
 
-                message.Body = message.Body + $"<p style='color:red'>Error! File lim.lim not found at {_settings.PathToLimLim}</p>";
+                message.Body = message.Body + $"<p style='color:red'>Error! File lim.lim not found at {_coreSettings.PathToLimLim}</p>";
+                message.Subject = $"Fail! QUIK {check} корректности (заранее скачанного) файла лимитов lim.lim";
                 await SendMessageFinalize(message, sendReport);
 
                 return result;
             }
 
             // считать все строки файла lim.lim
-            string[] fileLimLim = await File.ReadAllLinesAsync(_settings.PathToLimLim);
+            string[] fileLimLim = await File.ReadAllLinesAsync(_coreSettings.PathToLimLim);
 
             // lim.lim старый? 
             ListStringResponseModel lastWriteTime = await _repository.GetSftpFileLastWriteTime("lim.lim");
@@ -99,6 +112,7 @@ namespace LogicCore
                 result.IsTrue = false;
 
                 message.Body = message.Body + $"<p style='color:red'>Не найдено ни одного клиента, торговавшего за последнюю неделю</p>";
+                message.Subject = $"Nobody to check! QUIK {check} корректности (заранее скачанного) файла лимитов lim.lim";
                 await SendMessageFinalize(message, sendReport);
 
                 return result;
@@ -114,7 +128,7 @@ namespace LogicCore
             message.Body = message.Body + $"<p>Получили {limlimClients.Count} портфелей от клиентов из файла lim.lim</p>";
             message.Body = message.Body + $"<h3>Сравниваем результаты</h3>";
             //сравниваем данные матрицы и файла lim.lim
-            CompareMatrixAndLimlimAndRemoveEquals(matrixClients, limlimClients);
+            CompareMatrixAndLimlimAndRemoveEquals(matrixClients, limlimClients, checkExactMoney);
 
             // смотрим остатки, заполняем отчет о различиях
             AnalizeLeftoversAndFillResult(matrixClients, limlimClients, result);
@@ -123,7 +137,23 @@ namespace LogicCore
                 AnalizeLeftoversAndFillEmail(matrixClients, limlimClients, message);
             }
 
-            await SendMessageFinalize(message, sendReport);
+            if (result.IsSuccess)
+            {
+                if (result.Messages.Count > 0)
+                {
+                    message.Subject = $"Differences! QUIK {check} корректности (заранее скачанного) файла лимитов lim.lim";
+                }
+                else
+                {
+                    message.Subject = $"OK! QUIK {check} корректности (заранее скачанного) файла лимитов lim.lim";
+                }
+            }
+            else
+            {
+                message.Subject = $"Failed! QUIK {check} корректности (заранее скачанного) файла лимитов lim.lim";
+            }
+
+            await SendMessageFinalize(message, sendReport);          
 
             return result;
         }
@@ -133,10 +163,6 @@ namespace LogicCore
             if (matrixClients.Count > 0 || limlimClients.Count > 0)
             {
                 List<ClientAssetsComparitionModel> clientsWithDiff = new List<ClientAssetsComparitionModel>();
-
-                //message.Body = message.Body + $"<p>После чистки совпадающих позиций осталось с расхождениями " +
-                //    $"<br />matrix клиентов: {matrixClients.Count}" +
-                //    $"<br />lim.lim клиентов: {limlimClients.Count}</p>";
 
                 foreach (var mClient in matrixClients)
                 {
@@ -309,26 +335,18 @@ namespace LogicCore
                 _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICoreSingleServices CheckIsFileCorrectLimLim " +
                     $"- расхождения по клиентам остались: по матрице={matrixClients.Count}, по lim.lim={limlimClients.Count}");
 
-                //message.Body = message.Body + $"<p>После чистки совпадающих позиций осталось с расхождениями " +
-                //    $"<br />matrix клиентов: {matrixClients.Count}" +
-                //    $"<br />lim.lim клиентов: {limlimClients.Count}</p>";
-
                 foreach (var mClient in matrixClients)
                 {
                     foreach (var money in mClient.Moneys)
                     {
                         result.Messages.Add($"matrix: {mClient.ClientPortfolio.MatrixClientPortfolio} " +
                             $"has different money {money.Currency} {money.Balance} {money.Tag}");
-                        //message.Body = message.Body + $"<p style='color:red'>matrix: {mClient.ClientPortfolio.MatrixClientPortfolio} " +
-                        //    $"has different money {money.Currency} {money.Balance} {money.Tag}</p>";
                     }
 
                     foreach (var depo in mClient.Positions)
                     {
                         result.Messages.Add($"matrix: {mClient.ClientPortfolio.MatrixClientPortfolio} " +
                             $"has different position {depo.Seccode} {depo.OpenBalance} {depo.AveragePrice} {depo.TKS}");
-                        //message.Body = message.Body + $"<p style='color:red'>matrix: {mClient.ClientPortfolio.MatrixClientPortfolio} " +
-                        //    $"has different position {depo.Seccode} {depo.OpenBalance} {depo.AveragePrice} {depo.TKS}</p>";
                     }
                 }
 
@@ -338,16 +356,12 @@ namespace LogicCore
                     {
                         result.Messages.Add($"lim.lim: {qClient.ClientPortfolio.MatrixClientPortfolio} " +
                             $"has different money {money.Currency} {money.Balance} {money.Tag}");
-                        //message.Body = message.Body + $"<p style='color:red'>lim.lim: {qClient.ClientPortfolio.MatrixClientPortfolio} " +
-                        //    $"has different money {money.Currency} {money.Balance} {money.Tag}</p>";
                     }
 
                     foreach (var depo in qClient.Positions)
                     {
                         result.Messages.Add($"lim.lim: {qClient.ClientPortfolio.MatrixClientPortfolio} " +
                             $"has different position {depo.Seccode} {depo.OpenBalance} {depo.AveragePrice} {depo.TKS}");
-                        //message.Body = message.Body + $"<p style='color:red'>lim.lim: {qClient.ClientPortfolio.MatrixClientPortfolio} " +
-                        //    $"has different position {depo.Seccode} {depo.OpenBalance} {depo.AveragePrice} {depo.TKS}</p>";
                     }
                 }
             }
@@ -356,23 +370,20 @@ namespace LogicCore
                 _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICoreSingleServices CheckIsFileCorrectLimLim " +
                     $"- OK расхождений не найдено");
 
-                //message.Body = message.Body + $"<p><strong>OK, расхождений не найдено</strong></p>";
-
                 result.IsTrue = true;
             }
         }
 
-        private void CompareMatrixAndLimlimAndRemoveEquals(List<ClientAssetsModel> matrixClients, List<ClientAssetsModel> limlimClients)
+        private void CompareMatrixAndLimlimAndRemoveEquals(List<ClientAssetsModel> matrixClients, List<ClientAssetsModel> limlimClients, bool checkExactMoney)
         {
             //сравниваем данные матрицы и файла lim.lim
             for (int i = matrixClients.Count - 1; i >= 0; i--)
             {
                 // для дебага - ловить конкретного клиента
-                //if (matrixClients[i].ClientPortfolio.MatrixClientPortfolio.Equals("BC64582-MO-20"))
+                //if (matrixClients[i].ClientPortfolio.MatrixClientPortfolio.Equals("BP3871-MS-01"))
                 //{
                 //    Console.WriteLine();
                 //}
-
 
                 if (limlimClients.FindIndex(r =>
                                     r.ClientPortfolio.MatrixClientPortfolio == matrixClients[i].ClientPortfolio.MatrixClientPortfolio) == -1)
@@ -403,7 +414,25 @@ namespace LogicCore
                                         matrixClients[i].Moneys.RemoveAt(m);
 
                                         break;
-                                    }                                    
+                                    }
+                                    else if (!checkExactMoney)// если не включена проверка точного соответствия рублей
+                                    {
+                                        //получаем 1% от денег матрицы
+                                        decimal onePercent = matrixClients[i].Moneys[m].Balance / 100;
+
+                                        if (compareToLimLim.Moneys[qm].Balance + onePercent >= matrixClients[i].Moneys[m].Balance &&
+                                            compareToLimLim.Moneys[qm].Balance - onePercent <= matrixClients[i].Moneys[m].Balance)
+                                        {
+                                            //удаляем lim.lim деньги
+                                            limlimClients[limlimClients.FindIndex(r =>
+                                                r.ClientPortfolio.MatrixClientPortfolio == matrixClients[i].ClientPortfolio.MatrixClientPortfolio)].Moneys.RemoveAt(qm);
+
+                                            //удаляем матричные деньги
+                                            matrixClients[i].Moneys.RemoveAt(m);
+
+                                            break;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -430,6 +459,24 @@ namespace LogicCore
                                             matrixClients[i].Positions.RemoveAt(p);
 
                                             break;
+                                        }
+                                        else if (!checkExactMoney)// если не включена проверка точного соответствия рублей
+                                        {
+                                            //получаем 1% от AveragePrice матрицы
+                                            decimal onePercent = matrixClients[i].Positions[p].AveragePrice / 100;
+
+                                            if (compareToLimLim.Positions[qp].AveragePrice + onePercent >= matrixClients[i].Positions[p].AveragePrice &&
+                                                compareToLimLim.Positions[qp].AveragePrice - onePercent <= matrixClients[i].Positions[p].AveragePrice)
+                                            {
+                                                //удаляем lim.lim позицию
+                                                limlimClients[limlimClients.FindIndex(r =>
+                                                    r.ClientPortfolio.MatrixClientPortfolio == matrixClients[i].ClientPortfolio.MatrixClientPortfolio)].Positions.RemoveAt(qp);
+
+                                                //удаляем матричную позицию
+                                                matrixClients[i].Positions.RemoveAt(p);
+
+                                                break;
+                                            }
                                         }
                                     }
                                 }
@@ -479,14 +526,8 @@ namespace LogicCore
 
             for (int i = matrixClients.Count - 1; i >= 0; i--)
             {
-                string tag = "EQTV";
+                string tag = CommonServices.LimLimService.GetTagByPortfolio(matrixClients[i].ClientPortfolio.MatrixClientPortfolio);
                 string tks = matrixClients[i].TKS;
-                
-                if (!matrixClients[i].ClientPortfolio.MatrixClientPortfolio.Contains("-MS-") &&
-                    !matrixClients[i].ClientPortfolio.MatrixClientPortfolio.Contains("-MO-")) // тут придется харкодить, мне не известно что в МО портфеле торговали.
-                {
-                    tag = "EUSR";
-                }
 
                 // пусть будет пока. хотя ткс из позиции по идее должно быть = ткс из портфеля.
                 if (matrixClients[i].Positions.Count > 0)
@@ -508,9 +549,6 @@ namespace LogicCore
                         $"В файле lim.lim не найдено данных по портфелю {matrixClients[i].ClientPortfolio.MatrixClientPortfolio}");
 
                     message.Body = message.Body + $"<p style='color:red'>В файле lim.lim не найдено данных по портфелю {matrixClients[i].ClientPortfolio.MatrixClientPortfolio}</p>";
-
-                    // удалить из matrixClients этого клиента. что его сравнивать то? === не удаляем, иначе isTrue в респонсе = true
-                    //matrixClients.RemoveAt(i);
                 }
                 else
                 {
@@ -531,22 +569,14 @@ namespace LogicCore
             portfoliosToHTTPRequestDepoPositions = portfoliosToHTTPRequestDepoPositions.Substring(1);//убрать первый & из строки
             ClientDepoPositionsResponse matrixDepoPositions = await _repository.GetClientsPositionsByMatrixPortfolioList(portfoliosToHTTPRequestDepoPositions);
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICoreSingleServices CheckIsFileCorrectLimLim " +
-                $"получено позицийу клиентов с сделками - " + matrixDepoPositions.Clients.Count);
+                $"получено позицийу клиентов с сделками - " + matrixDepoPositions.PortfoliosAndPosition.Count);
             //позиции записать в List<ClientAssetsModel> matrixClients
-            foreach (ClientDepoPositionModel position in matrixDepoPositions.Clients)
+            foreach (ClientDepoPositionModel position in matrixDepoPositions.PortfoliosAndPosition)
             {
                 // если USD EUR etc - то в деньги <<-------------------------------------------------------------------------
-                if (position.SecCode.Equals("USD") ||
-                    position.SecCode.Equals("EUR") ||
-                    position.SecCode.Equals("GBP") ||
-                    position.SecCode.Equals("HKD"))
+                if (_limSettings.PositionAsMoneyArray.Contains(position.SecCode))
                 {
-                    string tag = "EQTV";
-
-                    if (!position.MatrixClientPortfolio.Contains("-MS-"))
-                    {
-                        tag = "EUSR";
-                    }
+                    string tag = CommonServices.LimLimService.GetTagByPortfolio(position.MatrixClientPortfolio);
 
                     ClientAssetsMoneyPositionModel newMoneyPosition = new ClientAssetsMoneyPositionModel
                     {
@@ -611,15 +641,8 @@ namespace LogicCore
                 { 
                     Balance = client.Money
                 };
-                if (newClient.ClientPortfolio.MatrixClientPortfolio.Contains("-MS-") || 
-                    newClient.ClientPortfolio.MatrixClientPortfolio.Contains("-MO-")) // тут придется харкодить, мне не известно что в МО портфеле торговали.
-                {
-                    clientMoneyPosition.Tag = "EQTV";
-                }
-                else
-                {
-                    clientMoneyPosition.Tag = "EUSR";
-                }
+
+                clientMoneyPosition.Tag = CommonServices.LimLimService.GetTagByPortfolio(newClient.ClientPortfolio.MatrixClientPortfolio);
 
                 newClient.Moneys.Add(clientMoneyPosition);
 
@@ -761,6 +784,204 @@ namespace LogicCore
             }
 
             return clientInLimLim;
+        }
+
+        public async Task<ListStringResponseModel> GetSingleClientSpotLimitsToFileByMatrixAccount(string matrixClientAccount, bool oldPositionMustBeZeroing)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICoreSingleServices GetSingleClientSpotLimitsToFileByMatrixAccount {matrixClientAccount} Called");
+
+            ListStringResponseModel result = new ListStringResponseModel();            
+
+            // проверка наличия директории
+            if (!Directory.Exists(_limSettings.PathToSingleClientLimLim))
+            {
+                try
+                {
+                    Directory.CreateDirectory(_limSettings.PathToSingleClientLimLim);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICoreSingleServices GetSingleClientSpotLimitsToFileByMatrixAccount Error! " +
+                        $"Path directory '{_limSettings.PathToSingleClientLimLim}' unavaliable");
+
+                    result.IsSuccess = false;
+                    result.Messages.Add($"Error! Path directory '{_limSettings.PathToSingleClientLimLim}' unavaliable. {ex.Message}");
+                    return result;
+                }
+            }
+
+            //запрос всех денег клиента по портфелям
+            SingleClientPortfoliosMoneyResponse clientPortfolios = await _repository.GetClientSpotPortfoliosAndMoneyForLimLim(matrixClientAccount);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICoreSingleServices GetSingleClientSpotLimitsToFileByMatrixAccount " +
+                $"for {matrixClientAccount} finded {clientPortfolios.PortfoliosAndMoney.Count} portfolios");
+            result.Messages.AddRange(clientPortfolios.Response.Messages);
+
+            //если нет портфелей с деньгами то запрос позиций не имеет смысла
+            if (clientPortfolios.PortfoliosAndMoney.Count > 0)
+            {
+                List<ClientDepoPositionModel> clientPositions = new List<ClientDepoPositionModel>();
+
+                //запрос привязки к ТКС пустыми позициями.
+                ClientDepoPositionsResponse clientInitialZeroToTKSPositions = await _repository.GetClientInitialDepoToTksSpotPositionsForLimLim(matrixClientAccount);
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICoreSingleServices GetSingleClientSpotLimitsToFileByMatrixAccount " +
+                    $"for {matrixClientAccount} finded {clientInitialZeroToTKSPositions.PortfoliosAndPosition.Count} TKS to portfolio positions");
+                result.Messages.AddRange(clientInitialZeroToTKSPositions.Response.Messages);
+                clientPositions.AddRange(clientInitialZeroToTKSPositions.PortfoliosAndPosition);
+
+                //запрос всех РАНЕЕ ЗАКРЫТЫХ позиций клиента
+                if (oldPositionMustBeZeroing)
+                {
+                    //дней когда последний раз торговал
+                    for (int dayShift = 1; dayShift <= 7; dayShift++)
+                    {
+                        BoolResponse GetIsClientTrade = await _repository.GetBoolIsClientTradeDaysAgoByClientAccountAndDays(matrixClientAccount, dayShift);
+                        if (GetIsClientTrade.IsTrue)
+                        {
+                            //запрос зануленных закрытых позиций
+                            ClientDepoPositionsResponse clientZeroedPositions = await _repository.GetClientZeroedClosedSpotPositionsForLimLim(matrixClientAccount, dayShift);
+                            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICoreSingleServices GetSingleClientSpotLimitsToFileByMatrixAccount " +
+                                $"for {matrixClientAccount} finded {clientZeroedPositions.PortfoliosAndPosition.Count} Zeroed positions");
+                            result.Messages.AddRange(clientZeroedPositions.Response.Messages);
+                            clientPositions.AddRange(clientZeroedPositions.PortfoliosAndPosition);
+
+                            break;
+                        }
+                    }
+                }
+
+                //запрос всех актуальных позимций клиента                
+                ClientDepoPositionsResponse clientActualPositions = await _repository.GetClientActualSpotPositionsForLimLim(matrixClientAccount);
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICoreSingleServices GetSingleClientSpotLimitsToFileByMatrixAccount " +
+                    $"for {matrixClientAccount} finded {clientActualPositions.PortfoliosAndPosition.Count} actual positions");
+                result.Messages.AddRange(clientActualPositions.Response.Messages);
+                clientPositions.AddRange(clientActualPositions.PortfoliosAndPosition);
+
+                //create lim.lim file
+                List<string> fileText = new List<string>();
+                //Деньги:
+                foreach (PortfoliosAndMoneyModel portfolio in clientPortfolios.PortfoliosAndMoney)
+                {
+                    fileText.Add(CreateMoneyStringForLimLim(portfolio));
+                }
+                //позиции
+                foreach (ClientDepoPositionModel position in clientPositions)
+                {
+                    fileText.Add(CreatePositionStringForLimLim(position));
+                }
+
+                //добавить имя файла к пути
+                string filePath = Path.Combine(_limSettings.PathToSingleClientLimLim, $"lim_{matrixClientAccount}_{DateTime.Now.ToString("yy-MM-dd_HH-mm")}.lim");
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICoreSingleServices GetSingleClientSpotLimitsToFileByMatrixAccount " + 
+                    $"try write file to {filePath}");
+                // пробуем записать
+                try
+                {
+                    await File.WriteAllLinesAsync(filePath, fileText);
+
+                    result.Messages.Add($"File saved at path: {filePath}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICoreSingleServices GetSingleClientSpotLimitsToFileByMatrixAccount Exception when write file! " +
+                        ex.Message);
+
+                    result.IsSuccess = false;
+                    result.Messages.Add($"Exception when write file! " + ex.Message);
+                }                
+            }
+            else
+            {
+                result.IsSuccess = false;                
+                result.Messages.Add($"Для клиента {matrixClientAccount} не найдено данных по наличию портфелей!");
+            }
+
+            return result;
+        }
+
+        private string CreatePositionStringForLimLim(ClientDepoPositionModel position)
+        {
+            //если это деньги - делаем деньги, иначе обычную позицию
+            if (_limSettings.PositionAsMoneyArray.Contains(position.SecCode))
+            {
+                Console.WriteLine(string.Format($"Слово '{position.SecCode}' содержится в массиве"));
+
+                PortfoliosAndMoneyModel portfolio = new PortfoliosAndMoneyModel();
+                portfolio.MatrixClientPortfolio = position.MatrixClientPortfolio;
+                portfolio.Leverage = 1;
+                portfolio.MoneyOpenBalanse = position.OpenBalance;
+
+                string resultMoney = CreateMoneyStringForLimLim(portfolio, position.SecCode);
+                return resultMoney;
+            }
+
+            //делаем обычную позицию
+            string positionResult = "";
+
+            //DEPO:  FIRM_ID = MC0138200000; SECCODE = HYDR; CLIENT_CODE = BP1234/01; OPEN_BALANCE = -1000; OPEN_LIMIT = 0; TRDACCID = L01+00000F00; WA_POSITION_PRICE = 0.745100; LIMIT_KIND = 2;
+            for (int i = 1; i <= 2; i++)
+            {
+                positionResult = positionResult +
+                    $"DEPO: " +
+                    $" FIRM_ID = MC0138200000;" +
+                    $" LIMIT_KIND = {i};" +
+                    $" CLIENT_CODE = {CommonServices.PortfoliosConvertingService.GetQuikSpotCode(position.MatrixClientPortfolio)};" +
+                    $" SECCODE = {position.SecCode};" +
+                    $" OPEN_BALANCE = {position.OpenBalance};" +
+                    $" OPEN_LIMIT = 0;" +
+                    $" TRDACCID = {position.TKS};" +
+                    $" WA_POSITION_PRICE = {position.AveragePrice};"
+                    ;
+                if (i == 1)
+                {
+                    positionResult = positionResult + "\r\n";
+                }
+            }
+
+            positionResult = CheckRepareDelimeters(positionResult);
+
+            return positionResult;
+        }
+
+        private string CreateMoneyStringForLimLim(PortfoliosAndMoneyModel portfolio, string currency = "SUR")
+        {
+            string moneyResult = "";
+
+            //MONEY:  FIRM_ID = MC0138200000; TAG = EQTV; CURR_CODE = SUR; CLIENT_CODE = BP21609/01; OPEN_BALANCE = 0.00; LEVERAGE = 2.00; LIMIT_KIND = 2;
+            for (int i = 1; i <= 2; i++)
+            {
+                moneyResult = moneyResult +
+                    $"MONEY: " +
+                    $" FIRM_ID = MC0138200000;" +
+                    $" LIMIT_KIND = {i};" +
+                    $" CLIENT_CODE = {CommonServices.PortfoliosConvertingService.GetQuikSpotCode(portfolio.MatrixClientPortfolio)};" +
+                    $" CURR_CODE = {currency};" +
+                    $" OPEN_BALANCE = {portfolio.MoneyOpenBalanse};" +
+                    $" TAG = {CommonServices.LimLimService.GetTagByPortfolio(portfolio.MatrixClientPortfolio)};" +  
+                    $" LEVERAGE = {portfolio.Leverage};"
+                    ;
+                if (i == 1)
+                {
+                    moneyResult = moneyResult + "\r\n";
+                }
+            }
+
+            moneyResult = CheckRepareDelimeters(moneyResult);
+
+            return moneyResult;
+        }
+
+        private string CheckRepareDelimeters(string str)
+        {
+            if (_limSettings.Delimiter.Equals("."))
+            {
+                str = str.Replace(",", ".");
+            }
+            else
+            {
+                str = str.Replace(".", ",");
+            }
+
+            return str;
         }
     }
 }

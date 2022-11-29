@@ -69,5 +69,10 @@ namespace DataAbstraction.Interfaces
         Task<MatrixClientCodeModelResponse> GetAllAllowedCDPortfolios();
         Task<ListStringResponseModel> AddNewMatrixPortfolioToExistingClientByUID(MatrixPortfolioAndUidModel matrixPortfolioAndUid);
         Task<ListStringResponseModel> AddNewFortsPortfolioToExistingClientByUID(FortsCodeAndUidModel fortsCodeAndUid);
+        Task<SingleClientPortfoliosMoneyResponse> GetClientSpotPortfoliosAndMoneyForLimLim(string matrixClientAccount);
+        Task<ClientDepoPositionsResponse> GetClientActualSpotPositionsForLimLim(string matrixClientAccount);
+        Task<ClientDepoPositionsResponse> GetClientInitialDepoToTksSpotPositionsForLimLim(string matrixClientAccount);
+        Task<BoolResponse> GetBoolIsClientTradeDaysAgoByClientAccountAndDays(string matrixClientAccount, int dayShift);
+        Task<ClientDepoPositionsResponse> GetClientZeroedClosedSpotPositionsForLimLim(string matrixClientAccount, int dayShift);
     }
 }

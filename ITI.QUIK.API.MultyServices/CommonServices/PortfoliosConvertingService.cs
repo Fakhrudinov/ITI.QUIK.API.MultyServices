@@ -2,6 +2,29 @@
 {
     public static class PortfoliosConvertingService
     {
+        public static string GetQuikSpotCode(string portfolio)
+        {
+            var portfolioParts = portfolio.Split("-");
+            string result = portfolioParts[0];
+
+            if (portfolio.Contains("-CD-"))
+            {
+                result = result
+                        + "/D"
+                        + portfolioParts[2];
+
+
+            }
+            else
+            {
+                result = result
+                        + "/"
+                        + portfolioParts[2];
+            }
+
+            return result;
+        }
+
         public static string GetQuikCdPortfolio(string portfolio)
         {
             var portfolioParts = portfolio.Split("-");

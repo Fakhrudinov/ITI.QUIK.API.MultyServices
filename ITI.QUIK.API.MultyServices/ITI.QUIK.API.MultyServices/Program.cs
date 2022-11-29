@@ -36,6 +36,9 @@ builder.Services.Configure<SMTPMailConfig>(
 builder.Services.Configure<CoreSettings>(
     builder.Configuration.GetSection("CoreSettings"));
 
+builder.Services.Configure<LimLImCreationSettings>(
+    builder.Configuration.GetSection("LimLImCreationSettings"));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

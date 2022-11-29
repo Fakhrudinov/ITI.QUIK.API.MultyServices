@@ -27,7 +27,7 @@ namespace LogicCore
 
             ListStringResponseModel result = new ListStringResponseModel();
             NewEMail message = new NewEMail();
-            message.Subject = "QUIK обновление списков Квал и сдавших тесты в Qadmin MC0138200000 библиотеке";
+            //message.Subject = "QUIK обновление списков Квал и сдавших тесты в Qadmin MC0138200000 библиотеке";
             message.Body = "<html><body><h2>QUIK обновление списков Квал инвесторов</h2>";
 
             // запросить в БД матрицы список всех квалов
@@ -131,11 +131,21 @@ namespace LogicCore
 
             if (sendReport)
             {
+                if (result.IsSuccess)
+                {
+                    message.Subject = "Success! QUIK обновление списков Квал и сдавших тесты в Qadmin MC0138200000 библиотеке";
+                }
+                else
+                {
+                    message.Subject = "Errors! QUIK обновление списков Квал и сдавших тесты в Qadmin MC0138200000 библиотеке";
+                }
+
                 _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreKval RenewClients отправляем почту");
                 await _sender.Send(message);
             }
 
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreKval RenewClients all done");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreKval RenewClients all done");         
+
             return result;
         }
 

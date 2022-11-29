@@ -924,7 +924,7 @@ namespace LogicCore
 
             ListStringResponseModel result = new ListStringResponseModel();
             NewEMail message = new NewEMail();
-            message.Subject = "QUIK обновление шаблонов 'По комиссии' в Qadmin MC0138200000 библиотеке";
+            //message.Subject = "QUIK обновление шаблонов 'По комиссии' в Qadmin MC0138200000 библиотеке";
             message.Body = "<html><body><h2>QUIK обновление шаблонов По комиссии спот</h2>";
 
             //установка MS и FX портфелей
@@ -1164,10 +1164,19 @@ namespace LogicCore
                 }
             }
 
-            message.Body = message.Body + "</body></html>";
-
             if (sendReport)
             {
+                message.Body = message.Body + "</body></html>";
+
+                if (result.IsSuccess)
+                {
+                    message.Subject = "Success! QUIK обновление шаблонов 'По комиссии' в Qadmin MC0138200000 библиотеке";
+                }
+                else
+                {
+                    message.Subject = "Errors! QUIK обновление шаблонов 'По комиссии' в Qadmin MC0138200000 библиотеке";
+                }
+
                 _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii отправляем почту");
                 await _sender.Send(message);
             }
@@ -1249,7 +1258,7 @@ namespace LogicCore
 
             ListStringResponseModel result = new ListStringResponseModel();
             NewEMail message = new NewEMail();
-            message.Subject = "QUIK обновление шаблонов 'По комиссии' в Qadmin SPBFUT библиотеке";
+            //message.Subject = "QUIK обновление шаблонов 'По комиссии' в Qadmin SPBFUT библиотеке";
             message.Body = "<html><body><h2>QUIK обновление шаблона По комиссии фортс 'RF_Restrict'</h2>";
 
             // запрет торговли по срочному рынку
@@ -1416,10 +1425,19 @@ namespace LogicCore
                 }
             }
 
-            message.Body = message.Body + "</body></html>";
-
             if (sendReport)
             {
+                message.Body = message.Body + "</body></html>";
+
+                if (result.IsSuccess)
+                {
+                    message.Subject = "Success! QUIK обновление шаблонов 'По комиссии' в Qadmin SPBFUT библиотеке";
+                }
+                else
+                {
+                    message.Subject = "Errors! QUIK обновление шаблонов 'По комиссии' в Qadmin SPBFUT библиотеке";
+                }
+
                 _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Send message");
                 await _sender.Send(message);
             }
@@ -1436,7 +1454,7 @@ namespace LogicCore
 
             ListStringResponseModel result = new ListStringResponseModel();
             NewEMail message = new NewEMail();
-            message.Subject = "QUIK обновление запрещенных для неквалов инструментов в шаблонах 'По комиссии' в Qadmin MC013820000";
+            //message.Subject = "QUIK обновление запрещенных для неквалов инструментов в шаблонах 'По комиссии' в Qadmin MC013820000";
             message.Body = "<html><body>";
             message.Body = message.Body + $"<h3>Получение данных по бумагам/бордам из матрицы</h3>";
             // запросить список инструментов в бд матрицы
@@ -1458,10 +1476,19 @@ namespace LogicCore
 
                 message.Body = message.Body + $"<p style='color:red'>Ошибка получения запрещенных для неквалов инструментов</p>";
                 foreach (var text in secAndBoards.Response.Messages)
-                {
+                {                  
                     _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} - {text}");
                     message.Body = message.Body + $"<p style='color:red'> - {text}</p>";
                     result.Messages.Add(text);
+                }
+
+                if (sendReport)
+                {
+                    message.Subject = "Failed! QUIK обновление запрещенных для неквалов инструментов в шаблонах 'По комиссии' в Qadmin MC013820000";
+
+                    message.Body = message.Body + "</body></html>";
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii Send message");
+                    await _sender.Send(message);
                 }
 
                 return result;
@@ -1518,12 +1545,21 @@ namespace LogicCore
                         message.Body = message.Body + $"<p>Отправка списка в {board.TemplateName} {board.SecBoard} с количеством {board.Securities.Count} успешна</p>";
                     }
                 }
-            }
-
-            message.Body = message.Body + "</body></html>";
+            }            
 
             if (sendReport)
             {
+                message.Body = message.Body + "</body></html>";
+
+                if (result.IsSuccess)
+                {
+                    message.Subject = "Success! QUIK обновление запрещенных для неквалов инструментов в шаблонах 'По комиссии' в Qadmin MC013820000";
+                }
+                else
+                {
+                    message.Subject = "Errors! QUIK обновление запрещенных для неквалов инструментов в шаблонах 'По комиссии' в Qadmin MC013820000";
+                }
+
                 _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii Send message");
                 await _sender.Send(message);
             }

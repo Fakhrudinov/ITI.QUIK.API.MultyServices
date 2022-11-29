@@ -1960,7 +1960,48 @@ namespace ChildHttpApiRepository
 
         public async Task<ClientDepoPositionsResponse> GetClientsPositionsByMatrixPortfolioList(string portfoliosToRequest)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsPositionsByMatrixPortfolioList Called with " + portfoliosToRequest);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsPositionsByMatrixPortfolioList Called " +
+                $"with " + portfoliosToRequest);
+
+            string httpRequest = "/api/ClientMoney/GetClients/Positions/ByMatrixPortfolioList?" + portfoliosToRequest;
+
+            return await GetClientDepoPositionsResponseByRequest(httpRequest);
+        }
+
+        public async Task<ClientDepoPositionsResponse> GetClientActualSpotPositionsForLimLim(string matrixClientAccount)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientActualSpotPositionsForLimLim Called " +
+                $"with " + matrixClientAccount);
+            
+            string httpRequest = "/api/ClientMoney/Get/SingleClient/ActualPositionsLimits/ByMatrixAccount/" + matrixClientAccount;
+
+            return await GetClientDepoPositionsResponseByRequest(httpRequest);
+        }
+
+        public async Task<ClientDepoPositionsResponse> GetClientInitialDepoToTksSpotPositionsForLimLim(string matrixClientAccount)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientInitialDepoToTksSpotPositionsForLimLim Called " +
+                $"with " + matrixClientAccount);
+
+            string httpRequest = "/api/ClientMoney/Get/SingleClient/ZeroPositionToTKSLimits/ByMatrixAccount/" + matrixClientAccount;
+
+            return await GetClientDepoPositionsResponseByRequest(httpRequest);
+        }
+
+        public async Task<ClientDepoPositionsResponse> GetClientZeroedClosedSpotPositionsForLimLim(string matrixClientAccount, int dayShift)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientZeroedClosedSpotPositionsForLimLim Called " +
+                $"with {matrixClientAccount} days={dayShift}");
+
+            string httpRequest = $"/api/ClientMoney/Get/SingleClient/ClosedPositionsLimits/ByMatrixAccount/{matrixClientAccount}/daysShift/{dayShift}";
+
+            return await GetClientDepoPositionsResponseByRequest(httpRequest);
+        }
+
+        private async Task<ClientDepoPositionsResponse> GetClientDepoPositionsResponseByRequest(string httpRequest)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientDepoPositionsResponseByRequest Called " +
+                $"with httpRequest " + httpRequest);
 
             ClientDepoPositionsResponse result = new ClientDepoPositionsResponse();
             try
@@ -1970,34 +2011,34 @@ namespace ChildHttpApiRepository
                     client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                    var response = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/ClientMoney/GetClients/Positions/ByMatrixPortfolioList?" + portfoliosToRequest);
+                    var response = await client.GetAsync(_connections.MatrixAPIConnectionString + httpRequest);
 
                     if (response.IsSuccessStatusCode)
                     {
                         result = await response.Content.ReadFromJsonAsync<ClientDepoPositionsResponse>();
 
-                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsPositionsByMatrixPortfolioList " +
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientDepoPositionsResponseByRequest " +
                             $"succes is {result.Response.IsSuccess}");
                     }
                     else
                     {
-                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsPositionsByMatrixPortfolioList response is" +
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientDepoPositionsResponseByRequest response is" +
                             $" {response.StatusCode} {response.ReasonPhrase} {response.Content}");
 
                         result.Response.IsSuccess = false;
-                        result.Response.Messages.Add($"HttpApiRepository GetClientsPositionsByMatrixPortfolioList response is " +
+                        result.Response.Messages.Add($"HttpApiRepository GetClientDepoPositionsResponseByRequest response is " +
                             $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientsPositionsByMatrixPortfolioList " +
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientDepoPositionsResponseByRequest " +
                     $"request url NotFound; {ex.Message}");
 
                 result.Response.IsSuccess = false;
-                result.Response.Messages.Add($"(404) HttpApiRepository GetClientsPositionsByMatrixPortfolioList request url NotFound; {ex.Message}");
-                result.Response.Messages.Add(_connections.MatrixAPIConnectionString + "/api/ClientMoney/GetClients/Positions/ByMatrixPortfolioList?" + portfoliosToRequest);
+                result.Response.Messages.Add($"(404) HttpApiRepository GetClientDepoPositionsResponseByRequest request url NotFound; {ex.Message}");
+                result.Response.Messages.Add(_connections.MatrixAPIConnectionString + httpRequest);
             }
 
             return result;
@@ -2012,7 +2053,7 @@ namespace ChildHttpApiRepository
             {
                 using (var client = new HttpClient())
                 {
-                    client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
+                    client.BaseAddress = new Uri(_connections.QuikAPIConnectionString);
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                     var response = await client.GetAsync(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/Get/FileInfo/ByPath/" + fileNameOrPath);
@@ -2143,6 +2184,100 @@ namespace ChildHttpApiRepository
                 result.IsSuccess = false;
                 result.Messages.Add($"(404) HttpApiRepository AddNewFortsPortfolioToExistingClientByUID request url NotFound; {ex.Message}");
                 result.Messages.Add(_connections.QuikAPIConnectionString + "/api/QuikSftpServer/AddNew/MatrixFortsCode/ToExistClient/ByUID");
+            }
+
+            return result;
+        }
+
+        public async Task<SingleClientPortfoliosMoneyResponse> GetClientSpotPortfoliosAndMoneyForLimLim(string matrixClientAccount)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientSpotPortfoliosAndMoneyForLimLim Called for " + matrixClientAccount);
+
+            SingleClientPortfoliosMoneyResponse result = new SingleClientPortfoliosMoneyResponse();
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.MatrixAPIConnectionString + "/api/ClientMoney/Get/SingleClient/Money/SpotLimits/ByMatrixAccount/" + matrixClientAccount);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<SingleClientPortfoliosMoneyResponse>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientSpotPortfoliosAndMoneyForLimLim " +
+                            $"succes is {result.Response.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientSpotPortfoliosAndMoneyForLimLim response is" +
+                            $" {response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.Response.IsSuccess = false;
+                        result.Response.Messages.Add($"HttpApiRepository GetClientSpotPortfoliosAndMoneyForLimLim response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetClientSpotPortfoliosAndMoneyForLimLim " +
+                    $"request url NotFound; {ex.Message}");
+
+                result.Response.IsSuccess = false;
+                result.Response.Messages.Add($"(404) HttpApiRepository GetClientSpotPortfoliosAndMoneyForLimLim request url NotFound; {ex.Message}");
+                result.Response.Messages.Add(_connections.MatrixAPIConnectionString + "/api/ClientMoney/Get/SingleClient/Money/SpotLimits/ByMatrixAccount/" + matrixClientAccount);
+            }
+
+            return result;
+        }
+
+        public async Task<BoolResponse> GetBoolIsClientTradeDaysAgoByClientAccountAndDays(string matrixClientAccount, int dayShift)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetBoolIsClientTradeDaysAgoByClientAccountAndDays Called " +
+                $"with {matrixClientAccount} days={dayShift}");
+
+            BoolResponse result = new BoolResponse();
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_connections.MatrixAPIConnectionString);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var response = await client.GetAsync(_connections.MatrixAPIConnectionString + 
+                        $"/api/ClientMoney/Get/SingleClient/DoTrades/ByMatrixAccount/{matrixClientAccount}/daysAgoShift/{dayShift}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        result = await response.Content.ReadFromJsonAsync<BoolResponse>();
+
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetBoolIsClientTradeDaysAgoByClientAccountAndDays " +
+                            $"'{matrixClientAccount}' succes is {result.IsSuccess}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetBoolIsClientTradeDaysAgoByClientAccountAndDays response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+
+                        result.IsSuccess = false;
+                        result.Messages.Add($"HttpApiRepository GetBoolIsClientTradeDaysAgoByClientAccountAndDays response is " +
+                            $"{response.StatusCode} {response.ReasonPhrase} {response.Content}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpApiRepository GetBoolIsClientTradeDaysAgoByClientAccountAndDays request " +
+                    $"url NotFound; {ex.Message}");
+
+                result.IsSuccess = false;
+                result.Messages.Add($"(404) HttpApiRepository GetBoolIsClientTradeDaysAgoByClientAccountAndDays request " +
+                    $"url NotFound; {ex.Message}");
+                result.Messages.Add(_connections.MatrixAPIConnectionString + 
+                    $"/api/ClientMoney/Get/SingleClient/DoTrades/ByMatrixAccount/{matrixClientAccount}/daysAgoShift/{dayShift}");
             }
 
             return result;
