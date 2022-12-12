@@ -1,8 +1,9 @@
-﻿using DataAbstraction.Responses;
+﻿using DataAbstraction.Interfaces;
+using DataAbstraction.Responses;
 
 namespace DataAbstraction.Models.MoneyAndDepo
 {
-    public class ClientDepoPositionsResponse
+    public class ClientDepoPositionsResponse : IResponseNested
     {
         public ListStringResponseModel Response { get; set; } = new ListStringResponseModel();
 

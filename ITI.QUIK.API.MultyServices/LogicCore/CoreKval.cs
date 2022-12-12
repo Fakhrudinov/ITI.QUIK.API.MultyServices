@@ -11,13 +11,15 @@ namespace LogicCore
     public class CoreKval : ICoreKval
     {
         private ILogger<CoreKval> _logger;
-        private IHttpApiRepository _repository;
+        private IHttpMatrixRepository _repository;
+        private IHttpQuikRepository _repoQuik;
         private IEMail _sender;
 
-        public CoreKval(ILogger<CoreKval> logger, IHttpApiRepository repository, IEMail sender)
+        public CoreKval(ILogger<CoreKval> logger, IHttpMatrixRepository repository, IHttpQuikRepository repoQuik, IEMail sender)
         {
             _logger = logger;
             _repository = repository;
+            _repoQuik = repoQuik;
             _sender = sender;
         }
 
@@ -41,7 +43,7 @@ namespace LogicCore
                 CodesArrayModel codesArrayModel = new CodesArrayModel();
                 codesArrayModel.MatrixClientPortfolios = kval.MatrixClientCodesList.ToArray();
 
-                ListStringResponseModel setKval = await _repository.SetKvalClientsToComplexProductRestrictions(codesArrayModel);
+                ListStringResponseModel setKval = await _repoQuik.SetKvalClientsToComplexProductRestrictions(codesArrayModel);
 
                 if (setKval.IsSuccess == false)
                 {
@@ -91,7 +93,7 @@ namespace LogicCore
 
                 message.Body = message.Body + $"<p>После сортировки портфелей неквалов с тестами {clientsForQuikBRL.Count}</p>";
 
-                ListStringResponseModel setNeKval = await _repository.SetNonKvalClientsWithTestsToComplexProductRestrictions(clientsForQuikBRL.ToArray());
+                ListStringResponseModel setNeKval = await _repoQuik.SetNonKvalClientsWithTestsToComplexProductRestrictions(clientsForQuikBRL.ToArray());
 
                 if (setNeKval.IsSuccess == false)
                 {

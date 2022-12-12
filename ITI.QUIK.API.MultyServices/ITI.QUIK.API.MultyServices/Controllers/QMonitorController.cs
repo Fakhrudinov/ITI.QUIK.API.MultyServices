@@ -10,9 +10,9 @@ namespace ITI.QUIK.API.MultyServices.Controllers
     public class QMonitorController : ControllerBase
     {
         private ILogger<QMonitorController> _logger;
-        private IHTTPQMonitorRepository _repository;
+        private IHttpQuikRepository _repository;
 
-        public QMonitorController(ILogger<QMonitorController> logger, IHTTPQMonitorRepository repository)
+        public QMonitorController(ILogger<QMonitorController> logger, IHttpQuikRepository repository)
         {
             _logger = logger;
             _repository = repository;

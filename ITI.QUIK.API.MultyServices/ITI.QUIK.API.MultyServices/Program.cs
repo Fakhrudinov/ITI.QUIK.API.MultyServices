@@ -1,4 +1,4 @@
-using ChildHttpApiRepository;
+using ChildHttpMatrixRepository;
 using DataAbstraction.Connections;
 using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
@@ -19,8 +19,9 @@ builder.Services.Configure<HttpConfigurations>(
     builder.Configuration.GetSection("HttpConfigurations"));
 
 // add child APIs repository
-builder.Services.AddTransient<IHttpApiRepository, HttpApiRepository>();
-builder.Services.AddTransient<IHTTPQMonitorRepository, HTTPQMonitorRepository>();
+builder.Services.AddTransient<IHttpMatrixRepository, HttpMatrixRepository>();
+builder.Services.AddTransient<IHttpQuikRepository, HttpQuikRepository>();
+builder.Services.AddTransient<HttpApiExecutiveRepository>();
 
 // add core level
 builder.Services.AddTransient<ICore, Core>();

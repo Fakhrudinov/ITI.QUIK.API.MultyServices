@@ -13,15 +13,22 @@ namespace LogicCore
     public class Core : ICore
     {
         private ILogger<Core> _logger;
-        private IHttpApiRepository _repository;
+        private IHttpMatrixRepository _repoMatrix;
+        private IHttpQuikRepository _repoQuik;
         private CoreSettings _settings;
         private System.Timers.Timer _timerUpdateFileCurrClnts;
         private IEMail _sender;
 
-        public Core(ILogger<Core> logger, IHttpApiRepository repository, IOptions<CoreSettings> settings, IEMail sender)
+        public Core(ILogger<
+            Core> logger, 
+            IHttpMatrixRepository repoMatrix, 
+            IHttpQuikRepository repoQuik, 
+            IOptions<CoreSettings> settings, 
+            IEMail sender)
         {
             _logger = logger;
-            _repository = repository;
+            _repoMatrix = repoMatrix;
+            _repoQuik = repoQuik;
             _settings = settings.Value;
 
             _timerUpdateFileCurrClnts = new System.Timers.Timer(120000);
@@ -37,13 +44,13 @@ namespace LogicCore
             // этот запрос помогает авторизоваться в сторонней бэкофисной БД и предотвратит ошибки:
             // ORA - 02396: превышено максимальное время ожидания, повторите соединение еще раз
             // ORA - 02063: предшествующий line из BOFFCE_MOFF_LINK",
-            await _repository.WarmUpBackOfficeDataBase();
+            await _repoMatrix.WarmUpBackOfficeDataBase();
 
             // далее все по плану
             NewClientModelResponse newClient = new NewClientModelResponse();
             newClient.NewClient.Key = new PubringKeyModel();
 
-            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientCode);
+            ClientInformationResponse clientInformation = await _repoMatrix.GetClientInformation(clientCode);
             if (clientInformation.Response.IsSuccess)
             {
                 newClient.NewClient.Client = clientInformation.ClientInformation;
@@ -55,7 +62,7 @@ namespace LogicCore
             }
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserNonEDP GetClientInformation result {clientInformation.Response.IsSuccess}");
 
-            MatrixClientCodeModelResponse spotCodes = await _repository.GetClientAllSpotCodesFiltered(clientCode);
+            MatrixClientCodeModelResponse spotCodes = await _repoMatrix.GetClientAllSpotCodesFiltered(clientCode);
             if (spotCodes.Response.IsSuccess)
             {
                 newClient.NewClient.MatrixClientPortfolios = spotCodes.MatrixClientCodesList.ToArray();
@@ -67,7 +74,7 @@ namespace LogicCore
             }
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserNonEDP GetClientAllSpotCodesFiltered result {spotCodes.Response.IsSuccess}");
 
-            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientAllFortsCodes(clientCode);
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repoMatrix.GetClientAllFortsCodes(clientCode);
             if (fortsCodes.Response.IsSuccess)
             {
                 newClient.NewClient.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
@@ -79,7 +86,7 @@ namespace LogicCore
             }
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserNonEDP GetClientAllFortsCodes result {fortsCodes.Response.IsSuccess}");
 
-            ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientCode);
+            ClientBOInformationResponse clientBOInformation = await _repoMatrix.GetClientBOInformation(clientCode);
             if (clientBOInformation.Response.IsSuccess)
             {
                 newClient.NewClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
@@ -104,7 +111,7 @@ namespace LogicCore
             NewClientOptionWorkShopModelResponse newClientOW = new NewClientOptionWorkShopModelResponse();
             newClientOW.NewOWClient.Key = new PubringKeyModel();
 
-            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientCode);
+            ClientInformationResponse clientInformation = await _repoMatrix.GetClientInformation(clientCode);
             if (clientInformation.Response.IsSuccess)
             {
                 newClientOW.NewOWClient.Client = clientInformation.ClientInformation;
@@ -116,7 +123,7 @@ namespace LogicCore
             }
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserOptionWorkShop GetClientInformation result {clientInformation.Response.IsSuccess}");
 
-            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientNonEdpFortsCodes(clientCode);
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repoMatrix.GetClientNonEdpFortsCodes(clientCode);
             if (fortsCodes.Response.IsSuccess)
             {
                 newClientOW.NewOWClient.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
@@ -128,7 +135,7 @@ namespace LogicCore
             }
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserOptionWorkShop GetClientNonEdpFortsCodes result {fortsCodes.Response.IsSuccess}");
 
-            BoolResponse isClientHasOptionWorkshop = await _repository.GetIsClientHasOptionWorkshop(clientCode);
+            BoolResponse isClientHasOptionWorkshop = await _repoMatrix.GetIsClientHasOptionWorkshop(clientCode);
             newClientOW.NewOWClient.HasOptionWorkShop = isClientHasOptionWorkshop.IsTrue;
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserOptionWorkShop isClientHasOptionWorkshop is {isClientHasOptionWorkshop.IsTrue}");
 
@@ -147,7 +154,7 @@ namespace LogicCore
             {
                 clientCodesArray.Add(forts.FortsClientCode);
             }
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
 
             if (checkUserExist.IsSuccess)//success - client already exist
             {
@@ -159,13 +166,13 @@ namespace LogicCore
             }
 
             // create new user
-            createResponse = await _repository.CreateNewClientOptionWorkshop(newClientModel);
+            createResponse = await _repoQuik.CreateNewClientOptionWorkshop(newClientModel);
 
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore PostNewClientOptionWorkshop result is {createResponse.IsSuccess}");
 
             if (createResponse.IsSuccess)
             {
-                ListStringResponseModel searchFileResult = await _repository.GetResultFromQuikSFTPFileUpload(createResponse.Messages[0]);
+                ListStringResponseModel searchFileResult = await _repoQuik.GetResultFromQuikSFTPFileUpload(createResponse.Messages[0]);
 
                 createResponse.Messages.AddRange(searchFileResult.Messages);
 
@@ -199,7 +206,7 @@ namespace LogicCore
                 }
             }
 
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
 
             if (checkUserExist.IsSuccess && newClientModel.isExistanceOverraid == false)//success - client already exist and no overrraid option selected
             {
@@ -218,7 +225,7 @@ namespace LogicCore
 
             //SFTP create
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore SFTP register for {newClientModel.Client.FirstName}");
-            ListStringResponseModel createSftpResponse = await _repository.CreateNewClient(newClientModel);
+            ListStringResponseModel createSftpResponse = await _repoQuik.CreateNewClient(newClientModel);
             createResponse.IsSftpUploadSuccess = createSftpResponse.IsSuccess;
             createResponse.SftpUploadMessages = createSftpResponse.Messages;
 
@@ -238,7 +245,7 @@ namespace LogicCore
             newMNPClient.isClientDepo = newClientModel.isClientDepo;
             newMNPClient.DepoClientAccountsManager = newClientModel.DepoClientAccountsManager;
 
-            ListStringResponseModel fillDataBaseInstrTWResponse = await _repository.FillDataBaseInstrTW(newMNPClient);
+            ListStringResponseModel fillDataBaseInstrTWResponse = await _repoQuik.FillDataBaseInstrTW(newMNPClient);
             createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
             createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
 
@@ -272,7 +279,7 @@ namespace LogicCore
                     codesArray.MatrixClientPortfolios[i] = new MatrixClientPortfolioModel() { MatrixClientPortfolio = portfolios[i] };
                 }
 
-                ListStringResponseModel fillCodesIniResponse = await _repository.FillCodesIniFile(codesArray);
+                ListStringResponseModel fillCodesIniResponse = await _repoQuik.FillCodesIniFile(codesArray);
                 createResponse.IsCodesIniSuccess = fillCodesIniResponse.IsSuccess;
                 createResponse.CodesIniMessages = fillCodesIniResponse.Messages;
 
@@ -283,14 +290,14 @@ namespace LogicCore
                 {
                     if (code.MatrixClientPortfolio.Contains("-CD-"))
                     {
-                        ListStringResponseModel addCdToKomissiiResponse = await _repository.AddCdPortfolioToTemplateKomissii(code);
+                        ListStringResponseModel addCdToKomissiiResponse = await _repoQuik.AddCdPortfolioToTemplateKomissii(code);
                         if (!addCdToKomissiiResponse.IsSuccess)
                         {
                             totalSucces = false;
                         }
                         createResponse.AddToTemplatesMessages.AddRange(addCdToKomissiiResponse.Messages);
 
-                        ListStringResponseModel addCdToPoPlechuResponse = await _repository.AddCdPortfolioToTemplatePoPlechu(code);
+                        ListStringResponseModel addCdToPoPlechuResponse = await _repoQuik.AddCdPortfolioToTemplatePoPlechu(code);
                         if (!addCdToPoPlechuResponse.IsSuccess)
                         {
                             totalSucces = false;
@@ -323,7 +330,7 @@ namespace LogicCore
             //проверим выполнение SFTP создания учетки в Qadmin - скорре всего результат будет "еще не обработан"
             if (createResponse.IsSftpUploadSuccess)
             {
-                ListStringResponseModel searchFileResult = await _repository.GetResultFromQuikSFTPFileUpload(createSftpResponse.Messages[0]);
+                ListStringResponseModel searchFileResult = await _repoQuik.GetResultFromQuikSFTPFileUpload(createSftpResponse.Messages[0]);
 
                 createResponse.NewClientCreationMessages.Add(createSftpResponse.Messages[0]);
                 createResponse.NewClientCreationMessages.AddRange(searchFileResult.Messages);
@@ -336,7 +343,7 @@ namespace LogicCore
 
         public async Task<ListStringResponseModel> GetResultFromQuikSFTPFileUpload(string fileName)
         {
-            return await _repository.GetResultFromQuikSFTPFileUpload(fileName);
+            return await _repoQuik.GetResultFromQuikSFTPFileUpload(fileName);
         }
 
         public PubringKeyModelResponse GetKeyFromFile(string filePath)
@@ -458,7 +465,7 @@ namespace LogicCore
             FindedQuikClientResponse result = new FindedQuikClientResponse();
 
             // найти все портфели - фильтрованные
-            MatrixClientCodeModelResponse spotCodes = await _repository.GetClientAllSpotCodesFiltered(matrixClientAccount);
+            MatrixClientCodeModelResponse spotCodes = await _repoMatrix.GetClientAllSpotCodesFiltered(matrixClientAccount);
             if (spotCodes.Response.IsSuccess)
             {
                 result.MatrixClientPortfolios = spotCodes.MatrixClientCodesList.ToArray();
@@ -470,7 +477,7 @@ namespace LogicCore
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount " +
                 $"GetClientAllSpotCodesFiltered result {spotCodes.Response.IsSuccess}");
 
-            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientAllFortsCodes(matrixClientAccount);
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repoMatrix.GetClientAllFortsCodes(matrixClientAccount);
             if (fortsCodes.Response.IsSuccess)
             {
                 result.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
@@ -510,11 +517,11 @@ namespace LogicCore
             }
 
             // INSTR TW - получить зарегистрированные в бд строки
-            result.InstrTWDBRecords = await _repository.GetRecordsFromInstrTwDataBase(allportfolios);
+            result.InstrTWDBRecords = await _repoQuik.GetRecordsFromInstrTwDataBase(allportfolios);
             result.InstrTWDBRecordsMessages = result.InstrTWDBRecords.Messages;
 
             // проверить наличие в файле CurrClients (QAdmin)
-            ListStringResponseModel findedInQadmin = await _repository.GetIsUserAlreadyExistByCodeArray(allportfolios.ToArray());
+            ListStringResponseModel findedInQadmin = await _repoQuik.GetIsUserAlreadyExistByCodeArray(allportfolios.ToArray());
             if (findedInQadmin.IsSuccess)
             {
                 result.isQuikQAdminClientFinded = true;
@@ -543,7 +550,7 @@ namespace LogicCore
                         // ищем в шаблонах по комиссии
                         for (int i = 0; i < tempatesName.Length; i++)
                         {
-                            ListStringResponseModel isAddedToTemplate = await _repository.GetAllClientsFromTemplatePoKomissii(tempatesName[i]);
+                            ListStringResponseModel isAddedToTemplate = await _repoQuik.GetAllClientsFromTemplatePoKomissii(tempatesName[i]);
                             if (isAddedToTemplate.IsSuccess)
                             {
                                 //search code in result
@@ -560,7 +567,7 @@ namespace LogicCore
                         }
 
                         // ищем в шаблоне по плечу
-                        ListStringResponseModel isAddedToTemplatePoPlechu = await _repository.GetAllClientsFromTemplatePoPlechu(tempatesName[0]);
+                        ListStringResponseModel isAddedToTemplatePoPlechu = await _repoQuik.GetAllClientsFromTemplatePoPlechu(tempatesName[0]);
                         if (isAddedToTemplatePoPlechu.IsSuccess)
                         {
                             //search code in result
@@ -597,7 +604,7 @@ namespace LogicCore
                     spotPortfolios.Add(portfolio.MatrixClientPortfolio);
                 }
 
-                BoolResponse isCodesIniFilled = await _repository.GetIsAllSpotPortfoliosPresentInFileCodesIni(spotPortfolios);
+                BoolResponse isCodesIniFilled = await _repoQuik.GetIsAllSpotPortfoliosPresentInFileCodesIni(spotPortfolios);
                 result.IsCodesIniFilled = isCodesIniFilled.IsTrue;
                 result.IsCodesIniFilledMessages = isCodesIniFilled.Messages;
             }
@@ -611,7 +618,7 @@ namespace LogicCore
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixClientAccount Called for {matrixClientAccount}");
             
-            ListStringResponseModel findedClients = await _repository.GetIsUserAlreadyExistByMatrixClientAccount(matrixClientAccount);
+            ListStringResponseModel findedClients = await _repoQuik.GetIsUserAlreadyExistByMatrixClientAccount(matrixClientAccount);
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixClientAccount result is {findedClients.IsSuccess}");
 
             FindedQuikQAdminClientResponse findedResponse = new FindedQuikQAdminClientResponse();
@@ -633,7 +640,7 @@ namespace LogicCore
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByFortsCode Called for {fortsClientCode}");
 
-            ListStringResponseModel findedClients = await _repository.GetIsUserAlreadyExistByFortsCode(fortsClientCode);
+            ListStringResponseModel findedClients = await _repoQuik.GetIsUserAlreadyExistByFortsCode(fortsClientCode);
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixPortfolio result is {findedClients.IsSuccess}");
 
             FindedQuikQAdminClientResponse findedResponse = new FindedQuikQAdminClientResponse();
@@ -744,7 +751,7 @@ namespace LogicCore
         public async Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientPortfolioModel model)
         {
             //check if user already exist and only 1
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.Split('-').First());
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.Split('-').First());
 
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
@@ -755,12 +762,12 @@ namespace LogicCore
             }
 
             // block unique user
-            return await _repository.BlockUserByMatrixClientCode(model);
+            return await _repoQuik.BlockUserByMatrixClientCode(model);
         }
         public async Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model)
         {
             //check if user already exist and only 1
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByFortsCode(model.FortsClientCode);
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByFortsCode(model.FortsClientCode);
 
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
@@ -771,18 +778,18 @@ namespace LogicCore
             }
 
             // block unique user
-            return await _repository.BlockUserByFortsClientCode(model);
+            return await _repoQuik.BlockUserByFortsClientCode(model);
         }
         public async Task<ListStringResponseModel> BlockUserByUID(int uid)
         {
-            return await _repository.BlockUserByUID(uid);
+            return await _repoQuik.BlockUserByUID(uid);
         }
 
 
         public async Task<ListStringResponseModel> SetNewPubringKeyByMatrixClientCode(MatrixCodeAndPubringKeyModel model)
         {
             //check if user already exist and only 1
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.MatrixClientPortfolio.Split('-').First());
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.MatrixClientPortfolio.Split('-').First());
 
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
@@ -792,12 +799,12 @@ namespace LogicCore
                 return checkUserExist;
             }
 
-            return await _repository.SetNewPubringKeyByMatrixClientCode(model);
+            return await _repoQuik.SetNewPubringKeyByMatrixClientCode(model);
         }
         public async Task<ListStringResponseModel> SetNewPubringKeyByFortsClientCode(FortsCodeAndPubringKeyModel model)
         {
             //check if user already exist and only 1
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByFortsCode(model.ClientCode.FortsClientCode);
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByFortsCode(model.ClientCode.FortsClientCode);
 
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
@@ -807,14 +814,14 @@ namespace LogicCore
                 return checkUserExist;
             }
 
-            return await _repository.SetNewPubringKeyByFortsClientCode(model);
+            return await _repoQuik.SetNewPubringKeyByFortsClientCode(model);
         }
 
 
         public async Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientPortfolioModel model)
         {
             //check if user already exist and only 1
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.Split('-').First());
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.Split('-').First());
 
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
@@ -824,12 +831,12 @@ namespace LogicCore
                 return checkUserExist;
             }
 
-            return await _repository.SetAllTradesByMatrixClientCode(model);
+            return await _repoQuik.SetAllTradesByMatrixClientCode(model);
         }
         public async Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model)
         {
             //check if user already exist and only 1
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByFortsCode(model.FortsClientCode);
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByFortsCode(model.FortsClientCode);
 
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
@@ -839,7 +846,7 @@ namespace LogicCore
                 return checkUserExist;
             }
 
-            return await _repository.SetAllTradesByFortsClientCode(model);
+            return await _repoQuik.SetAllTradesByFortsClientCode(model);
         }
 
         private void WaitAndGenerateNewFileCurrClnts(Object source, System.Timers.ElapsedEventArgs e)
@@ -856,7 +863,7 @@ namespace LogicCore
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewAllClientFile Called");
             
             //послать запрос на формирование нового файла с всеми клиентами            
-            ListStringResponseModel generateNewCurrClnts = await _repository.GenerateNewFileCurrClnts();
+            ListStringResponseModel generateNewCurrClnts = await _repoQuik.GenerateNewFileCurrClnts();
 
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewAllClientFile generateNewCurrClnts.IsSuccess={generateNewCurrClnts.IsSuccess}");
 
@@ -875,7 +882,7 @@ namespace LogicCore
                 {
                     _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewAllClientFile try {i} find complete request");
 
-                    ListStringResponseModel getFileResult = await _repository.GetResultFromQuikSFTPFileUpload(generateNewCurrClnts.Messages[0]);
+                    ListStringResponseModel getFileResult = await _repoQuik.GetResultFromQuikSFTPFileUpload(generateNewCurrClnts.Messages[0]);
                     if(getFileResult.IsSuccess && getFileResult.Messages[0].Contains("обработан и исполнен"))
                     {
                         //если успешно - запускаем скачивание файла
@@ -908,14 +915,14 @@ namespace LogicCore
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewLimLimFile Called");
 
-            return await _repository.DownloadLimLimFile();
+            return await _repoQuik.DownloadLimLimFile();
         }
 
         private async Task DownloadNewFileCurrClnts()
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore DownloadNewFileCurrClnts Called");
 
-            await _repository.DownloadNewFileCurrClnts();
+            await _repoQuik.DownloadNewFileCurrClnts();
         }
 
         public async Task<ListStringResponseModel> RenewClientsInSpotTemplatesPoKomissii(bool sendReport)
@@ -951,32 +958,32 @@ namespace LogicCore
                 switch (i)
                 {
                     case 0://запросить список злых нерезов
-                        clientportfolios = await _repository.GetAllEnemyNonResidentSpotPortfolios();
+                        clientportfolios = await _repoMatrix.GetAllEnemyNonResidentSpotPortfolios();
                         message.Body = message.Body + $"<p>Найдено в БД Матрицы вражеских нерезидентов спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
                         break;
                     case 1://запросить список добрых нерезов квалов
-                        clientportfolios = await _repository.GetAllFrendlyNonResidentKvalSpotPortfolios();
+                        clientportfolios = await _repoMatrix.GetAllFrendlyNonResidentKvalSpotPortfolios();
                         message.Body = message.Body + $"<p>Найдено в БД Матрицы Дружественных нерезидентов квалов спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
                         break;
                     case 2://запросить список добрых нерезов не квалов
-                        clientportfolios = await _repository.GetAllFrendlyNonResidentNonKvalSpotPortfolios();
+                        clientportfolios = await _repoMatrix.GetAllFrendlyNonResidentNonKvalSpotPortfolios();
                         message.Body = message.Body + $"<p>Найдено в БД Матрицы Дружественных нерезидентов не квалов спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
                         break;
                     case 3://запросить список неквалов КСУР
-                        clientportfolios = await _repository.GetAllNonKvalKsurUsersSpotPortfolios();
+                        clientportfolios = await _repoMatrix.GetAllNonKvalKsurUsersSpotPortfolios();
                         message.Body = message.Body + $"<p>Найдено в БД Матрицы Неквалов КСУР спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
                         break;
                     case 4://запросить список неквалов КПУР
-                        clientportfolios = await _repository.GetAllNonKvalKpurUsersSpotPortfolios();
+                        clientportfolios = await _repoMatrix.GetAllNonKvalKpurUsersSpotPortfolios();
                         message.Body = message.Body + $"<p>Найдено в БД Матрицы Неквалов КПУР спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
                         break;
                     case 5://запросить список квалов КПУР
-                        clientportfolios = await _repository.GetAllKvalKpurUsersSpotPortfolios();
+                        clientportfolios = await _repoMatrix.GetAllKvalKpurUsersSpotPortfolios();
                         message.Body = message.Body + $"<p>Найдено в БД Матрицы Квалов КПУР спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
                         break;
                     case 6://6 запрет торговли на валюте для CD портфелей
                         //clientportfolios = await _repository.GetAllEnemyNonResidentCdPortfolios();//запросить список злых нерезов
-                        clientportfolios = await _repository.GetAllRestrictedCDPortfolios();//запросить список портфелей для шаблона CD_Restrict
+                        clientportfolios = await _repoMatrix.GetAllRestrictedCDPortfolios();//запросить список портфелей для шаблона CD_Restrict
                         message.Body = message.Body + $"<p>Найдено в БД Матрицы CD портфелей для шаблона CD_Restrict: {clientportfolios.MatrixClientCodesList.Count}</p>";
 
                         //6 запрет торговли на валюте - для всех нерезидентов, дружественных и не дружественных.
@@ -1018,7 +1025,7 @@ namespace LogicCore
                         break;
 
                     case 7://7 все CD портфели с разрешением торговать
-                        clientportfolios = await _repository.GetAllAllowedCDPortfolios();//запросить список портфелей для шаблона CD_portfolio
+                        clientportfolios = await _repoMatrix.GetAllAllowedCDPortfolios();//запросить список портфелей для шаблона CD_portfolio
                         message.Body = message.Body + $"<p>Найдено в БД Матрицы CD портфелей для шаблона CD_portfolio: {clientportfolios.MatrixClientCodesList.Count}</p>";
                         // все кпур и ксур клиенты, добрые нерезы квалы и не квалы - в общий список Cd портфелей
                         //MatrixClientCodeModelResponse kvalKPUR = await _repository.GetAllKvalKpurUsersCdPortfolios();//запросить список квалов КПУР
@@ -1129,7 +1136,7 @@ namespace LogicCore
                         Template = templateNames[i]
                     };
 
-                    ListStringResponseModel setCodeToTemplatePoKomissii = await _repository.SetClientsToTemplatePoKomissii(templateAndMatrixCodes);
+                    ListStringResponseModel setCodeToTemplatePoKomissii = await _repoQuik.SetClientsToTemplatePoKomissii(templateAndMatrixCodes);
                     if (setCodeToTemplatePoKomissii.IsSuccess == false)
                     {
                         _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii " +
@@ -1288,10 +1295,10 @@ namespace LogicCore
                 message.Body = message.Body + $"<p>Найдено кодов срочного рынка в CurrClnts.xml: {codesFromCurrClntsXML.Count}</p>";
 
                 //1
-                FortsClientCodeModelResponse allEnemyNonResident = await _repository.GetAllEnemyNonResidentFortsCodes();// список ВСЕХ вражеских нерезов не зависимо от Q
+                FortsClientCodeModelResponse allEnemyNonResident = await _repoMatrix.GetAllEnemyNonResidentFortsCodes();// список ВСЕХ вражеских нерезов не зависимо от Q
                 //2
-                FortsClientCodeModelResponse allKvalClientsFortsCodes = await _repository.GetAllKvalClientsFortsCodes();//всех квалов фортс                                                                                                                 //      квалов
-                FortsClientCodeModelResponse allNonKvalWithTest16FortsCodes = await _repository.GetAllNonKvalWithTest16FortsCodes();//всех неквалов фортс сдавших тест 16
+                FortsClientCodeModelResponse allKvalClientsFortsCodes = await _repoMatrix.GetAllKvalClientsFortsCodes();//всех квалов фортс                                                                                                                 //      квалов
+                FortsClientCodeModelResponse allNonKvalWithTest16FortsCodes = await _repoMatrix.GetAllNonKvalWithTest16FortsCodes();//всех неквалов фортс сдавших тест 16
 
                 if (allEnemyNonResident.Response.IsSuccess)
                 {
@@ -1401,7 +1408,7 @@ namespace LogicCore
                     templateAndMatrixFortsCodesModel.FortsClientCodes = allEnemyNonResident.FortsClientCodesList.ToArray();
                     message.Body = message.Body + $"<h3>Выгрузка в QUIK БРЛ SPBFUT шаблон ео комиссии {templateAndMatrixFortsCodesModel.Template}</h3>";
 
-                    ListStringResponseModel setCodeToTemplatePoKomissii = await _repository.SetClientsToFortsTemplatePoKomissii(templateAndMatrixFortsCodesModel);
+                    ListStringResponseModel setCodeToTemplatePoKomissii = await _repoQuik.SetClientsToFortsTemplatePoKomissii(templateAndMatrixFortsCodesModel);
                     if (setCodeToTemplatePoKomissii.IsSuccess == false)
                     {
                         _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка " +
@@ -1458,7 +1465,7 @@ namespace LogicCore
             message.Body = "<html><body>";
             message.Body = message.Body + $"<h3>Получение данных по бумагам/бордам из матрицы</h3>";
             // запросить список инструментов в бд матрицы
-            SecurityAndBoardResponse secAndBoards = await _repository.GetRestrictedSecuritiesAndBoards();// список ВСЕХ запрещенных нерезам бумаг
+            SecurityAndBoardResponse secAndBoards = await _repoMatrix.GetRestrictedSecuritiesAndBoards();// список ВСЕХ запрещенных нерезам бумаг
             if (secAndBoards.Response.IsSuccess)
             {
                 _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii " +
@@ -1518,7 +1525,7 @@ namespace LogicCore
                 {
                     board.TemplateName = template;
 
-                    ListStringResponseModel setRestrictedSecurityes = await _repository.SetRestrictedSecuritiesInTemplatesPoKomissii(board);
+                    ListStringResponseModel setRestrictedSecurityes = await _repoQuik.SetRestrictedSecuritiesInTemplatesPoKomissii(board);
 
                     if (setRestrictedSecurityes.IsSuccess == false)
                     {
@@ -1671,7 +1678,7 @@ namespace LogicCore
                 UID = model.UID
             };
 
-            ListStringResponseModel createSftpResponse = await _repository.AddNewMatrixPortfolioToExistingClientByUID(matrixPortfolioAndUid);
+            ListStringResponseModel createSftpResponse = await _repoQuik.AddNewMatrixPortfolioToExistingClientByUID(matrixPortfolioAndUid);
             createResponse.IsSftpUploadSuccess = createSftpResponse.IsSuccess;
             createResponse.SftpUploadMessages = createSftpResponse.Messages;
 
@@ -1685,7 +1692,7 @@ namespace LogicCore
             ListStringResponseModel clientInfoRequest = await GetClientInformationForInstrTwRegister(newMNPClient, createResponse.NewClient, clientAccount);
             if (clientInfoRequest.IsSuccess)
             {
-                ListStringResponseModel fillDataBaseInstrTWResponse = await _repository.FillDataBaseInstrTW(newMNPClient);
+                ListStringResponseModel fillDataBaseInstrTWResponse = await _repoQuik.FillDataBaseInstrTW(newMNPClient);
                 createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
                 createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
             }
@@ -1741,7 +1748,7 @@ namespace LogicCore
             //codes ini
             CodesArrayModel codesArray = new CodesArrayModel() { MatrixClientPortfolios = newMatrixPortfolioArray };
 
-            ListStringResponseModel fillCodesIniResponse = await _repository.FillCodesIniFile(codesArray);
+            ListStringResponseModel fillCodesIniResponse = await _repoQuik.FillCodesIniFile(codesArray);
             createResponse.IsCodesIniSuccess = fillCodesIniResponse.IsSuccess;
             createResponse.CodesIniMessages = fillCodesIniResponse.Messages;
 
@@ -1750,14 +1757,14 @@ namespace LogicCore
 
             if (model.MatrixPortfolio.MatrixClientPortfolio.Contains("-CD-"))
             {
-                ListStringResponseModel addCdToKomissiiResponse = await _repository.AddCdPortfolioToTemplateKomissii(model.MatrixPortfolio);
+                ListStringResponseModel addCdToKomissiiResponse = await _repoQuik.AddCdPortfolioToTemplateKomissii(model.MatrixPortfolio);
                 if (!addCdToKomissiiResponse.IsSuccess)
                 {
                     totalSucces = false;
                 }
                 createResponse.AddToTemplatesMessages.AddRange(addCdToKomissiiResponse.Messages);
 
-                ListStringResponseModel addCdToPoPlechuResponse = await _repository.AddCdPortfolioToTemplatePoPlechu(model.MatrixPortfolio);
+                ListStringResponseModel addCdToPoPlechuResponse = await _repoQuik.AddCdPortfolioToTemplatePoPlechu(model.MatrixPortfolio);
                 if (!addCdToPoPlechuResponse.IsSuccess)
                 {
                     totalSucces = false;
@@ -1815,7 +1822,7 @@ namespace LogicCore
                 UID = model.UID
             };
 
-            ListStringResponseModel createSftpResponse = await _repository.AddNewFortsPortfolioToExistingClientByUID(fortsCodeAndUid);
+            ListStringResponseModel createSftpResponse = await _repoQuik.AddNewFortsPortfolioToExistingClientByUID(fortsCodeAndUid);
             createResponse.IsSftpUploadSuccess = createSftpResponse.IsSuccess;
             createResponse.SftpUploadMessages = createSftpResponse.Messages;
 
@@ -1828,7 +1835,7 @@ namespace LogicCore
             ListStringResponseModel clientInfoRequest = await GetClientInformationForInstrTwRegister(newMNPClient, createResponse.NewClient, clientAccount);
             if (clientInfoRequest.IsSuccess)
             {
-                ListStringResponseModel fillDataBaseInstrTWResponse = await _repository.FillDataBaseInstrTW(newMNPClient);
+                ListStringResponseModel fillDataBaseInstrTWResponse = await _repoQuik.FillDataBaseInstrTW(newMNPClient);
                 createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
                 createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
             }
@@ -1857,8 +1864,8 @@ namespace LogicCore
 
             ListStringResponseModel result = new ListStringResponseModel();
 
-            ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientAccount);
-            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientAccount);
+            ClientBOInformationResponse clientBOInformation = await _repoMatrix.GetClientBOInformation(clientAccount);
+            ClientInformationResponse clientInformation = await _repoMatrix.GetClientInformation(clientAccount);
 
             if (clientInformation.Response.IsSuccess)
             {
@@ -1902,7 +1909,7 @@ namespace LogicCore
             List<string> clientCodesArray = new List<string>();
 
             // получим портфели спот
-            MatrixClientCodeModelResponse spotCodes = await _repository.GetClientAllSpotCodesFiltered(clientAccount);
+            MatrixClientCodeModelResponse spotCodes = await _repoMatrix.GetClientAllSpotCodesFiltered(clientAccount);
 
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " +
                 $"GetClientAllSpotCodesFiltered result {spotCodes.Response.IsSuccess}");
@@ -1916,7 +1923,7 @@ namespace LogicCore
             }
 
             // получим портфели фортс
-            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientAllFortsCodes(clientAccount);
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repoMatrix.GetClientAllFortsCodes(clientAccount);
 
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " +
                 $"GetClientAllFortsCodes result {fortsCodes.Response.IsSuccess}");
@@ -1943,7 +1950,7 @@ namespace LogicCore
             }
 
             // запросим UID
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
 
             if (checkUserExist.IsSuccess == false)
             {

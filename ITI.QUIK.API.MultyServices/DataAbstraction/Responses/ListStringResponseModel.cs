@@ -1,6 +1,8 @@
-﻿namespace DataAbstraction.Responses
+﻿using DataAbstraction.Interfaces;
+
+namespace DataAbstraction.Responses
 {
-    public class ListStringResponseModel
+    public class ListStringResponseModel : IResponseDirect
     {
         public ListStringResponseModel()
         {

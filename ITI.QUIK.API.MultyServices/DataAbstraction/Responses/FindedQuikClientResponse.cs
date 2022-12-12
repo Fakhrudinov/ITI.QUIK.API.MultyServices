@@ -1,9 +1,10 @@
-﻿using DataAbstraction.Models;
+﻿using DataAbstraction.Interfaces;
+using DataAbstraction.Models;
 using DataAbstraction.Models.InstrTw;
 
 namespace DataAbstraction.Responses
 {
-    public class FindedQuikClientResponse
+    public class FindedQuikClientResponse : IResponseDirect
     {
         public bool IsSuccess { get; set; } = true;
         public List<string> Messages { get; set; } = new List<string>();

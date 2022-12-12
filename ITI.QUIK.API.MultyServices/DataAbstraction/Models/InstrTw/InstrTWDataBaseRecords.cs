@@ -1,6 +1,8 @@
-﻿namespace DataAbstraction.Models.InstrTw
+﻿using DataAbstraction.Interfaces;
+
+namespace DataAbstraction.Models.InstrTw
 {
-    public class InstrTWDataBaseRecords
+    public class InstrTWDataBaseRecords : IResponseDirect
     {
         public InstrTWDataBaseRecords()
         {

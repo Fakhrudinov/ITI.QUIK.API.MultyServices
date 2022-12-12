@@ -12,20 +12,23 @@ namespace LogicCore
     public class CoreSingleServices : ICoreSingleServices
     {
         private ILogger<CoreSingleServices> _logger;
-        private IHttpApiRepository _repository;
+        private IHttpMatrixRepository _repository;
+        private IHttpQuikRepository _repoQuik;
         private CoreSettings _coreSettings;
         private LimLImCreationSettings _limSettings;
         private IEMail _sender;
 
         public CoreSingleServices(
             ILogger<CoreSingleServices> logger, 
-            IHttpApiRepository repository, 
+            IHttpMatrixRepository repository,
+            IHttpQuikRepository repoQuik,
             IOptions<CoreSettings> coreSettings,
             IOptions<LimLImCreationSettings> limSettings,
             IEMail sender)
         {
             _logger = logger;
             _repository = repository;
+            _repoQuik = repoQuik;
             _coreSettings = coreSettings.Value;
             _limSettings = limSettings.Value;
             _sender=sender;
@@ -76,7 +79,7 @@ namespace LogicCore
             string[] fileLimLim = await File.ReadAllLinesAsync(_coreSettings.PathToLimLim);
 
             // lim.lim старый? 
-            ListStringResponseModel lastWriteTime = await _repository.GetSftpFileLastWriteTime("lim.lim");
+            ListStringResponseModel lastWriteTime = await _repoQuik.GetSftpFileLastWriteTime("lim.lim");
 
             if (lastWriteTime.IsSuccess)
             {
@@ -903,8 +906,6 @@ namespace LogicCore
             //если это деньги - делаем деньги, иначе обычную позицию
             if (_limSettings.PositionAsMoneyArray.Contains(position.SecCode))
             {
-                Console.WriteLine(string.Format($"Слово '{position.SecCode}' содержится в массиве"));
-
                 PortfoliosAndMoneyModel portfolio = new PortfoliosAndMoneyModel();
                 portfolio.MatrixClientPortfolio = position.MatrixClientPortfolio;
                 portfolio.Leverage = 1;
