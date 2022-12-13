@@ -330,7 +330,7 @@ namespace ChildHttpMatrixRepository
 
             MatrixClientCodeModelResponse result = await _executiveRepo.GetTNestedResponse<MatrixClientCodeModelResponse>(
                 _connection,
-                "/api/KvalInvestors/GetAll/KvalUsers/Spot/Portfolios");
+                "/api/TemplatesPoKomissii/GetAll/Allowed/CD/Portfolios/ForCD_portfolio");
             return result;
         }
 
