@@ -572,7 +572,7 @@ namespace LogicCore
             portfoliosToHTTPRequestDepoPositions = portfoliosToHTTPRequestDepoPositions.Substring(1);//убрать первый & из строки
             ClientDepoPositionsResponse matrixDepoPositions = await _repository.GetClientsPositionsByMatrixPortfolioList(portfoliosToHTTPRequestDepoPositions);
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICoreSingleServices CheckIsFileCorrectLimLim " +
-                $"получено позицийу клиентов с сделками - " + matrixDepoPositions.PortfoliosAndPosition.Count);
+                $"получено позиций у клиентов с сделками - " + matrixDepoPositions.PortfoliosAndPosition.Count);
             //позиции записать в List<ClientAssetsModel> matrixClients
             foreach (ClientDepoPositionModel position in matrixDepoPositions.PortfoliosAndPosition)
             {
