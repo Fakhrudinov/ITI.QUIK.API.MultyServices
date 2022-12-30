@@ -1,5 +1,7 @@
-﻿using DataAbstraction.Interfaces;
+﻿using CommonServices;
+using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
+using DataAbstraction.Models.EMail;
 using DataAbstraction.Responses;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -11,19 +13,28 @@ namespace LogicCore
     public class Core : ICore
     {
         private ILogger<Core> _logger;
-        private IHttpApiRepository _repository;
-        private PubringKeyIgnoreWords _ignoreWords;
+        private IHttpMatrixRepository _repoMatrix;
+        private IHttpQuikRepository _repoQuik;
+        private CoreSettings _settings;
         private System.Timers.Timer _timerUpdateFileCurrClnts;
+        private IEMail _sender;
 
-        public Core(ILogger<Core> logger, IHttpApiRepository repository, IOptions<PubringKeyIgnoreWords> ignoreWords)
+        public Core(ILogger<
+            Core> logger, 
+            IHttpMatrixRepository repoMatrix, 
+            IHttpQuikRepository repoQuik, 
+            IOptions<CoreSettings> settings, 
+            IEMail sender)
         {
             _logger = logger;
-            _repository = repository;
-            _ignoreWords = ignoreWords.Value;
+            _repoMatrix = repoMatrix;
+            _repoQuik = repoQuik;
+            _settings = settings.Value;
 
             _timerUpdateFileCurrClnts = new System.Timers.Timer(120000);
             _timerUpdateFileCurrClnts.Elapsed += WaitAndGenerateNewFileCurrClnts;
             _timerUpdateFileCurrClnts.AutoReset = false;
+            _sender=sender;
         }
 
         public async Task<NewClientModelResponse> GetInfoNewUserNonEDP(string clientCode)
@@ -33,13 +44,13 @@ namespace LogicCore
             // этот запрос помогает авторизоваться в сторонней бэкофисной БД и предотвратит ошибки:
             // ORA - 02396: превышено максимальное время ожидания, повторите соединение еще раз
             // ORA - 02063: предшествующий line из BOFFCE_MOFF_LINK",
-            await _repository.WarmUpBackOfficeDataBase();
+            await _repoMatrix.WarmUpBackOfficeDataBase();
 
             // далее все по плану
             NewClientModelResponse newClient = new NewClientModelResponse();
             newClient.NewClient.Key = new PubringKeyModel();
 
-            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientCode);
+            ClientInformationResponse clientInformation = await _repoMatrix.GetClientInformation(clientCode);
             if (clientInformation.Response.IsSuccess)
             {
                 newClient.NewClient.Client = clientInformation.ClientInformation;
@@ -51,7 +62,7 @@ namespace LogicCore
             }
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserNonEDP GetClientInformation result {clientInformation.Response.IsSuccess}");
 
-            MatrixClientCodeModelResponse spotCodes = await _repository.GetClientAllSpotCodesFiltered(clientCode);
+            MatrixClientCodeModelResponse spotCodes = await _repoMatrix.GetClientAllSpotCodesFiltered(clientCode);
             if (spotCodes.Response.IsSuccess)
             {
                 newClient.NewClient.MatrixClientPortfolios = spotCodes.MatrixClientCodesList.ToArray();
@@ -63,7 +74,7 @@ namespace LogicCore
             }
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserNonEDP GetClientAllSpotCodesFiltered result {spotCodes.Response.IsSuccess}");
 
-            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientAllFortsCodes(clientCode);
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repoMatrix.GetClientAllFortsCodes(clientCode);
             if (fortsCodes.Response.IsSuccess)
             {
                 newClient.NewClient.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
@@ -75,7 +86,7 @@ namespace LogicCore
             }
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserNonEDP GetClientAllFortsCodes result {fortsCodes.Response.IsSuccess}");
 
-            ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientCode);
+            ClientBOInformationResponse clientBOInformation = await _repoMatrix.GetClientBOInformation(clientCode);
             if (clientBOInformation.Response.IsSuccess)
             {
                 newClient.NewClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
@@ -100,7 +111,7 @@ namespace LogicCore
             NewClientOptionWorkShopModelResponse newClientOW = new NewClientOptionWorkShopModelResponse();
             newClientOW.NewOWClient.Key = new PubringKeyModel();
 
-            ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientCode);
+            ClientInformationResponse clientInformation = await _repoMatrix.GetClientInformation(clientCode);
             if (clientInformation.Response.IsSuccess)
             {
                 newClientOW.NewOWClient.Client = clientInformation.ClientInformation;
@@ -112,7 +123,7 @@ namespace LogicCore
             }
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserOptionWorkShop GetClientInformation result {clientInformation.Response.IsSuccess}");
 
-            MatrixToFortsCodesMappingResponse fortsCodes = await _repository.GetClientNonEdpFortsCodes(clientCode);
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repoMatrix.GetClientNonEdpFortsCodes(clientCode);
             if (fortsCodes.Response.IsSuccess)
             {
                 newClientOW.NewOWClient.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
@@ -123,6 +134,10 @@ namespace LogicCore
                 newClientOW.Response.Messages.AddRange(fortsCodes.Response.Messages);
             }
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserOptionWorkShop GetClientNonEdpFortsCodes result {fortsCodes.Response.IsSuccess}");
+
+            BoolResponse isClientHasOptionWorkshop = await _repoMatrix.GetIsClientHasOptionWorkshop(clientCode);
+            newClientOW.NewOWClient.HasOptionWorkShop = isClientHasOptionWorkshop.IsTrue;
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetInfoNewUserOptionWorkShop isClientHasOptionWorkshop is {isClientHasOptionWorkshop.IsTrue}");
 
             return newClientOW;
         }
@@ -139,7 +154,7 @@ namespace LogicCore
             {
                 clientCodesArray.Add(forts.FortsClientCode);
             }
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
 
             if (checkUserExist.IsSuccess)//success - client already exist
             {
@@ -151,13 +166,13 @@ namespace LogicCore
             }
 
             // create new user
-            createResponse = await _repository.CreateNewClientOptionWorkshop(newClientModel);
+            createResponse = await _repoQuik.CreateNewClientOptionWorkshop(newClientModel);
 
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore PostNewClientOptionWorkshop result is {createResponse.IsSuccess}");
 
             if (createResponse.IsSuccess)
             {
-                ListStringResponseModel searchFileResult = await _repository.GetResultFromQuikSFTPFileUpload(createResponse.Messages[0]);
+                ListStringResponseModel searchFileResult = await _repoQuik.GetResultFromQuikSFTPFileUpload(createResponse.Messages[0]);
 
                 createResponse.Messages.AddRange(searchFileResult.Messages);
 
@@ -191,9 +206,9 @@ namespace LogicCore
                 }
             }
 
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
 
-            if (checkUserExist.IsSuccess)//success - client already exist
+            if (checkUserExist.IsSuccess && newClientModel.isExistanceOverraid == false)//success - client already exist and no overrraid option selected
             {
                 createResponse.IsNewClientCreationSuccess = false;
                 createResponse.NewClientCreationMessages.Add("PostNewClientOptionWorkshop terminated. User already exist.");
@@ -201,12 +216,16 @@ namespace LogicCore
 
                 return createResponse;
             }
+            else
+            {
+                createResponse.NewClientCreationMessages.AddRange(checkUserExist.Messages);
+            }
 
             // create new user
 
             //SFTP create
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore SFTP register for {newClientModel.Client.FirstName}");
-            ListStringResponseModel createSftpResponse = await _repository.CreateNewClient(newClientModel);
+            ListStringResponseModel createSftpResponse = await _repoQuik.CreateNewClient(newClientModel);
             createResponse.IsSftpUploadSuccess = createSftpResponse.IsSuccess;
             createResponse.SftpUploadMessages = createSftpResponse.Messages;
 
@@ -226,7 +245,7 @@ namespace LogicCore
             newMNPClient.isClientDepo = newClientModel.isClientDepo;
             newMNPClient.DepoClientAccountsManager = newClientModel.DepoClientAccountsManager;
 
-            ListStringResponseModel fillDataBaseInstrTWResponse = await _repository.FillDataBaseInstrTW(newMNPClient);
+            ListStringResponseModel fillDataBaseInstrTWResponse = await _repoQuik.FillDataBaseInstrTW(newMNPClient);
             createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
             createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
 
@@ -260,7 +279,7 @@ namespace LogicCore
                     codesArray.MatrixClientPortfolios[i] = new MatrixClientPortfolioModel() { MatrixClientPortfolio = portfolios[i] };
                 }
 
-                ListStringResponseModel fillCodesIniResponse = await _repository.FillCodesIniFile(codesArray);
+                ListStringResponseModel fillCodesIniResponse = await _repoQuik.FillCodesIniFile(codesArray);
                 createResponse.IsCodesIniSuccess = fillCodesIniResponse.IsSuccess;
                 createResponse.CodesIniMessages = fillCodesIniResponse.Messages;
 
@@ -271,14 +290,14 @@ namespace LogicCore
                 {
                     if (code.MatrixClientPortfolio.Contains("-CD-"))
                     {
-                        ListStringResponseModel addCdToKomissiiResponse = await _repository.AddCdPortfolioToTemplateKomissii(code);
+                        ListStringResponseModel addCdToKomissiiResponse = await _repoQuik.AddCdPortfolioToTemplateKomissii(code);
                         if (!addCdToKomissiiResponse.IsSuccess)
                         {
                             totalSucces = false;
                         }
                         createResponse.AddToTemplatesMessages.AddRange(addCdToKomissiiResponse.Messages);
 
-                        ListStringResponseModel addCdToPoPlechuResponse = await _repository.AddCdPortfolioToTemplatePoPlechu(code);
+                        ListStringResponseModel addCdToPoPlechuResponse = await _repoQuik.AddCdPortfolioToTemplatePoPlechu(code);
                         if (!addCdToPoPlechuResponse.IsSuccess)
                         {
                             totalSucces = false;
@@ -311,7 +330,7 @@ namespace LogicCore
             //проверим выполнение SFTP создания учетки в Qadmin - скорре всего результат будет "еще не обработан"
             if (createResponse.IsSftpUploadSuccess)
             {
-                ListStringResponseModel searchFileResult = await _repository.GetResultFromQuikSFTPFileUpload(createSftpResponse.Messages[0]);
+                ListStringResponseModel searchFileResult = await _repoQuik.GetResultFromQuikSFTPFileUpload(createSftpResponse.Messages[0]);
 
                 createResponse.NewClientCreationMessages.Add(createSftpResponse.Messages[0]);
                 createResponse.NewClientCreationMessages.AddRange(searchFileResult.Messages);
@@ -324,7 +343,7 @@ namespace LogicCore
 
         public async Task<ListStringResponseModel> GetResultFromQuikSFTPFileUpload(string fileName)
         {
-            return await _repository.GetResultFromQuikSFTPFileUpload(fileName);
+            return await _repoQuik.GetResultFromQuikSFTPFileUpload(fileName);
         }
 
         public PubringKeyModelResponse GetKeyFromFile(string filePath)
@@ -376,8 +395,7 @@ namespace LogicCore
             keyText = keyText.Replace("\t", " ");
 
             //чистим от списка слов из appsettings.json секция PubringKeyIgnoreWords
-            var deleteWordsArray = _ignoreWords.RemoveText.Split(" ");
-            foreach (string deleteWord in deleteWordsArray)
+            foreach (string deleteWord in _settings.RemoveTextArray)
             {
                 keyText = keyText.Replace(deleteWord, "");
             }
@@ -440,12 +458,168 @@ namespace LogicCore
             return key;
         }
 
-        public async Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByMatrixClientAccount(string clientPortfolio)
+        public async Task<FindedQuikClientResponse> GetIsUserAlreadyExistInAllQuikByMatrixClientAccount(string matrixClientAccount)
         {
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixPortfolio Called for {clientPortfolio}");
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount Called for {matrixClientAccount}");
+
+            FindedQuikClientResponse result = new FindedQuikClientResponse();
+
+            // найти все портфели - фильтрованные
+            MatrixClientCodeModelResponse spotCodes = await _repoMatrix.GetClientAllSpotCodesFiltered(matrixClientAccount);
+            if (spotCodes.Response.IsSuccess)
+            {
+                result.MatrixClientPortfolios = spotCodes.MatrixClientCodesList.ToArray();
+            }
+            else
+            {
+                result.MatrixClientPortfoliosMessages.AddRange(spotCodes.Response.Messages);
+            }
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount " +
+                $"GetClientAllSpotCodesFiltered result {spotCodes.Response.IsSuccess}");
+
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repoMatrix.GetClientAllFortsCodes(matrixClientAccount);
+            if (fortsCodes.Response.IsSuccess)
+            {
+                result.CodesPairRF = fortsCodes.MatrixToFortsCodesList.ToArray();
+            }
+            else
+            {
+                result.CodesPairRFMessages.AddRange(fortsCodes.Response.Messages);
+            }
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount " +
+                $"GetClientAllFortsCodes result {fortsCodes.Response.IsSuccess}");
+            // проверить, что хоть какие то портфели вернулись
+            if (result.CodesPairRF is null && result.MatrixClientPortfolios is null)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistInAllQuikByMatrixClientAccount " +
+                    $"(404) no portfolios found for {matrixClientAccount}");
+                result.Messages.Add($"(404) no portfolios found for {matrixClientAccount}");
+                result.IsSuccess = false;
+
+                return result;
+            }
+
+            //все портфели и коды срочного в список
+            List<string> allportfolios = new List<string>();
+            if (result.MatrixClientPortfolios is not null)
+            {
+                foreach (var portfolio in result.MatrixClientPortfolios)
+                {
+                    allportfolios.Add(portfolio.MatrixClientPortfolio);
+                }
+            }
+            if (result.CodesPairRF is not null)
+            {
+                foreach (var fortsCode in result.CodesPairRF)
+                {
+                    allportfolios.Add(fortsCode.FortsClientCode);
+                }
+            }
+
+            // INSTR TW - получить зарегистрированные в бд строки
+            result.InstrTWDBRecords = await _repoQuik.GetRecordsFromInstrTwDataBase(allportfolios);
+            result.InstrTWDBRecordsMessages = result.InstrTWDBRecords.Messages;
+
+            // проверить наличие в файле CurrClients (QAdmin)
+            ListStringResponseModel findedInQadmin = await _repoQuik.GetIsUserAlreadyExistByCodeArray(allportfolios.ToArray());
+            if (findedInQadmin.IsSuccess)
+            {
+                result.isQuikQAdminClientFinded = true;
+                result.QuikQAdminClient = GetClientsFromMessages(findedInQadmin.Messages);
+            }
+            else
+            {
+                result.QuikQAdminClientMessages.AddRange(findedInQadmin.Messages);
+            }
+
+            // проверить CD портфели - есть ли в шаблонах
+            if (result.MatrixClientPortfolios is not null)
+            {
+                foreach (var portfolio in result.MatrixClientPortfolios)
+                {
+                    if (portfolio.MatrixClientPortfolio.Contains("-CD-"))
+                    {
+                        MatrixPortfolioAtTemplates codeAtTemplates = new MatrixPortfolioAtTemplates() { MatrixClientPortfolios = portfolio };
+                        string quikCdportfolio = CommonServices.PortfoliosConvertingService.GetQuikCdPortfolio(portfolio.MatrixClientPortfolio);
+
+                        string[] tempatesName = new string[]
+                        {
+                            "CD_portfolio", "CD_OnlyClose"
+                        };
+
+                        // ищем в шаблонах по комиссии
+                        for (int i = 0; i < tempatesName.Length; i++)
+                        {
+                            ListStringResponseModel isAddedToTemplate = await _repoQuik.GetAllClientsFromTemplatePoKomissii(tempatesName[i]);
+                            if (isAddedToTemplate.IsSuccess)
+                            {
+                                //search code in result
+                                if (isAddedToTemplate.Messages.Contains(quikCdportfolio))
+                                {
+                                    codeAtTemplates.TemplatePoKomissii = tempatesName[i];
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                result.IsCdPortfoliosAddedToTemplateMessages.AddRange(isAddedToTemplate.Messages);
+                            }
+                        }
+
+                        // ищем в шаблоне по плечу
+                        ListStringResponseModel isAddedToTemplatePoPlechu = await _repoQuik.GetAllClientsFromTemplatePoPlechu(tempatesName[0]);
+                        if (isAddedToTemplatePoPlechu.IsSuccess)
+                        {
+                            //search code in result
+                            if (isAddedToTemplatePoPlechu.Messages.Contains(quikCdportfolio))
+                            {
+                                codeAtTemplates.TemplatePoPlechu = tempatesName[0];
+                            }
+                        }
+                        else
+                        {
+                            result.IsCdPortfoliosAddedToTemplateMessages.AddRange(isAddedToTemplatePoPlechu.Messages);
+                        }
+
+                        result.PortfolioAtTemplates.Add(codeAtTemplates);
+                    }
+                }
+
+                // check is all templates filled. if not - set false at IsCdPortfoliosAddedToTemplates
+                foreach (var cdPortfolio in result.PortfolioAtTemplates)
+                {
+                    if (cdPortfolio.TemplatePoPlechu == null || cdPortfolio.TemplatePoKomissii == null)
+                    {
+                        result.IsCdPortfoliosAddedToTemplates = false;
+                    }
+                }
+            }
+
+            // проверить коды в codes.ini
+            if (result.MatrixClientPortfolios is not null)
+            {
+                List<string> spotPortfolios = new List<string>();
+                foreach (var portfolio in result.MatrixClientPortfolios)
+                {
+                    spotPortfolios.Add(portfolio.MatrixClientPortfolio);
+                }
+
+                BoolResponse isCodesIniFilled = await _repoQuik.GetIsAllSpotPortfoliosPresentInFileCodesIni(spotPortfolios);
+                result.IsCodesIniFilled = isCodesIniFilled.IsTrue;
+                result.IsCodesIniFilledMessages = isCodesIniFilled.Messages;
+            }
+
+            // ? общий анализ ?
+
+            return result;
+        }
+
+        public async Task<FindedQuikQAdminClientResponse> GetIsUserAlreadyExistByMatrixClientAccount(string matrixClientAccount)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixClientAccount Called for {matrixClientAccount}");
             
-            ListStringResponseModel findedClients = await _repository.GetIsUserAlreadyExistByMatrixClientAccount(clientPortfolio);
-            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixPortfolio result is {findedClients.IsSuccess}");
+            ListStringResponseModel findedClients = await _repoQuik.GetIsUserAlreadyExistByMatrixClientAccount(matrixClientAccount);
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixClientAccount result is {findedClients.IsSuccess}");
 
             FindedQuikQAdminClientResponse findedResponse = new FindedQuikQAdminClientResponse();
 
@@ -466,7 +640,7 @@ namespace LogicCore
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByFortsCode Called for {fortsClientCode}");
 
-            ListStringResponseModel findedClients = await _repository.GetIsUserAlreadyExistByFortsCode(fortsClientCode);
+            ListStringResponseModel findedClients = await _repoQuik.GetIsUserAlreadyExistByFortsCode(fortsClientCode);
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore GetIsUserAlreadyExistByMatrixPortfolio result is {findedClients.IsSuccess}");
 
             FindedQuikQAdminClientResponse findedResponse = new FindedQuikQAdminClientResponse();
@@ -577,7 +751,7 @@ namespace LogicCore
         public async Task<ListStringResponseModel> BlockUserByMatrixClientCode(MatrixClientPortfolioModel model)
         {
             //check if user already exist and only 1
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.Split('-').First());
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.Split('-').First());
 
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
@@ -588,91 +762,91 @@ namespace LogicCore
             }
 
             // block unique user
-            return await _repository.BlockUserByMatrixClientCode(model);
+            return await _repoQuik.BlockUserByMatrixClientCode(model);
         }
         public async Task<ListStringResponseModel> BlockUserByFortsClientCode(FortsClientCodeModel model)
         {
             //check if user already exist and only 1
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByFortsCode(model.FortsClientCode);
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByFortsCode(model.FortsClientCode);
 
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
                 checkUserExist.IsSuccess = false;
-                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+                checkUserExist.Messages.Insert(0, "BlockUserByFortsClientCode terminated. Founded more then one user:");
 
                 return checkUserExist;
             }
 
             // block unique user
-            return await _repository.BlockUserByFortsClientCode(model);
+            return await _repoQuik.BlockUserByFortsClientCode(model);
         }
         public async Task<ListStringResponseModel> BlockUserByUID(int uid)
         {
-            return await _repository.BlockUserByUID(uid);
+            return await _repoQuik.BlockUserByUID(uid);
         }
 
 
         public async Task<ListStringResponseModel> SetNewPubringKeyByMatrixClientCode(MatrixCodeAndPubringKeyModel model)
         {
             //check if user already exist and only 1
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.MatrixClientPortfolio.Split('-').First());
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.MatrixClientPortfolio.Split('-').First());
 
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
                 checkUserExist.IsSuccess = false;
-                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+                checkUserExist.Messages.Insert(0, "SetNewPubringKeyByMatrixClientCode terminated. Founded more then one user:");
 
                 return checkUserExist;
             }
 
-            return await _repository.SetNewPubringKeyByMatrixClientCode(model);
+            return await _repoQuik.SetNewPubringKeyByMatrixClientCode(model);
         }
         public async Task<ListStringResponseModel> SetNewPubringKeyByFortsClientCode(FortsCodeAndPubringKeyModel model)
         {
             //check if user already exist and only 1
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByFortsCode(model.ClientCode.FortsClientCode);
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByFortsCode(model.ClientCode.FortsClientCode);
 
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
                 checkUserExist.IsSuccess = false;
-                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+                checkUserExist.Messages.Insert(0, "SetNewPubringKeyByFortsClientCode terminated. Founded more then one user:");
 
                 return checkUserExist;
             }
 
-            return await _repository.SetNewPubringKeyByFortsClientCode(model);
+            return await _repoQuik.SetNewPubringKeyByFortsClientCode(model);
         }
 
 
         public async Task<ListStringResponseModel> SetAllTradesByMatrixClientCode(MatrixClientPortfolioModel model)
         {
             //check if user already exist and only 1
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.Split('-').First());
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByMatrixClientAccount(model.MatrixClientPortfolio.Split('-').First());
 
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
                 checkUserExist.IsSuccess = false;
-                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+                checkUserExist.Messages.Insert(0, "SetAllTradesByMatrixClientCode terminated. Founded more then one user:");
 
                 return checkUserExist;
             }
 
-            return await _repository.SetAllTradesByMatrixClientCode(model);
+            return await _repoQuik.SetAllTradesByMatrixClientCode(model);
         }
         public async Task<ListStringResponseModel> SetAllTradesByFortsClientCode(FortsClientCodeModel model)
         {
             //check if user already exist and only 1
-            ListStringResponseModel checkUserExist = await _repository.GetIsUserAlreadyExistByFortsCode(model.FortsClientCode);
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByFortsCode(model.FortsClientCode);
 
             if (checkUserExist.IsSuccess && checkUserExist.Messages.Count > 1)//success - client already exist && messages - 1 message for 1 founded
             {
                 checkUserExist.IsSuccess = false;
-                checkUserExist.Messages.Insert(0, "BlockUserByMatrixClientCode terminated. Founded more then one user:");
+                checkUserExist.Messages.Insert(0, "SetAllTradesByFortsClientCode terminated. Founded more then one user:");
 
                 return checkUserExist;
             }
 
-            return await _repository.SetAllTradesByFortsClientCode(model);
+            return await _repoQuik.SetAllTradesByFortsClientCode(model);
         }
 
         private void WaitAndGenerateNewFileCurrClnts(Object source, System.Timers.ElapsedEventArgs e)
@@ -689,7 +863,7 @@ namespace LogicCore
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewAllClientFile Called");
             
             //послать запрос на формирование нового файла с всеми клиентами            
-            ListStringResponseModel generateNewCurrClnts = await _repository.GenerateNewFileCurrClnts();
+            ListStringResponseModel generateNewCurrClnts = await _repoQuik.GenerateNewFileCurrClnts();
 
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewAllClientFile generateNewCurrClnts.IsSuccess={generateNewCurrClnts.IsSuccess}");
 
@@ -708,7 +882,7 @@ namespace LogicCore
                 {
                     _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewAllClientFile try {i} find complete request");
 
-                    ListStringResponseModel getFileResult = await _repository.GetResultFromQuikSFTPFileUpload(generateNewCurrClnts.Messages[0]);
+                    ListStringResponseModel getFileResult = await _repoQuik.GetResultFromQuikSFTPFileUpload(generateNewCurrClnts.Messages[0]);
                     if(getFileResult.IsSuccess && getFileResult.Messages[0].Contains("обработан и исполнен"))
                     {
                         //если успешно - запускаем скачивание файла
@@ -737,11 +911,1104 @@ namespace LogicCore
             }
         }
 
+        public async Task<ListStringResponseModel> RenewLimLimFile()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewLimLimFile Called");
+
+            return await _repoQuik.DownloadLimLimFile();
+        }
+
         private async Task DownloadNewFileCurrClnts()
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore DownloadNewFileCurrClnts Called");
 
-            await _repository.DownloadNewFileCurrClnts();
+            await _repoQuik.DownloadNewFileCurrClnts();
+        }
+
+        public async Task<ListStringResponseModel> RenewClientsInSpotTemplatesPoKomissii(bool sendReport)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii Called");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+            NewEMail message = new NewEMail();
+            //message.Subject = "QUIK обновление шаблонов 'По комиссии' в Qadmin MC0138200000 библиотеке";
+            message.Body = "<html><body><h2>QUIK обновление шаблонов По комиссии спот</h2>";
+
+            //установка MS и FX портфелей
+
+            string[] templateNames = new string[]
+            {
+                "FoeNeRes", // 0 список злых нерезов
+                "FrnNeResKval",// 1 список добрых нерезов квалов 
+                "FrnNeResNeKv",// 2 список добрых нерезов Не квалов 
+                "KSUR_NeKval", // 3 список неквалов КСУР
+                "KPUR_NeKval", // 4 список неквалов КПУР
+                "KPUR_Kval",   // 5 список квалов КПУР
+                "CD_Restrict", // 6 для CD портфелей все нерезы-не дружественные.
+                "CD_portfolio" // 7 для CD портфелей все кпур и ксур клиенты, нерезы-дружественные, квалы и не квалы
+            };
+
+            for (int i = 0; i < templateNames.Length; i++)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii work with {templateNames[i]}");
+
+                message.Body = message.Body + $"<h3>Установка в шаблон {templateNames[i]}</h3>";
+                //запросить список клиентов в БД матрицы
+                MatrixClientCodeModelResponse clientportfolios = new MatrixClientCodeModelResponse();
+                switch (i)
+                {
+                    case 0://запросить список злых нерезов
+                        clientportfolios = await _repoMatrix.GetAllEnemyNonResidentSpotPortfolios();
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы вражеских нерезидентов спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
+                        break;
+                    case 1://запросить список добрых нерезов квалов
+                        clientportfolios = await _repoMatrix.GetAllFrendlyNonResidentKvalSpotPortfolios();
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы Дружественных нерезидентов квалов спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
+                        break;
+                    case 2://запросить список добрых нерезов не квалов
+                        clientportfolios = await _repoMatrix.GetAllFrendlyNonResidentNonKvalSpotPortfolios();
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы Дружественных нерезидентов не квалов спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
+                        break;
+                    case 3://запросить список неквалов КСУР
+                        clientportfolios = await _repoMatrix.GetAllNonKvalKsurUsersSpotPortfolios();
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы Неквалов КСУР спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
+                        break;
+                    case 4://запросить список неквалов КПУР
+                        clientportfolios = await _repoMatrix.GetAllNonKvalKpurUsersSpotPortfolios();
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы Неквалов КПУР спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
+                        break;
+                    case 5://запросить список квалов КПУР
+                        clientportfolios = await _repoMatrix.GetAllKvalKpurUsersSpotPortfolios();
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы Квалов КПУР спот портфелей {clientportfolios.MatrixClientCodesList.Count}</p>";
+                        break;
+                    case 6://6 запрет торговли на валюте для CD портфелей
+                        //clientportfolios = await _repository.GetAllEnemyNonResidentCdPortfolios();//запросить список злых нерезов
+                        clientportfolios = await _repoMatrix.GetAllRestrictedCDPortfolios();//запросить список портфелей для шаблона CD_Restrict
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы CD портфелей для шаблона CD_Restrict: {clientportfolios.MatrixClientCodesList.Count}</p>";
+
+                        //6 запрет торговли на валюте - для всех нерезидентов, дружественных и не дружественных.
+                        //MatrixClientCodeModelResponse frendlyNeRez = await _repository.GetAllFrendlyNonResidentCdPortfolios();//запросить список добрых нерезов
+                        //MatrixClientCodeModelResponse enemyNeRez = await _repository.GetAllEnemyNonResidentCdPortfolios();//запросить список злых нерезов
+
+                        //message.Body = message.Body + 
+                        //    $"<p>Найдено в БД Матрицы " +
+                        //    $"<br />Вражеских нерезидентов CD портфелей {enemyNeRez.MatrixClientCodesList.Count}" +
+                        //    $"<br />Дружественных нерезидентов CD портфелей {frendlyNeRez.MatrixClientCodesList.Count}</p>";
+
+                        ////объеденить списки в общий список clientportfolios
+                        //if (frendlyNeRez.Response.IsSuccess)
+                        //{
+                        //    if (frendlyNeRez.MatrixClientCodesList is not null)
+                        //    {
+                        //        clientportfolios.MatrixClientCodesList.AddRange(frendlyNeRez.MatrixClientCodesList);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    result.IsSuccess = false;
+                        //    result.Messages.AddRange(frendlyNeRez.Response.Messages);
+                        //}
+
+                        //if (enemyNeRez.Response.IsSuccess)
+                        //{
+                        //    if (enemyNeRez.MatrixClientCodesList is not null)
+                        //    {
+                        //        clientportfolios.MatrixClientCodesList.AddRange(enemyNeRez.MatrixClientCodesList);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    result.IsSuccess = false;
+                        //    result.Messages.AddRange(enemyNeRez.Response.Messages);
+                        //}
+
+                        break;
+
+                    case 7://7 все CD портфели с разрешением торговать
+                        clientportfolios = await _repoMatrix.GetAllAllowedCDPortfolios();//запросить список портфелей для шаблона CD_portfolio
+                        message.Body = message.Body + $"<p>Найдено в БД Матрицы CD портфелей для шаблона CD_portfolio: {clientportfolios.MatrixClientCodesList.Count}</p>";
+                        // все кпур и ксур клиенты, добрые нерезы квалы и не квалы - в общий список Cd портфелей
+                        //MatrixClientCodeModelResponse kvalKPUR = await _repository.GetAllKvalKpurUsersCdPortfolios();//запросить список квалов КПУР
+                        //MatrixClientCodeModelResponse kvalKSUR = await _repository.GetAllKvalKsurUsersCdPortfolios();//запросить список квалов КСУР
+                        //MatrixClientCodeModelResponse nonKvalKPUR = await _repository.GetAllNonKvalKpurUsersCdPortfolios();//запросить список НЕ квалов КПУР
+                        //MatrixClientCodeModelResponse nonKvalKSUR = await _repository.GetAllNonKvalKsurUsersCdPortfolios();//запросить список НЕ квалов КСУР
+                        //MatrixClientCodeModelResponse frendlyNeRez = await _repository.GetAllFrendlyNonResidentCdPortfolios();//запросить список добрых нерезов
+
+                        //message.Body = message.Body +
+                        //    $"<p>Найдено в БД Матрицы " +
+                        //    $"<br />Квалов КПУР CD портфелей {kvalKPUR.MatrixClientCodesList.Count}" +
+                        //    $"<br />Квалов КСУР CD портфелей {kvalKSUR.MatrixClientCodesList.Count}" +
+                        //    $"<br />НЕ квалов КПУР CD портфелей {nonKvalKPUR.MatrixClientCodesList.Count}" +
+                        //    $"<br />НЕ квалов КСУР CD портфелей {nonKvalKSUR.MatrixClientCodesList.Count}" +
+                        //    $"<br />всех дружественных нерезидентов CD портфелей {frendlyNeRez.MatrixClientCodesList.Count}</p>";
+
+                        ////объеденить списки в общий список clientportfolios
+                        //if (kvalKPUR.Response.IsSuccess)
+                        //{
+                        //    if (kvalKPUR.MatrixClientCodesList is not null)
+                        //    {
+                        //        clientportfolios.MatrixClientCodesList.AddRange(kvalKPUR.MatrixClientCodesList);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    clientportfolios.Response.IsSuccess = false;
+                        //    clientportfolios.Response.Messages.AddRange(kvalKPUR.Response.Messages);
+                        //}
+
+                        //if (kvalKSUR.Response.IsSuccess)
+                        //{
+                        //    if (kvalKSUR.MatrixClientCodesList is not null)
+                        //    {
+                        //        clientportfolios.MatrixClientCodesList.AddRange(kvalKSUR.MatrixClientCodesList);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    clientportfolios.Response.IsSuccess = false;
+                        //    clientportfolios.Response.Messages.AddRange(kvalKSUR.Response.Messages);
+                        //}
+
+                        //if (nonKvalKPUR.Response.IsSuccess)
+                        //{
+                        //    if (nonKvalKPUR.MatrixClientCodesList is not null)
+                        //    {
+                        //        clientportfolios.MatrixClientCodesList.AddRange(nonKvalKPUR.MatrixClientCodesList);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    clientportfolios.Response.IsSuccess = false;
+                        //    clientportfolios.Response.Messages.AddRange(nonKvalKPUR.Response.Messages);
+                        //}
+
+                        //if (nonKvalKSUR.Response.IsSuccess)
+                        //{
+                        //    if (nonKvalKSUR.MatrixClientCodesList is not null)
+                        //    {
+                        //        clientportfolios.MatrixClientCodesList.AddRange(nonKvalKSUR.MatrixClientCodesList);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    clientportfolios.Response.IsSuccess = false;
+                        //    clientportfolios.Response.Messages.AddRange(nonKvalKSUR.Response.Messages);
+                        //}
+
+                        //if (frendlyNeRez.Response.IsSuccess)
+                        //{
+                        //    if (frendlyNeRez.MatrixClientCodesList is not null)
+                        //    {
+                        //        clientportfolios.MatrixClientCodesList.AddRange(frendlyNeRez.MatrixClientCodesList);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    clientportfolios.Response.IsSuccess = false;
+                        //    clientportfolios.Response.Messages.AddRange(frendlyNeRez.Response.Messages);
+                        //}
+
+                        break;
+                }
+
+                //установить список в шаблон по комиссии Quik БРЛ
+                if (clientportfolios.Response.IsSuccess)
+                {
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii " +
+                        $"clientportfolios count {clientportfolios.MatrixClientCodesList.Count}");
+
+                    // это нужно чтобы затереть старые данные любым кодом клиента
+                    if (clientportfolios.MatrixClientCodesList.Count < 1)
+                    {
+                        message.Body = message.Body + $"<p>Пустой список заменяем на подставного клиента BP00001-MS-99, для перезаписи ранее установленного списка</p>";
+                        _logger.LogDebug($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii " +
+                            $"Пустой список заменяем на подставного клиента BP00001-MS-99");
+                        clientportfolios.MatrixClientCodesList.Add(
+                            new MatrixClientPortfolioModel() 
+                            { 
+                                MatrixClientPortfolio = "BP00001-MS-99"
+                            });
+                    }
+
+                    TemplateAndMatrixCodesModel templateAndMatrixCodes = new TemplateAndMatrixCodesModel()
+                    {
+                        MatrixClientPortfolio = clientportfolios.MatrixClientCodesList.ToArray(),
+                        Template = templateNames[i]
+                    };
+
+                    ListStringResponseModel setCodeToTemplatePoKomissii = await _repoQuik.SetClientsToTemplatePoKomissii(templateAndMatrixCodes);
+                    if (setCodeToTemplatePoKomissii.IsSuccess == false)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii " +
+                            $"Ошибка установки списка клиентов в шаблон {templateNames[i]} ");
+
+                        foreach (var text in setCodeToTemplatePoKomissii.Messages)
+                        {
+                            _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} - {text}");
+                            message.Body = message.Body + $"<p style='color:red'>Ошибка установки в {templateNames[i]}: {text}</p>";
+                        }
+
+                        result.IsSuccess = false;
+                        result.Messages.AddRange(setCodeToTemplatePoKomissii.Messages);
+                    }
+                    else
+                    {
+                        message.Body = message.Body + $"<p>Установка в {templateNames[i]} успешна</p>";
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii Ошибка запроса списка клиентов ");
+
+                    foreach (var text in clientportfolios.Response.Messages)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} - {text}");
+                        message.Body = message.Body + $"<p style='color:red'>Ошибка запроса списка клиентов {text}</p>";
+                    }
+
+                    result.IsSuccess = false;
+                    result.Messages.AddRange(clientportfolios.Response.Messages);
+                }
+            }
+
+            if (sendReport)
+            {
+                message.Body = message.Body + "</body></html>";
+
+                if (result.IsSuccess)
+                {
+                    message.Subject = "Success! QUIK обновление шаблонов 'По комиссии' в Qadmin MC0138200000 библиотеке";
+                }
+                else
+                {
+                    message.Subject = "Errors! QUIK обновление шаблонов 'По комиссии' в Qadmin MC0138200000 библиотеке";
+                }
+
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii отправляем почту");
+                await _sender.Send(message);
+            }
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInSpotTemplatesPoKomissii all done");
+            return result;
+        }
+
+        private List<string> RemoveCodeIfFinded(List<string> codesFromCurrClntsXML, List<FortsClientCodeModel> source)
+        {
+            //идем от конца, чтобы удалять из list можно было без ошибок
+            for (int i = codesFromCurrClntsXML.Count - 1; i >= 0; i--)
+            {
+                string matrixCode = PortfoliosConvertingService.GetMatrixFortsCode(codesFromCurrClntsXML[i]);
+
+                foreach (var code in source)
+                {
+                    if (code.FortsClientCode.Equals(matrixCode))
+                    {
+                        codesFromCurrClntsXML.RemoveAt(i);
+                    }
+                }
+            }
+
+            return codesFromCurrClntsXML;
+        }
+
+        private List<string> GetFortsCodesFromCurrClntsXml(string filePathToCurrClntsXml)
+        {
+            List<string> result = new List<string>();
+
+            XmlDocument xDoc = new XmlDocument();
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            using (var sr = new StreamReader(filePathToCurrClntsXml, Encoding.GetEncoding("windows-1251"))) xDoc.Load(sr);
+            // получим корневой элемент
+            XmlElement xRoot = xDoc.DocumentElement;
+            // обход всех узлов в корневом элементе
+            foreach (XmlNode xnode in xRoot)
+            {
+                string futCodes = "";
+
+                // обходим все дочерние узлы
+                foreach (XmlNode childnode in xnode.ChildNodes)
+                {
+                    if (childnode.Name == "Classes")
+                    {
+                        if (childnode.Attributes.GetNamedItem("FirmID").Value.Contains("SPBFUT"))
+                        {
+                            if (!childnode.InnerText.Equals("INSTR_RF"))
+                            {
+                                futCodes = childnode.Attributes.GetNamedItem("ClientCodes").Value;
+
+                                if (futCodes.Length > 0)
+                                {
+                                    string[] codesSplitted = futCodes.Split(", ");
+                                    foreach (string code in codesSplitted)
+                                    {
+                                        if (code.Contains("SPBFUT"))
+                                        {
+                                            if (!result.Contains(code))
+                                            {
+                                                result.Add(code);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+        
+        public async Task<ListStringResponseModel> RenewClientsInFortsTemplatesPoKomissii(bool sendReport)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Called");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+            NewEMail message = new NewEMail();
+            //message.Subject = "QUIK обновление шаблонов 'По комиссии' в Qadmin SPBFUT библиотеке";
+            message.Body = "<html><body><h2>QUIK обновление шаблона По комиссии фортс 'RF_Restrict'</h2>";
+
+            // запрет торговли по срочному рынку
+
+            // Все QUIK коды срочки берутся из файла xml
+
+            // 1. берем список ВСЕХ вражеских нерезов не зависимо от Q и оставляем только те что есть в XML
+            // должен остаться allEnemyNonResident(list) с кодами встреченными в codesFromCurrClntsXML
+            // 2. берем всех
+            //      квалов
+            //      неквалов сдавших тест 16
+            // и вычитаем эти коды из файла xml - должен остаться codesFromCurrClntsXML без кодов квалов и тестированных
+            // остатки 1 и 2 объеденяем и загружаем в шаблон RF_Restrict
+
+            string filePathToCurrClntsXml = _settings.PathToCurrClntsXml;
+            if (!File.Exists(filePathToCurrClntsXml))
+            {
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} Error! File CurrClnts.xml not found at " + filePathToCurrClntsXml);
+                message.Body = message.Body + $"<p style='color:red'>Error! File CurrClnts.xml not found at {filePathToCurrClntsXml}</p>";
+            }
+            else
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii " +
+                    $"CurrClnts.xml from {File.GetCreationTime(filePathToCurrClntsXml)} finded");
+                message.Body = message.Body + $"<p>Файл CurrClnts.xml создан: {File.GetLastWriteTime(filePathToCurrClntsXml)}</p>";
+                List<string> codesFromCurrClntsXML = GetFortsCodesFromCurrClntsXml(filePathToCurrClntsXml);//список всех кодов срочки из CurrClnts.xml
+                message.Body = message.Body + $"<p>Найдено кодов срочного рынка в CurrClnts.xml: {codesFromCurrClntsXML.Count}</p>";
+
+                //1
+                FortsClientCodeModelResponse allEnemyNonResident = await _repoMatrix.GetAllEnemyNonResidentFortsCodes();// список ВСЕХ вражеских нерезов не зависимо от Q
+                //2
+                FortsClientCodeModelResponse allKvalClientsFortsCodes = await _repoMatrix.GetAllKvalClientsFortsCodes();//всех квалов фортс                                                                                                                 //      квалов
+                FortsClientCodeModelResponse allNonKvalWithTest16FortsCodes = await _repoMatrix.GetAllNonKvalWithTest16FortsCodes();//всех неквалов фортс сдавших тест 16
+
+                if (allEnemyNonResident.Response.IsSuccess)
+                {
+                    message.Body = message.Body + $"<p>Найдено кодов срочного рынка всех вражеских нерезов не зависимо от торговой системы: " +
+                        $"{allEnemyNonResident.FortsClientCodesList.Count}</p>";
+                }
+                else
+                {
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInTemplatesPoKomissii Ошибка " +
+                        $"при получении кодов срочного рынка ВСЕХ вражеских нерезов не зависимо от торговой системы");
+
+                    message.Body = message.Body + $"<p style='color:red'>Ошибка при получении кодов срочного рынка ВСЕХ вражеских нерезов не зависимо от торговой системы</p>";
+                    foreach (var text in allEnemyNonResident.Response.Messages)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка = {text}");
+                        message.Body = message.Body + $"<p style='color:red'> - {text}</p>";
+                    }
+                }
+
+                if (allKvalClientsFortsCodes.Response.IsSuccess)
+                {
+                    message.Body = message.Body + $"<p>Найдено кодов срочного рынка всех квалов фортс не зависимо от торговой системы: " +
+                        $"{allKvalClientsFortsCodes.FortsClientCodesList.Count}</p>";
+                }
+                else
+                {
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка " +
+                        $"при получении кодов срочного рынка всех квалов фортс не зависимо от торговой системы");
+
+                    message.Body = message.Body + $"<p style='color:red'>Ошибка при получении кодов срочного рынка всех квалов фортс не зависимо от торговой системы</p>";
+                    foreach (var text in allKvalClientsFortsCodes.Response.Messages)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка = {text}");
+                        message.Body = message.Body + $"<p style='color:red'> - {text}</p>";
+                    }
+                }
+
+                if (allNonKvalWithTest16FortsCodes.Response.IsSuccess)
+                {
+                    message.Body = message.Body + $"<p>Найдено кодов срочного рынка всех неквалов фортс сдавших тест 16 не зависимо от торговой системы: " +
+                        $"{allNonKvalWithTest16FortsCodes.FortsClientCodesList.Count}</p>";
+                }
+                else
+                {
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка " +
+                        $"при получении кодов срочного рынка всех неквалов фортс сдавших тест 16 не зависимо от торговой системы");
+
+                    message.Body = message.Body + $"<p style='color:red'>Ошибка при получении кодов срочного рынка всех неквалов фортс сдавших тест 16 не зависимо от торговой системы</p>";
+                    foreach (var text in allNonKvalWithTest16FortsCodes.Response.Messages)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка = {text}");
+                        message.Body = message.Body + $"<p style='color:red'> - {text}</p>";
+                    }
+                }
+
+                if (allEnemyNonResident.Response.IsSuccess && allKvalClientsFortsCodes.Response.IsSuccess && allNonKvalWithTest16FortsCodes.Response.IsSuccess)
+                {
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii all db request is ok, work with data");
+
+                    message.Body = message.Body + $"<h3>Обработка полученных из БД матрицы данных</h3>";
+                    // 1. берем список ВСЕХ вражеских нерезов не зависимо от Q и оставляем только те что есть в XML
+                    //идем от конца, чтобы удалять из list можно было без ошибок
+                    for (int i = allEnemyNonResident.FortsClientCodesList.Count - 1; i >= 0; i--)
+                    {
+                        //переведем в формат Q для сравнения
+                        string quikCode = PortfoliosConvertingService.GetQuikFortsCode(allEnemyNonResident.FortsClientCodesList[i].FortsClientCode);
+
+                        //если кода нет, удаляем, нам он не интересен
+                        if (!codesFromCurrClntsXML.Contains(quikCode))
+                        {
+                            allEnemyNonResident.FortsClientCodesList.RemoveAt(i);
+                        }
+                    }
+
+                    message.Body = message.Body + $"<p>Совпадений всех вражеских нерезов с CurrClnts.xml: {allEnemyNonResident.FortsClientCodesList.Count}</p>";
+
+                    // 2. берем всех
+                    //      квалов
+                    //      неквалов сдавших тест 16
+                    // и вычитаем эти коды из файла xml - должен остаться codesFromCurrClntsXML без кодов квалов и тестированных
+                    codesFromCurrClntsXML = RemoveCodeIfFinded(codesFromCurrClntsXML, allKvalClientsFortsCodes.FortsClientCodesList);
+                    message.Body = message.Body + $"<p>Осталось в CurrClnts.xml после удаления кодов всех квалов: {codesFromCurrClntsXML.Count}</p>";
+                    codesFromCurrClntsXML = RemoveCodeIfFinded(codesFromCurrClntsXML, allNonKvalWithTest16FortsCodes.FortsClientCodesList);
+                    message.Body = message.Body + $"<p>Осталось в CurrClnts.xml после удаления кодов всех неквалов с тестом 16: {codesFromCurrClntsXML.Count}</p>";
+
+                    //коды quik формата заменяем на формат матрицы
+                    for (int i = 0; i < codesFromCurrClntsXML.Count; i++)
+                    {
+                        codesFromCurrClntsXML[i] = PortfoliosConvertingService.GetMatrixFortsCode(codesFromCurrClntsXML[i]);
+                    }
+
+                    //объеденяем списки
+                    foreach (var code in codesFromCurrClntsXML)
+                    {
+                        FortsClientCodeModel model = new FortsClientCodeModel();
+                        model.FortsClientCode = code;
+                        allEnemyNonResident.FortsClientCodesList.Add(model);
+                    }
+
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii отправляем список с кодами " +
+                        $"{allEnemyNonResident.FortsClientCodesList.Count} в QUIK БРЛ SPBEX");
+                    message.Body = message.Body + $"<p>В общем списке запрещенных кодов: {allEnemyNonResident.FortsClientCodesList.Count}</p>";                    
+
+                    //выгружаем результат в forts шаблон по комиссии RF_Restrict
+                    TemplateAndMatrixFortsCodesModel templateAndMatrixFortsCodesModel = new TemplateAndMatrixFortsCodesModel();
+                    templateAndMatrixFortsCodesModel.Template = "RF_Restrict";
+                    templateAndMatrixFortsCodesModel.FortsClientCodes = allEnemyNonResident.FortsClientCodesList.ToArray();
+                    message.Body = message.Body + $"<h3>Выгрузка в QUIK БРЛ SPBFUT шаблон ео комиссии {templateAndMatrixFortsCodesModel.Template}</h3>";
+
+                    ListStringResponseModel setCodeToTemplatePoKomissii = await _repoQuik.SetClientsToFortsTemplatePoKomissii(templateAndMatrixFortsCodesModel);
+                    if (setCodeToTemplatePoKomissii.IsSuccess == false)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка " +
+                            $"при установке кодов в Forts шаблон по комиссии {templateAndMatrixFortsCodesModel.Template}");
+
+                        foreach (var text in setCodeToTemplatePoKomissii.Messages)
+                        {
+                            _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Ошибка = {text}");
+
+                            message.Body = message.Body + $"<p style='color:red'>Ошибка установки в forts BRL RF_Restrict: {text}</p>";
+                        }
+
+                        result.IsSuccess = false;
+                        result.Messages.AddRange(setCodeToTemplatePoKomissii.Messages);
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii в forts BRL RF_Restrict успешна");
+                        message.Body = message.Body + $"<p>Установка в forts BRL RF_Restrict успешна</p>";
+                    }
+                }
+            }
+
+            if (sendReport)
+            {
+                message.Body = message.Body + "</body></html>";
+
+                if (result.IsSuccess)
+                {
+                    message.Subject = "Success! QUIK обновление шаблонов 'По комиссии' в Qadmin SPBFUT библиотеке";
+                }
+                else
+                {
+                    message.Subject = "Errors! QUIK обновление шаблонов 'По комиссии' в Qadmin SPBFUT библиотеке";
+                }
+
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii Send message");
+                await _sender.Send(message);
+            }
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewClientsInFortsTemplatesPoKomissii all done");
+            return result;
+        }
+
+
+
+        public async Task<ListStringResponseModel> RenewRestrictedSecuritiesInTemplatesPoKomissii(bool sendReport)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii Called");
+
+            ListStringResponseModel result = new ListStringResponseModel();
+            NewEMail message = new NewEMail();
+            //message.Subject = "QUIK обновление запрещенных для неквалов инструментов в шаблонах 'По комиссии' в Qadmin MC013820000";
+            message.Body = "<html><body>";
+            message.Body = message.Body + $"<h3>Получение данных по бумагам/бордам из матрицы</h3>";
+            // запросить список инструментов в бд матрицы
+            SecurityAndBoardResponse secAndBoards = await _repoMatrix.GetRestrictedSecuritiesAndBoards();// список ВСЕХ запрещенных нерезам бумаг
+            if (secAndBoards.Response.IsSuccess)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii " +
+                    $"Найдено запрещенных для неквалов инструментов: {secAndBoards.SecurityAndBoardList.Count}");
+
+                message.Body = message.Body + $"<p>Найдено запрещенных для неквалов инструментов: " +
+                    $"{secAndBoards.SecurityAndBoardList.Count}</p>";
+            }
+            else
+            {
+                result.IsSuccess = false;
+
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii " +
+                    $"Ошибка получения запрещенных для неквалов инструментов:");
+
+                message.Body = message.Body + $"<p style='color:red'>Ошибка получения запрещенных для неквалов инструментов</p>";
+                foreach (var text in secAndBoards.Response.Messages)
+                {                  
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} - {text}");
+                    message.Body = message.Body + $"<p style='color:red'> - {text}</p>";
+                    result.Messages.Add(text);
+                }
+
+                if (sendReport)
+                {
+                    message.Subject = "Failed! QUIK обновление запрещенных для неквалов инструментов в шаблонах 'По комиссии' в Qadmin MC013820000";
+
+                    message.Body = message.Body + "</body></html>";
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii Send message");
+                    await _sender.Send(message);
+                }
+
+                return result;
+            }
+
+            //разбить список по бордам, формируя отдельные RestrictedSecuritiesArraySetForBoardInTemplatesModel
+            List<RestrictedSecuritiesArraySetForBoardInTemplatesModel> secAndBoardsSeparatesList = GenerateRestrictedSecuritiesArraySetForBoard(secAndBoards.SecurityAndBoardList);
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii " +
+                $"после сортировки количество бордов {secAndBoardsSeparatesList.Count}");
+
+            message.Body = message.Body + $"<p>После сортировки количество бордов {secAndBoardsSeparatesList.Count}</p>";
+
+            //если не пустой, выгрузить в QUIK
+            string[] templateNames = new string[]
+            {
+                "KSUR_NeKval", // 0 список неквалов КСУР
+                "KPUR_NeKval", // 1 список неквалов КПУР
+                "FrnNeResNeKv" // 2 список неквалов дружественных нерезов
+            };
+
+            foreach (string template in templateNames)
+            {
+                message.Body = message.Body + $"<h3> Отправка списков в шаблон {template}</h3>";
+
+                foreach (RestrictedSecuritiesArraySetForBoardInTemplatesModel board in secAndBoardsSeparatesList)
+                {
+                    board.TemplateName = template;
+
+                    ListStringResponseModel setRestrictedSecurityes = await _repoQuik.SetRestrictedSecuritiesInTemplatesPoKomissii(board);
+
+                    if (setRestrictedSecurityes.IsSuccess == false)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii Ошибка " +
+                            $"отправки списка в {board.TemplateName} {board.SecBoard} с количеством {board.Securities.Count}:");
+
+                        message.Body = message.Body + $"<p style='color:red'> Ошибка отправки списка в {board.TemplateName} {board.SecBoard} с количеством {board.Securities.Count}:</p>";
+
+                        foreach (var text in setRestrictedSecurityes.Messages)
+                        {
+                            _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} - {text}");
+
+                            message.Body = message.Body + $"<p style='color:red'> - {text}</p>";
+                        }
+
+                        result.IsSuccess = false;
+                        result.Messages.AddRange(setRestrictedSecurityes.Messages);
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii " +
+                            $"Отправка списка в {board.TemplateName} {board.SecBoard} с количеством {board.Securities.Count} успешна");
+
+                        message.Body = message.Body + $"<p>Отправка списка в {board.TemplateName} {board.SecBoard} с количеством {board.Securities.Count} успешна</p>";
+                    }
+                }
+            }            
+
+            if (sendReport)
+            {
+                message.Body = message.Body + "</body></html>";
+
+                if (result.IsSuccess)
+                {
+                    message.Subject = "Success! QUIK обновление запрещенных для неквалов инструментов в шаблонах 'По комиссии' в Qadmin MC013820000";
+                }
+                else
+                {
+                    message.Subject = "Errors! QUIK обновление запрещенных для неквалов инструментов в шаблонах 'По комиссии' в Qadmin MC013820000";
+                }
+
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii Send message");
+                await _sender.Send(message);
+            }
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore RenewRestrictedSecuritiesInTemplatesPoKomissii all done");
+            return result;
+        }
+
+        private List<RestrictedSecuritiesArraySetForBoardInTemplatesModel> GenerateRestrictedSecuritiesArraySetForBoard(List<SecurityAndBoardModel> securityAndBoardList)
+        {
+            List<RestrictedSecuritiesArraySetForBoardInTemplatesModel> result = new List<RestrictedSecuritiesArraySetForBoardInTemplatesModel>();
+            foreach (SecurityAndBoardModel securityAndBoard in securityAndBoardList)
+            {
+                //сначала смотрим есть ли такой борд в листе result.
+                bool boardIsPresent = false;
+                foreach(var model in result)
+                {
+                    if (model.SecBoard.Contains(securityAndBoard.Board))
+                    {
+                        //просто добавим бумагу в этот список
+                        model.Securities.Add(securityAndBoard.Secutity);
+                        boardIsPresent = true;
+                        break;
+                    }
+                }
+
+                // не нашли такого борда, добавляем новый в список
+                if (!boardIsPresent)
+                {
+                    RestrictedSecuritiesArraySetForBoardInTemplatesModel newModel = new RestrictedSecuritiesArraySetForBoardInTemplatesModel();
+                    newModel.SecBoard = securityAndBoard.Board;
+                    newModel.Securities.Add(securityAndBoard.Secutity);
+                    
+                    result.Add(newModel);
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<NewClientCreationResponse> AddNewMatrixPortfolioToExistingClientByUID(NewMatrixPortfolioToExistingClientModel model)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewMatrixPortfolioToExistingClientByUID Called, " +
+                $"UID={model.UID} portfolio={model.MatrixPortfolio.MatrixClientPortfolio}");
+
+            MatrixClientPortfolioModel[] newMatrixPortfolioArray = new MatrixClientPortfolioModel[1];
+            newMatrixPortfolioArray[0] = model.MatrixPortfolio;
+
+            string clientAccount = model.MatrixPortfolio.MatrixClientPortfolio.Split("-").First();
+
+            NewClientCreationResponse createResponse = new NewClientCreationResponse();
+
+            // проверить - совпадает ли клиент в UID
+            if (model.CheckIsUserHaveEqualsPortfolio)
+            {
+                BoolResponse isExist = await CheckIsUserAlreadyExistAtUID(model.UID, clientAccount);
+
+                // если клиента нет в UID - отказываем
+                if (isExist.IsTrue == false)
+                {
+                    createResponse.IsSftpUploadSuccess = false;
+                    createResponse.SftpUploadMessages.AddRange(isExist.Messages);
+
+                    return createResponse;
+                }
+            }
+
+            //// проверить - совпадает ли клиент в UID
+            //if (model.CheckIsUserHaveEqualsPortfolio)
+            //{
+            //    FindedQuikQAdminClientResponse findedInQ = await GetIsUserAlreadyExistByMatrixClientAccount(clientAccount);
+
+            //    if (findedInQ.QuikQAdminClient != null)
+            //    {
+            //        QuikQAdminClientModel isClienExist = findedInQ.QuikQAdminClient.Find(x => x.UID.Equals(model.UID));
+
+            //        if (isClienExist==null)
+            //        {
+            //            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewMatrixPortfolioToExistingClientByUID " +
+            //                $"SFTP: UID {model.UID} not contain any porfolios for account {clientAccount}");
+
+            //            createResponse.IsSftpUploadSuccess = false;
+            //            createResponse.SftpUploadMessages.Add($"Присланный UID {model.UID} не имеет ранее присвоенных портфелей клиента {clientAccount}. " +
+            //                $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID");
+
+            //            return createResponse;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewMatrixPortfolioToExistingClientByUID " + 
+            //            $"SFTP: for account {clientAccount} not found any UID in CurrClnt");
+
+            //        createResponse.IsSftpUploadSuccess = false;
+            //        createResponse.SftpUploadMessages.Add($"Присланный портфель клиента {clientAccount} не найден во всем файле CurrClnt. " +
+            //            $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID {model.UID}");
+
+            //        return createResponse;
+            //    }
+            //}
+
+            //SFTP update - добавить портфель
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewMatrixPortfolioToExistingClientByUID " +
+                $"SFTP for {model.UID} added porfolio {model.MatrixPortfolio.MatrixClientPortfolio}");
+
+            MatrixPortfolioAndUidModel matrixPortfolioAndUid = new MatrixPortfolioAndUidModel
+            {
+                MatrixPortfolio = model.MatrixPortfolio,
+                UID = model.UID
+            };
+
+            ListStringResponseModel createSftpResponse = await _repoQuik.AddNewMatrixPortfolioToExistingClientByUID(matrixPortfolioAndUid);
+            createResponse.IsSftpUploadSuccess = createSftpResponse.IsSuccess;
+            createResponse.SftpUploadMessages = createSftpResponse.Messages;
+
+
+            //InstrTw register
+            NewMNPClientModel newMNPClient = new NewMNPClientModel()
+            {
+                MatrixClientPortfolios = newMatrixPortfolioArray
+            };
+
+            ListStringResponseModel clientInfoRequest = await GetClientInformationForInstrTwRegister(newMNPClient, createResponse.NewClient, clientAccount);
+            if (clientInfoRequest.IsSuccess)
+            {
+                ListStringResponseModel fillDataBaseInstrTWResponse = await _repoQuik.FillDataBaseInstrTW(newMNPClient);
+                createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
+                createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
+            }
+            else
+            {
+                createResponse.InstrTwMessages.AddRange(clientInfoRequest.Messages);
+                createResponse.IsInstrTwSuccess = false;
+            }
+
+            ////InstrTw register
+            //ClientBOInformationResponse clientBOInformation = await _repository.GetClientBOInformation(clientAccount);
+            //ClientInformationResponse clientInformation = await _repository.GetClientInformation(clientAccount);
+
+            //NewMNPClientModel newMNPClient = new NewMNPClientModel();
+
+            //if (clientInformation.Response.IsSuccess)
+            //{
+            //    newMNPClient.Client = clientInformation.ClientInformation;
+            //    createResponse.NewClient.Client = newMNPClient.Client;
+            //}
+
+            //if (clientBOInformation.Response.IsSuccess)
+            //{
+            //    newMNPClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
+            //    newMNPClient.Address = clientBOInformation.ClientBOInformation.Address;
+            //    newMNPClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
+            //    newMNPClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
+
+            //    createResponse.NewClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
+            //    createResponse.NewClient.Address = clientBOInformation.ClientBOInformation.Address;
+            //    createResponse.NewClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
+            //    createResponse.NewClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
+            //}
+
+
+            //if (clientInformation.Response.IsSuccess && clientBOInformation.Response.IsSuccess)
+            //{
+            //    newMNPClient.MatrixClientPortfolios = newMatrixPortfolioArray;
+
+            //    ListStringResponseModel fillDataBaseInstrTWResponse = await _repository.FillDataBaseInstrTW(newMNPClient);
+            //    createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
+            //    createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
+            //}
+            //else
+            //{
+            //    createResponse.InstrTwMessages.AddRange(clientInformation.Response.Messages);
+            //    createResponse.InstrTwMessages.AddRange(clientBOInformation.Response.Messages);
+
+            //    createResponse.IsInstrTwSuccess = false;
+            //}
+
+            // codes ini, CD reg
+            //codes ini
+            CodesArrayModel codesArray = new CodesArrayModel() { MatrixClientPortfolios = newMatrixPortfolioArray };
+
+            ListStringResponseModel fillCodesIniResponse = await _repoQuik.FillCodesIniFile(codesArray);
+            createResponse.IsCodesIniSuccess = fillCodesIniResponse.IsSuccess;
+            createResponse.CodesIniMessages = fillCodesIniResponse.Messages;
+
+            // ? CD reg
+            bool totalSucces = true;
+
+            if (model.MatrixPortfolio.MatrixClientPortfolio.Contains("-CD-"))
+            {
+                ListStringResponseModel addCdToKomissiiResponse = await _repoQuik.AddCdPortfolioToTemplateKomissii(model.MatrixPortfolio);
+                if (!addCdToKomissiiResponse.IsSuccess)
+                {
+                    totalSucces = false;
+                }
+                createResponse.AddToTemplatesMessages.AddRange(addCdToKomissiiResponse.Messages);
+
+                ListStringResponseModel addCdToPoPlechuResponse = await _repoQuik.AddCdPortfolioToTemplatePoPlechu(model.MatrixPortfolio);
+                if (!addCdToPoPlechuResponse.IsSuccess)
+                {
+                    totalSucces = false;
+                }
+                createResponse.AddToTemplatesMessages.AddRange(addCdToPoPlechuResponse.Messages);
+            }
+            if (totalSucces)
+            {
+                createResponse.IsAddToTemplatesSuccess = true;
+            }
+
+            //IsSuccess total ?
+            if (createResponse.IsSftpUploadSuccess && createResponse.IsCodesIniSuccess && createResponse.IsAddToTemplatesSuccess && createResponse.IsInstrTwSuccess)
+            {
+                createResponse.IsNewClientCreationSuccess = true;
+            }
+
+            return createResponse;
+        }
+
+        public async Task<NewClientCreationResponse> AddNewFortsPortfolioToExistingClientByUID(NewFortsPortfolioToExistingClientModel model)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID Called, " +
+                $"UID={model.UID} portfolio={model.MatrixToFortsCodes.MatrixClientCode}");
+
+            MatrixToFortsCodesMappingModel[] newMatrixPortfolioArray = new MatrixToFortsCodesMappingModel[1];
+            newMatrixPortfolioArray[0] = model.MatrixToFortsCodes;
+
+            string clientAccount = model.MatrixToFortsCodes.MatrixClientCode.Split("-").First();
+
+            NewClientCreationResponse createResponse = new NewClientCreationResponse();
+
+            // проверить - совпадает ли клиент в UID
+            if (model.CheckIsUserHaveEqualsPortfolio)
+            {
+                BoolResponse isExist = await CheckIsUserAlreadyExistAtUID(model.UID, clientAccount);
+
+                // если клиента нет в UID - отказываем
+                if (isExist.IsTrue == false)
+                {
+                    createResponse.IsSftpUploadSuccess = false;
+                    createResponse.SftpUploadMessages.AddRange(isExist.Messages);
+
+                    return createResponse;
+                }
+            }
+
+            //SFTP update - добавить портфель
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " +
+                $"SFTP for {model.UID} added code {model.MatrixToFortsCodes.FortsClientCode} from porfolio {model.MatrixToFortsCodes.MatrixClientCode}");
+
+            FortsCodeAndUidModel fortsCodeAndUid = new FortsCodeAndUidModel
+            {
+                MatrixFortsCode = model.MatrixToFortsCodes.FortsClientCode,
+                UID = model.UID
+            };
+
+            ListStringResponseModel createSftpResponse = await _repoQuik.AddNewFortsPortfolioToExistingClientByUID(fortsCodeAndUid);
+            createResponse.IsSftpUploadSuccess = createSftpResponse.IsSuccess;
+            createResponse.SftpUploadMessages = createSftpResponse.Messages;
+
+            //InstrTw register
+            NewMNPClientModel newMNPClient = new NewMNPClientModel()
+            {
+                CodesPairRF = newMatrixPortfolioArray
+            };
+
+            ListStringResponseModel clientInfoRequest = await GetClientInformationForInstrTwRegister(newMNPClient, createResponse.NewClient, clientAccount);
+            if (clientInfoRequest.IsSuccess)
+            {
+                ListStringResponseModel fillDataBaseInstrTWResponse = await _repoQuik.FillDataBaseInstrTW(newMNPClient);
+                createResponse.IsInstrTwSuccess = fillDataBaseInstrTWResponse.IsSuccess;
+                createResponse.InstrTwMessages = fillDataBaseInstrTWResponse.Messages;
+            }
+            else
+            {
+                createResponse.InstrTwMessages.AddRange(clientInfoRequest.Messages);
+                createResponse.IsInstrTwSuccess = false;
+            }
+
+            // codes ini, CD reg - no actions needed, skip
+            createResponse.IsCodesIniSuccess = true;
+            createResponse.IsAddToTemplatesSuccess = true;
+
+
+            //IsSuccess total ?
+            if (createResponse.IsSftpUploadSuccess && createResponse.IsCodesIniSuccess && createResponse.IsAddToTemplatesSuccess && createResponse.IsInstrTwSuccess)
+            {
+                createResponse.IsNewClientCreationSuccess = true;
+            }
+
+            return createResponse;
+        }
+
+        private async Task<ListStringResponseModel> GetClientInformationForInstrTwRegister(NewMNPClientModel newMNPClient, NewClientModel newClient, string clientAccount)
+        {
+
+            ListStringResponseModel result = new ListStringResponseModel();
+
+            ClientBOInformationResponse clientBOInformation = await _repoMatrix.GetClientBOInformation(clientAccount);
+            ClientInformationResponse clientInformation = await _repoMatrix.GetClientInformation(clientAccount);
+
+            if (clientInformation.Response.IsSuccess)
+            {
+                newMNPClient.Client = clientInformation.ClientInformation;
+                newClient.Client = newMNPClient.Client;
+            }
+
+            if (clientBOInformation.Response.IsSuccess)
+            {
+                newMNPClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
+                newMNPClient.Address = clientBOInformation.ClientBOInformation.Address;
+                newMNPClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
+                newMNPClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
+
+                newClient.RegisterDate = clientBOInformation.ClientBOInformation.RegisterDate;
+                newClient.Address = clientBOInformation.ClientBOInformation.Address;
+                newClient.isClientResident = clientBOInformation.ClientBOInformation.isClientResident;
+                newClient.isClientPerson = clientBOInformation.ClientBOInformation.isClientPerson;
+            }
+
+            if (clientInformation.Response.IsSuccess && clientBOInformation.Response.IsSuccess)
+            {
+                result.IsSuccess = true;
+            }
+            else
+            {
+                result.Messages.AddRange(clientInformation.Response.Messages);
+                result.Messages.AddRange(clientBOInformation.Response.Messages);
+
+                result.IsSuccess = false;
+            }
+
+            return result;
+        }
+
+        private async Task<BoolResponse> CheckIsUserAlreadyExistAtUID(int uID, string clientAccount)
+        {
+            BoolResponse isExist = new BoolResponse();
+            
+            // список портфелей и кодов клиента для поиска по UID
+            List<string> clientCodesArray = new List<string>();
+
+            // получим портфели спот
+            MatrixClientCodeModelResponse spotCodes = await _repoMatrix.GetClientAllSpotCodesFiltered(clientAccount);
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " +
+                $"GetClientAllSpotCodesFiltered result {spotCodes.Response.IsSuccess}");
+
+            if (spotCodes.MatrixClientCodesList.Count > 0)
+            {
+                foreach (var spot in spotCodes.MatrixClientCodesList)
+                {
+                    clientCodesArray.Add(spot.MatrixClientPortfolio);
+                }
+            }
+
+            // получим портфели фортс
+            MatrixToFortsCodesMappingResponse fortsCodes = await _repoMatrix.GetClientAllFortsCodes(clientAccount);
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " +
+                $"GetClientAllFortsCodes result {fortsCodes.Response.IsSuccess}");
+
+            if (fortsCodes.MatrixToFortsCodesList.Count > 0)
+            {
+                foreach (var forts in fortsCodes.MatrixToFortsCodesList)
+                {
+                    clientCodesArray.Add(forts.FortsClientCode);
+                }
+            }
+
+            // если портфелей нет - вернем ответ
+            if (clientCodesArray.Count == 0)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " + 
+                    $" return false, not any portfolios found in matrix for {clientAccount}");
+
+                isExist.Messages.Add($"Портфели клиента {clientAccount} не найдены во всем файле CurrClnt. " +
+                    $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID {uID}");
+
+                isExist.IsTrue = false;
+                return isExist;
+            }
+
+            // запросим UID
+            ListStringResponseModel checkUserExist = await _repoQuik.GetIsUserAlreadyExistByCodeArray(clientCodesArray.ToArray());
+
+            if (checkUserExist.IsSuccess == false)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID GetIsUserAlreadyExistByCodeArray " +
+                    $" return IsSuccess false");
+
+                isExist.IsSuccess = false;
+                isExist.IsTrue = false;
+                isExist.Messages.AddRange(checkUserExist.Messages);                
+                return isExist;
+            }
+
+            foreach (string xmlClient in checkUserExist.Messages)
+            {
+                if (xmlClient.Contains("UID=\"" + uID + "\""))
+                {
+                    isExist.IsTrue = true;
+                    return isExist;
+                }
+            }
+
+            isExist.IsTrue = false;
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " +
+                    $"Account {clientAccount} not found at UID {uID}. ");
+            isExist.Messages.Add($"Портфели клиента {clientAccount} не найдены в UID {uID}. " +
+                    $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID {uID}");
+
+
+            //if (findedInQ.QuikQAdminClient != null)
+            //{
+            //    QuikQAdminClientModel isClienExist = findedInQ.QuikQAdminClient.Find(x => x.UID.Equals(model.UID));
+
+            //    if (isClienExist==null)
+            //    {
+            //        _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " +
+            //            $"SFTP: UID {model.UID} not contain any porfolios for account {clientAccount}");
+
+            //        createResponse.IsSftpUploadSuccess = false;
+            //        createResponse.SftpUploadMessages.Add($"Присланный UID {model.UID} не имеет ранее присвоенных портфелей клиента {clientAccount}. " +
+            //            $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID");
+
+            //        return createResponse;
+            //    }
+            //}
+            //else
+            //{
+            //    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} ICore AddNewFortsPortfolioToExistingClientByUID " +
+            //        $"SFTP: for account {clientAccount} not found any UID in CurrClnt");
+
+            //    createResponse.IsSftpUploadSuccess = false;
+            //    createResponse.SftpUploadMessages.Add($"Присланный портфель клиента {clientAccount} не найден во всем файле CurrClnt. " +
+            //        $"Добавление невозможно, т.к. включена проверка на строгое наличие клиента в UID {model.UID}");
+
+            //    return createResponse;
+            //}
+
+
+            return isExist;
         }
     }
 }

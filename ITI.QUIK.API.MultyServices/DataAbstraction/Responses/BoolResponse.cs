@@ -1,6 +1,8 @@
-﻿namespace DataAbstraction.Responses
+﻿using DataAbstraction.Interfaces;
+
+namespace DataAbstraction.Responses
 {
-    public class BoolResponse
+    public class BoolResponse : IResponseDirect
     {
         public BoolResponse()
         {

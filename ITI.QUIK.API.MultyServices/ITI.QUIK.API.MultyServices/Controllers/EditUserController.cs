@@ -19,8 +19,26 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             _core = core;
         }
 
+        [HttpGet("Get/IsUser/AlreadyExist/inAllQuik/ByMatrixClientAccount/{matrixClientAccount}")]
+        public async Task<IActionResult> GetIsUserAlreadyExistInAllQuikByMatrixClientAccount(string matrixClientAccount)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/inAllQuik/ByMatrixClientAccount/{matrixClientAccount} Call");
+
+            //проверим корректность входных данных
+            FindedQuikClientResponse result = ValidateData.ValidateMatrixClientAccountToFindedQuik(matrixClientAccount);
+            if (!result.IsSuccess)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/inAllQuik/ByMatrixClientAccount/{matrixClientAccount} Error: {result.Messages[0]}");
+                return Ok(result);
+            }
+
+            result = await _core.GetIsUserAlreadyExistInAllQuikByMatrixClientAccount(matrixClientAccount);
+
+            return Ok(result);
+        }
+
         [HttpGet("Get/IsUser/AlreadyExist/inQAdmin/ByMatrixClientAccount/{matrixClientAccount}")]
-        public async Task<IActionResult> GetIsUserAlreadyExistByMatrixPortfolio(string matrixClientAccount)
+        public async Task<IActionResult> GetIsUserAlreadyExistByMatrixClientAccount(string matrixClientAccount)
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Get/IsUser/AlreadyExist/inQAdmin/ByMatrixClientAccount/{matrixClientAccount} Call");
 
@@ -172,6 +190,46 @@ namespace ITI.QUIK.API.MultyServices.Controllers
             }
 
             result = await _core.SetAllTradesByFortsClientCode(model);
+
+            return Ok(result);
+        }
+
+        [HttpPut("AddNew/MatrixPortfolio/ToExistingClient/ByUID")]
+        public async Task<IActionResult> AddNewMatrixPortfolioToExistingClientByUID([FromBody] NewMatrixPortfolioToExistingClientModel model)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut AddNew/MatrixPortfolio/ToExistingClient/ByUID Call, " +
+                $"UID={model.UID} portfolio={model.MatrixPortfolio.MatrixClientPortfolio}");
+
+            //проверим корректность входных данных
+            NewClientCreationResponse result = ValidateData.ValidateNewMatrixPortfolioToExistingClientModel(model.MatrixPortfolio);
+            if (!result.IsNewClientCreationSuccess)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut AddNew/MatrixPortfolio/ToExistingClient/ByUID " +
+                    $" {model.UID} {model.MatrixPortfolio.MatrixClientPortfolio} Error: { result.NewClientCreationMessages[0]} ");
+                return Ok(result);
+            }
+
+            result = await _core.AddNewMatrixPortfolioToExistingClientByUID(model);
+
+            return Ok(result);
+        }
+
+        [HttpPut("AddNew/FortsPortfolio/ToExistingClient/ByUID")]
+        public async Task<IActionResult> AddNewFortsPortfolioToExistingClientByUID([FromBody] NewFortsPortfolioToExistingClientModel model)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut AddNew/FortsPortfolio/ToExistingClient/ByUID Call, " +
+                $"UID={model.UID} portfolio={model.MatrixToFortsCodes.MatrixClientCode}");
+
+            //проверим корректность входных данных
+            NewClientCreationResponse result = ValidateData.ValidateNewFortsPortfolioToExistingClientModel(model.MatrixToFortsCodes);
+            if (!result.IsNewClientCreationSuccess)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpPut AddNew/FortsPortfolio/ToExistingClient/ByUID " +
+                    $" {model.UID} {model.MatrixToFortsCodes.MatrixClientCode} Error: {result.NewClientCreationMessages[0]} ");
+                return Ok(result);
+            }
+
+            result = await _core.AddNewFortsPortfolioToExistingClientByUID(model);
 
             return Ok(result);
         }

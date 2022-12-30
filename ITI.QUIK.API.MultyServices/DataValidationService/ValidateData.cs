@@ -21,6 +21,24 @@ namespace DataValidationService
 
             return responseList;
         }
+        public static FindedQuikClientResponse ValidateMatrixClientAccountToFindedQuik(string matrixClientAccount)
+        {
+            MatrixClientAccountValidator validator = new MatrixClientAccountValidator();
+            var result = new FindedQuikClientResponse();
+            var responseList = new ListStringResponseModel();
+
+            ValidationResult validationResult = validator.Validate(matrixClientAccount);
+
+            if (!validationResult.IsValid)
+            {
+                responseList = SetResponseFromValidationResult.SetResponse(validationResult, responseList);
+
+                result.Messages.AddRange(responseList.Messages);
+                result.IsSuccess = false;
+            }
+
+            return result;
+        }
 
         public static ListStringResponseModel ValidateMatrixFortsCode(string fortsClientCode)
         {
@@ -110,6 +128,44 @@ namespace DataValidationService
             }
 
             return responseList;
+        }
+
+        public static NewClientCreationResponse ValidateNewMatrixPortfolioToExistingClientModel(MatrixClientPortfolioModel model)
+        {
+            MatrixClientPortfolioMoMsFxRsCdValidator validator = new MatrixClientPortfolioMoMsFxRsCdValidator();
+            var responseList = new ListStringResponseModel();
+
+            ValidationResult validationResult = validator.Validate(model.MatrixClientPortfolio);
+
+            if (!validationResult.IsValid)
+            {
+                responseList = SetResponseFromValidationResult.SetResponse(validationResult, responseList);
+            }
+
+            NewClientCreationResponse response = new NewClientCreationResponse();
+            response.IsNewClientCreationSuccess = responseList.IsSuccess;
+            response.NewClientCreationMessages.AddRange(responseList.Messages);
+
+            return response;
+        }
+
+        public static NewClientCreationResponse ValidateNewFortsPortfolioToExistingClientModel(MatrixToFortsCodesMappingModel model)
+        {
+            MatrixToFortsCodesMappingModelValidationService validator = new MatrixToFortsCodesMappingModelValidationService();
+            var responseList = new ListStringResponseModel();
+
+            ValidationResult validationResult = validator.Validate(model);
+
+            if (!validationResult.IsValid)
+            {
+                responseList = SetResponseFromValidationResult.SetResponse(validationResult, responseList);
+            }
+
+            NewClientCreationResponse response = new NewClientCreationResponse();
+            response.IsNewClientCreationSuccess = responseList.IsSuccess;
+            response.NewClientCreationMessages.AddRange(responseList.Messages);
+
+            return response;
         }
     }
 }
