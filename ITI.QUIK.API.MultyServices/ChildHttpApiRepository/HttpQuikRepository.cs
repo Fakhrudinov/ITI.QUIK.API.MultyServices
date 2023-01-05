@@ -9,6 +9,7 @@ using DataAbstraction.Models.InstrTw;
 //using System.Net.Http.Json;
 //using System.Text;
 using System.Text.Json;
+using DataAbstraction.Models.Discounts;
 
 namespace ChildHttpMatrixRepository
 {
@@ -1766,5 +1767,26 @@ namespace ChildHttpMatrixRepository
 
             //return result;
         }
-     }
+
+        public async Task<DiscountSingleResponse> GetDiscountSingleFromGlobal(string security)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpMatrixRepository GetDiscountSingleFromGlobal Called for {security}");
+
+            DiscountSingleResponse result = await _executiveRepo.GetTDirectResponse<DiscountSingleResponse>(
+                _connection,
+                "/api/Discounts/Get/SingleDiscount/FromGlobal/" + security);
+            return result;
+        }
+
+        public async Task<DiscountSingleResponse> GetDiscountSingleFromMarginTemplate(string template, string security)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpMatrixRepository GetDiscountSingleFromMarginTemplate " +
+                $"Called for {template}/{security}");
+
+            DiscountSingleResponse result = await _executiveRepo.GetTDirectResponse<DiscountSingleResponse>(
+                _connection,
+                $"/api/Discounts/Get/SingleDiscount/FromMarginTemplate/{template}/{security}");
+            return result;
+        }
+    }
 }

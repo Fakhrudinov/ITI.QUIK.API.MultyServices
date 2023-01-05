@@ -1,4 +1,5 @@
 ﻿using DataAbstraction.Models;
+using DataAbstraction.Models.Discounts;
 using DataAbstraction.Models.InstrTw;
 using DataAbstraction.Models.MoneyAndDepo;
 using DataAbstraction.Responses;
@@ -41,5 +42,7 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> AddNewFortsPortfolioToExistingClientByUID(FortsCodeAndUidModel fortsCodeAndUid);
         Task<ListStringResponseModel> SetRestrictedSecuritiesInTemplatesPoKomissii(RestrictedSecuritiesArraySetForBoardInTemplatesModel board);
         Task<ListStringResponseModel> SetKvalClientsToComplexProductRestrictions(CodesArrayModel model);
+        Task<DiscountSingleResponse> GetDiscountSingleFromGlobal(string security);
+        Task<DiscountSingleResponse> GetDiscountSingleFromMarginTemplate(string template, string security);
     }
 }

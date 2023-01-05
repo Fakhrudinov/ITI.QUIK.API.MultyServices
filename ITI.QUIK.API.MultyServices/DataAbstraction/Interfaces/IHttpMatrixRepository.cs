@@ -1,4 +1,5 @@
 ﻿using DataAbstraction.Models;
+using DataAbstraction.Models.Discounts;
 using DataAbstraction.Models.InstrTw;
 using DataAbstraction.Models.MoneyAndDepo;
 using DataAbstraction.Responses;
@@ -42,5 +43,7 @@ namespace DataAbstraction.Interfaces
         Task<BoolResponse> GetBoolIsClientTradeDaysAgoByClientAccountAndDays(string matrixClientAccount, int dayShift);
         Task<ClientDepoPositionsResponse> GetClientZeroedClosedSpotPositionsForLimLim(string matrixClientAccount, int dayShift);
         Task<ClientAndMoneyResponse> GetClientsSpotPortfoliosWhoTradesYesterday(int i);
+        Task<DiscountMatrixSingleResponse> GetDiscountSingle(string security);
+        Task<DiscountMatrixSingleResponse?> GetDiscountSingleForts(string security);
     }
 }

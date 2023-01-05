@@ -1,5 +1,6 @@
 ﻿using DataAbstraction.Connections;
 using DataAbstraction.Interfaces;
+using DataAbstraction.Models.Discounts;
 using DataAbstraction.Models.MoneyAndDepo;
 using DataAbstraction.Responses;
 using Microsoft.Extensions.Logging;
@@ -981,5 +982,24 @@ namespace ChildHttpMatrixRepository
             //return result;
         }
 
+        public async Task<DiscountMatrixSingleResponse> GetDiscountSingle(string security)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpMatrixRepository GetDiscountSingle '{security}' Called");
+
+            DiscountMatrixSingleResponse result = await _executiveRepo.GetTDirectResponse<DiscountMatrixSingleResponse>(
+                _connection,
+                "/api/Discounts/Get/SingleDiscount/" + security);
+            return result;
+        }
+
+        public async Task<DiscountMatrixSingleResponse?> GetDiscountSingleForts(string security)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpMatrixRepository GetDiscountSingleForts '{security}' Called");
+
+            DiscountMatrixSingleResponse result = await _executiveRepo.GetTDirectResponse<DiscountMatrixSingleResponse>(
+                _connection,
+                "/api/Discounts/Get/SingleDiscountForts/" + security);
+            return result;
+        }
     }
 }

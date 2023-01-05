@@ -2,6 +2,7 @@ using ChildHttpMatrixRepository;
 using DataAbstraction.Connections;
 using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
+using DataAbstraction.Models.Discounts;
 using LogicCore;
 using MailService;
 using Microsoft.OpenApi.Models;
@@ -34,7 +35,10 @@ builder.Services.AddTransient<HttpApiExecutiveRepository>();
 // add core level
 builder.Services.AddTransient<ICore, Core>();
 builder.Services.AddTransient<ICoreKval, CoreKval>();
-builder.Services.AddTransient<ICoreSingleServices, CoreSingleServices>(); 
+builder.Services.AddTransient<ICoreSingleServices, CoreSingleServices>();
+builder.Services.AddTransient<ICoreDiscounts, CoreDiscounts>();
+builder.Services.Configure<DiscountsSettings>(
+    builder.Configuration.GetSection("DiscountsSettings"));
 
 // add Email sender
 builder.Services.AddTransient<IEMail, EMail>();
