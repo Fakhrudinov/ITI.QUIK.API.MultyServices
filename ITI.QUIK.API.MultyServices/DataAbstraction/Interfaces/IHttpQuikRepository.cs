@@ -44,5 +44,8 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> SetKvalClientsToComplexProductRestrictions(CodesArrayModel model);
         Task<DiscountSingleResponse> GetDiscountSingleFromGlobal(string security);
         Task<DiscountSingleResponse> GetDiscountSingleFromMarginTemplate(string template, string security);
+        Task<ListStringResponseModel> PostSingleDiscountToGlobal(DiscountAndSecurityModel modelToQuik);
+        Task<ListStringResponseModel> PostSingleDiscountToTemplate(string template, DiscountAndSecurityModel modelToQuik);
+        Task<ListStringResponseModel> DeleteDiscountFromTemplate(string template, string security);
     }
 }

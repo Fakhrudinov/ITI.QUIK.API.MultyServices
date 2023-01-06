@@ -10,6 +10,7 @@ using DataAbstraction.Models.InstrTw;
 //using System.Text;
 using System.Text.Json;
 using DataAbstraction.Models.Discounts;
+using System.Reflection;
 
 namespace ChildHttpMatrixRepository
 {
@@ -1786,6 +1787,60 @@ namespace ChildHttpMatrixRepository
             DiscountSingleResponse result = await _executiveRepo.GetTDirectResponse<DiscountSingleResponse>(
                 _connection,
                 $"/api/Discounts/Get/SingleDiscount/FromMarginTemplate/{template}/{security}");
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> PostSingleDiscountToGlobal(DiscountAndSecurityModel model)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpMatrixRepository PostSingleDiscountToGlobal {model.Security} Called");
+
+            string bodyJson = JsonSerializer.Serialize(model);
+
+            ListStringResponseModel result = await _executiveRepo.DoActionTDirectResponse<ListStringResponseModel>(
+                EnumHttpActions.Post,
+                bodyJson,
+                _connection,
+                "/api/Discounts/Post/SingleDiscount/ToGlobal");
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> PostSingleDiscountToTemplate(string template, DiscountAndSecurityModel model)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpMatrixRepository PostSingleDiscountToTemplate {model.Security} Called");
+
+            string bodyJson = JsonSerializer.Serialize(model);
+
+            ListStringResponseModel result = await _executiveRepo.DoActionTDirectResponse<ListStringResponseModel>(
+                EnumHttpActions.Post,
+                bodyJson,
+                _connection,
+                "/api/Discounts/Post/SingleDiscount/ToMarginTemplate/" + template);
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> DeleteDiscountFromGlobal(string security)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpMatrixRepository DeleteDiscountFromGlobal {security} Called");
+
+            string bodyJson = JsonSerializer.Serialize("");
+            ListStringResponseModel result = await _executiveRepo.DoActionTDirectResponse<ListStringResponseModel>(
+                EnumHttpActions.Delete,
+                bodyJson,
+                _connection,
+                "/api/Discounts/Delete/SingleDiscount/FromGlobal/" + security);
+            return result;
+        }
+
+        public async Task<ListStringResponseModel> DeleteDiscountFromTemplate(string template, string security)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpMatrixRepository DeleteDiscountFromTemplate {template} {security} Called");
+
+            string bodyJson = JsonSerializer.Serialize("");
+            ListStringResponseModel result = await _executiveRepo.DoActionTDirectResponse<ListStringResponseModel>(
+                EnumHttpActions.Delete,
+                bodyJson,
+                _connection,
+                $"/api/Discounts/Delete/SingleDiscount/{security}/FromMarginTemplate/{template}");
             return result;
         }
     }
