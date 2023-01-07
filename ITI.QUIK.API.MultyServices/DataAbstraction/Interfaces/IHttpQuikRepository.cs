@@ -47,5 +47,6 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> PostSingleDiscountToGlobal(DiscountAndSecurityModel modelToQuik);
         Task<ListStringResponseModel> PostSingleDiscountToTemplate(string template, DiscountAndSecurityModel modelToQuik);
         Task<ListStringResponseModel> DeleteDiscountFromTemplate(string template, string security);
+        Task<ListStringResponseModel> DeleteDiscountFromGlobal(string security);
     }
 }

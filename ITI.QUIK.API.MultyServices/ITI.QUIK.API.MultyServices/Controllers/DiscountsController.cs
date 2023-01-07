@@ -71,5 +71,32 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
             return Ok(result);
         }
+
+        [HttpDelete("Delete/SingleDiscount/{security}")]
+        public async Task<IActionResult> DeleteSingleDiscount(string security)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete Delete/SingleDiscount/{security} Call");
+
+            //проверим корректность входных данных
+            ListStringResponseModel validateResult = ValidateData.ValidateSecurityName(security);
+            if (!validateResult.IsSuccess)
+            {
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete Delete/SingleDiscount/{security} " +
+                    $"validate Error: {validateResult.Messages[0]}");
+
+                BoolResponse validationResult = new BoolResponse();
+
+                validationResult.IsSuccess = false;
+                validationResult.Messages.AddRange(validateResult.Messages);
+                return Ok(validationResult);
+            }
+
+            BoolResponse result = await _core.DeleteSingleDiscount(security);
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpDelete Delete/SingleDiscount/{security} " +
+                $"result isOK={result.IsSuccess}");
+
+            return Ok(result);
+        }
     }
 }

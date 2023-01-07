@@ -254,10 +254,96 @@ namespace LogicCore
                 {
                     await PostSingleDiscountToTemplate(template, modelToQuik, result);
                 }
-            }
-            
+            }            
 
             return result;
+        }
+
+        public async Task<BoolResponse> DeleteSingleDiscount(string security)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts DeleteSingleDiscount Called {security}");
+            BoolResponse result = new BoolResponse();
+
+            //удаляем из глобал
+            ListStringResponseModel deleteFromGlobal = await _repoQuik.DeleteDiscountFromGlobal(security);
+            if (deleteFromGlobal.IsSuccess)
+            {
+                result.Messages.Add($"Delete from global is success.");
+            }
+            else // ошибка
+            {
+                if (deleteFromGlobal.Messages[0].EndsWith("1004 Данные не найдены"))
+                {
+                    result.Messages.Add($"Delete from global - discount not found. Nothing to delete.");
+                }
+                else
+                {
+                    // ошибка в запросе
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts DeleteSingleDiscount {security} " +
+                        $"from global - Error {deleteFromGlobal.Messages[0]}");
+
+                    result.Messages.AddRange(deleteFromGlobal.Messages);
+
+                    result.IsTrue = false;
+                    result.IsSuccess = false;
+                }
+            }
+
+            // удаляем из щаблонов
+            //пробуем удалить из Quik templates KSUR
+            if (_settings.TemlpatesArrayKSUR is not null)
+            {
+                foreach (string template in _settings.TemlpatesArrayKSUR)
+                {
+                    await DeleteSingleDiscountFromTemplate(template, security, result);
+                }
+            }
+            //пробуем удалить из Quik templates KPUR
+            if (_settings.TemlpatesArrayKPUR is not null)
+            {
+                foreach (string template in _settings.TemlpatesArrayKPUR)
+                {
+                    await DeleteSingleDiscountFromTemplate(template, security, result);
+                }
+            }
+            //пробуем удалить из Quik templates NoLvrg
+            if (_settings.TemlpatesArrayNoLeverage is not null)
+            {
+                foreach (string template in _settings.TemlpatesArrayNoLeverage)
+                {
+                    await DeleteSingleDiscountFromTemplate(template, security, result);
+                }
+            }
+
+            return result;
+        }
+
+        private async Task DeleteSingleDiscountFromTemplate(string template, string security, BoolResponse result)
+        {
+            //удаляем из глобал
+            ListStringResponseModel deleteFromTemplate= await _repoQuik.DeleteDiscountFromTemplate(template, security);
+            if (deleteFromTemplate.IsSuccess)
+            {
+                result.Messages.Add($"Delete {security} from template {template} is success.");
+            }
+            else // ошибка
+            {
+                if (deleteFromTemplate.Messages[0].EndsWith("1004 Данные не найдены"))
+                {
+                    result.Messages.Add($"Delete {security} from template {template} - discount not found. Nothing to delete.");
+                }
+                else
+                {
+                    // ошибка в запросе
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts DeleteSingleDiscount " +
+                        $"{security} from template {template} - Error {deleteFromTemplate.Messages[0]}");
+
+                    result.Messages.AddRange(deleteFromTemplate.Messages);
+
+                    result.IsTrue = false;
+                    result.IsSuccess = false;
+                }
+            }
         }
 
         private async Task<DiscountMatrixSingleResponse> GetDiscountValueFromMatrix(string security)
