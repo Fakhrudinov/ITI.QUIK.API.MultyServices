@@ -1001,5 +1001,15 @@ namespace ChildHttpMatrixRepository
                 "/api/Discounts/Get/SingleDiscountForts/" + security);
             return result;
         }
+
+        public async Task<DiscountsListResponse> GetDiscountsListFromMarket(string market)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpMatrixRepository GetDiscountsListFromMarket '{market}' Called");
+
+            DiscountsListResponse result = await _executiveRepo.GetTDirectResponse<DiscountsListResponse>(
+                _connection,
+                "/api/Discounts/Get/DiscountsList/" + market);
+            return result;
+        }
     }
 }

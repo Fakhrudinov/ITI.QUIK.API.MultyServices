@@ -1,6 +1,7 @@
 ﻿using DataAbstraction.Interfaces;
 using DataAbstraction.Models;
 using DataAbstraction.Models.Discounts;
+using DataAbstraction.Models.EMail;
 using DataAbstraction.Responses;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -15,18 +16,30 @@ namespace LogicCore
         private IHttpQuikRepository _repoQuik;
         private DiscountsSettings _settings;
         private string[] _settingsCurrencyArray;
+        private IEMail _sender;
 
         // эталонные дисконты
         private DiscountModel _ksur = null;
         private DiscountModel _kpur = null;
         private DiscountModel _nolvrg = null;
 
+        private enum _discontType
+        { 
+            KSUR = 0,
+            KPUR = 1,
+            NoLvrg = 2
+        };
+
+        private DiscountModel[] discontEthalonArray = new DiscountModel[3];// по числу в enum
+
+
         public CoreDiscounts(
             ILogger<CoreDiscounts> logger,
             IHttpMatrixRepository repoMatrix,
             IHttpQuikRepository repoQuik,
             IOptions<DiscountsSettings> settings,
-            IOptions<LimLImCreationSettings> settingsCurrency
+            IOptions<LimLImCreationSettings> settingsCurrency,
+            IEMail sender
             )
         {
             _logger = logger;
@@ -34,6 +47,7 @@ namespace LogicCore
             _repoQuik = repoQuik;
             _settings = settings.Value;
             _settingsCurrencyArray = settingsCurrency.Value.PositionAsMoneyArray;
+            _sender = sender;
         }
 
         public async Task<BoolResponse> CheckSingleDiscount(string security)
@@ -43,7 +57,6 @@ namespace LogicCore
             {
                 IsTrue = true
             };
-
 
             /// plan
             // получим информацию из матрицы
@@ -262,7 +275,10 @@ namespace LogicCore
         public async Task<BoolResponse> DeleteSingleDiscount(string security)
         {
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts DeleteSingleDiscount Called {security}");
-            BoolResponse result = new BoolResponse();
+            BoolResponse result = new BoolResponse
+            {
+                IsTrue = true
+            };
 
             //удаляем из глобал
             ListStringResponseModel deleteFromGlobal = await _repoQuik.DeleteDiscountFromGlobal(security);
@@ -316,6 +332,286 @@ namespace LogicCore
             }
 
             return result;
+        }
+
+        public async Task<BoolResponse> CheckAllDiscounts()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts CheckAllDiscounts Called");
+            BoolResponse result = new BoolResponse
+            {
+                IsTrue = true
+            };
+            NewEMail message = new NewEMail();
+            message.Subject = "Quik Проверка списков дисконтов";
+            message.Body = $"<html><body><h2>Проверка списков дисконтов</h2>";
+
+            /// план 
+            // получим из матрицы списки ЦБ+дисконтов по рынкам, указанным в настройках CheckMarketsArray.
+            // при неудаче - прерываем.
+
+            // запросим список бумаг из глобал/шаболонов
+            // сравним по бумагам, лишние/недостающие указать отдельно, \
+            // по оставшимся сравить значения дисконотов.
+
+            List<DiscountMatrixModel> matrixDiscounts = new List<DiscountMatrixModel>();
+
+            foreach (string market in _settings.CheckMarketsArray)
+            {
+                DiscountsListResponse discounts = await _repoMatrix.GetDiscountsListFromMarket(market);
+                if (discounts.IsSuccess)
+                {
+                    matrixDiscounts.AddRange(discounts.Discounts);
+
+                    message.Body = message.Body + $"<p>From Matrix {market} added {discounts.Discounts.Count} discounts.</p>";
+                    _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts CheckAllDiscounts " +
+                        $"- from Matrix market {market} added {discounts.Discounts.Count} discounts");
+                }
+                else
+                {
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts CheckAllDiscounts " +
+                        $"failed get Matrix discounts from market {market}. {discounts.Messages[0]}");
+
+                    message.Body = message.Body + $"<p style='color:red'>Error! Matrix discounts from market {market} failed.</p>";
+                    foreach (var str in discounts.Messages)
+                    {
+                        _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts CheckAllDiscounts - {str}");
+                        message.Body = message.Body + $"<p style='color:red'> - {str}</p>";
+                    }
+
+                    result.IsTrue = false;
+                    result.IsSuccess = false;
+                    result.Messages.AddRange(discounts.Messages);
+
+                    message.Subject = "Failed! " + message.Subject;
+
+                    await SendMessageFinalize(message);
+
+                    return result;
+                }
+            }
+            // сравниваем в глобал
+            await CompareDiscountsList("global", matrixDiscounts, result, message, _discontType.KSUR);
+            // запросить из всех шаблонов ------------------------------------------------
+            //получим информацию из Quik templates KSUR
+            if (_settings.TemlpatesArrayKSUR is not null)
+            {
+                foreach (string template in _settings.TemlpatesArrayKSUR)
+                {
+                    await CompareDiscountsList(template, matrixDiscounts, result, message, _discontType.KSUR);
+                }
+            }
+            //получим информацию из Quik templates KPUR
+            if (_settings.TemlpatesArrayKPUR is not null)
+            {
+                foreach (string template in _settings.TemlpatesArrayKPUR)
+                {
+                    await CompareDiscountsList(template, matrixDiscounts, result, message, _discontType.KPUR);
+                }
+            }
+            //получим информацию из Quik templates NoLvrg
+            if (_settings.TemlpatesArrayNoLeverage is not null)
+            {
+                foreach (string template in _settings.TemlpatesArrayNoLeverage)
+                {
+                    await CompareDiscountsList(template, matrixDiscounts, result, message, _discontType.NoLvrg);
+                }
+            }
+
+
+            if (result.IsTrue)
+            {
+                message.Subject = "Success! " + message.Subject;
+            }
+            else
+            {
+                message.Subject = "Errors! " + message.Subject;
+            }
+
+            await SendMessageFinalize(message);
+            return result;
+        }
+
+        private async Task CompareDiscountsList(string templateName, List<DiscountMatrixModel> matrixDiscounts, BoolResponse result, NewEMail message, _discontType discontType)
+        {
+            // получить список цб из шаблона
+            // сравнить списки
+            SecuritysListResponse securitiesFromQuik = null;
+            message.Body = message.Body + $"<h2>Сравниваем шаблон {templateName}</h2>";
+
+            // get
+            if (templateName == "global")//from global
+            {
+                securitiesFromQuik = await _repoQuik.GetDiscountSecurityesListFromGlobal();
+            }
+            else // from template
+            {
+                securitiesFromQuik = await _repoQuik.GetDiscountSecurityesListFromTemplate(templateName);
+            }
+
+            // compare
+            if (!securitiesFromQuik.IsSuccess) // error at request
+            {
+                result.IsTrue = false;
+
+                _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts CompareDiscountsList " +
+                    $"failed to get discounts securities list from {templateName}. {securitiesFromQuik.Messages[0]}");
+
+                message.Body = message.Body + $"<p style='color:red'>Error when get discounts securities list from {templateName}.</p>";
+                foreach (var str in securitiesFromQuik.Messages)
+                {
+                    _logger.LogWarning($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts CompareDiscountsList - {str}");
+                    message.Body = message.Body + $"<p style='color:red'> - {str}</p>";
+                }
+            }
+            else // ok
+            {
+                message.Body = message.Body + $"<p>In {templateName} finded {securitiesFromQuik.Securitys.Count} securities.</p>";
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts CompareDiscountsList " +
+                    $"- In {templateName} finded {securitiesFromQuik.Securitys.Count} securities.");
+
+                // получить список недостающих в quik securityes
+                // получить список лишних в quik securityes - этот список будет как остаток от securitiesFromQuik
+                // получить список по совпадающим securityes - по ним сравнить дисконты
+
+                List<string> absentInQuik= new List<string>();
+                List<string> matchInBoth = new List<string>();
+
+                if (securitiesFromQuik.Securitys is not null && securitiesFromQuik.Securitys.Count > 0)
+                {
+                    //заполнить недостающие и совпадающие
+                    for (int i = securitiesFromQuik.Securitys.Count - 1; i >= 0; i--)
+                    {
+                        foreach (DiscountMatrixModel security in matrixDiscounts)
+                        {
+                            if (security.Tiker == securitiesFromQuik.Securitys[i])
+                            {
+                                matchInBoth.Add(securitiesFromQuik.Securitys[i]);
+                                securitiesFromQuik.Securitys.RemoveAt(i);
+                                break;
+                            }
+                        }
+
+                    }
+                    // заполнит абсент
+                    foreach (DiscountMatrixModel securityInMatrix in matrixDiscounts)
+                    {
+                        bool found = false;
+                        foreach (string securityInQuik in matchInBoth)
+                        {
+                            if (securityInMatrix.Tiker == securityInQuik)
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+                        //если не нашли - добавим
+                        if (!found)
+                        {
+                            absentInQuik.Add(securityInMatrix.Tiker);
+                        }
+                    }
+                }
+                else // тогда все в список отсутствующих
+                {
+                    foreach (DiscountMatrixModel security in matrixDiscounts)
+                    {
+                        absentInQuik.Add(security.Tiker);
+                    }
+                }
+
+                if (absentInQuik.Count > 0 || securitiesFromQuik.Securitys.Count > 0)
+                {
+                    result.IsTrue = false;
+                }
+
+                // Выведем списки недостающих и лишних:
+                _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts CompareDiscountsList " +
+                    $"After comparision lists is: " +
+                    $"Both={matchInBoth.Count}, " +
+                    $"AbsentInQuik={absentInQuik.Count}, " +
+                    $"unnecessaryInQuik={securitiesFromQuik.Securitys.Count}");
+
+                message.Body = message.Body + $"<h3>Отсутствует в QUIK шаблоне {templateName} - {absentInQuik.Count} бумаг.</h3><p>";
+                foreach (var str in absentInQuik)
+                {
+                    message.Body = message.Body + $"{str}, ";
+                }
+                message.Body = message.Body + $"</p>";
+
+                message.Body = message.Body + $"<h3>Лишние в QUIK шаблоне {templateName} - {securitiesFromQuik.Securitys.Count} бумаг.</h3><p>";
+                foreach (var str in securitiesFromQuik.Securitys)
+                {
+                    message.Body = message.Body + $"{str}, ";
+                }
+                message.Body = message.Body + $"</p>";
+
+                // сравним совпавшие по дисконтам.
+                await CompareDiscontListWithActualValues(matrixDiscounts, matchInBoth, templateName, discontType, message, result);
+            }
+        }
+
+        private async Task CompareDiscontListWithActualValues(
+            List<DiscountMatrixModel> matrixDiscounts, //значения дисконтов для инструмента
+            List<string> matchInBoth, // список инструментов для проверки
+            string templateName, // в каком шаблоне квик сравнивать
+            _discontType discontType, // с каким типом дисконтом сверять
+            NewEMail message, // сюда результаты
+            BoolResponse result) // сюда результаты
+        {
+            // план 
+            // foreach matchInBoth
+            // находим его значения в matrixDiscounts и формируем данные для quik
+            // получить данные из QUIK из нужного темплейта
+            // сравниваем с заданным типом дисконта discontType
+
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts CompareDiscontListWithActualValues " +
+                $"started for {templateName} {discontType}");
+
+            foreach (string tiker in matchInBoth)
+            {
+                _logger.LogDebug($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts CompareDiscontListWithActualValues " +
+                    $"work with {templateName} {tiker}");
+                //находим его значения в matrixDiscounts и формируем данные для quik
+                DiscountMatrixModel matrixSingleDiscount = matrixDiscounts.Where(disc => disc.Tiker == tiker).FirstOrDefault();
+
+                _logger.LogDebug($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts CompareDiscontListWithActualValues " +
+                    $"finded in matrix list {matrixSingleDiscount.Tiker} {matrixSingleDiscount.Discount}");
+
+                CalculateEthalonDiscounts(matrixSingleDiscount);
+
+                // получить данные из QUIK из нужного темплейта
+                DiscountSingleResponse quikDiscount = null;
+                if (templateName == "global")
+                {
+                    //получим информацию из Quik global
+                    quikDiscount = await _repoQuik.GetDiscountSingleFromGlobal(tiker);
+                }
+                else
+                {
+                    // из шаблона 
+                    quikDiscount = await _repoQuik.GetDiscountSingleFromMarginTemplate(templateName, tiker);
+                }
+
+                // сравниваем с заданным типом дисконта discontType
+                if (!quikDiscount.IsSuccess)//при ошибке - записать инфу,
+                {
+
+                }
+                else // сравниваем 
+                {
+
+                }
+            }
+        }
+
+        private async Task SendMessageFinalize(NewEMail message)
+        {
+            message.Body = message.Body + "</body></html>";
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts SendMessageFinalize try to Send message");
+            await _sender.Send(message);
+
         }
 
         private async Task DeleteSingleDiscountFromTemplate(string template, string security, BoolResponse result)
@@ -377,7 +673,7 @@ namespace LogicCore
             };
 
             _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} CoreDiscounts CalculateEthalonDiscounts " +
-                $"matrix discounts is " +
+                $"matrix discounts for {discount.Tiker} is " +
                 $"KSUR {_ksur.ToString()} KPUR {_kpur.ToString()} NoLvrg {_nolvrg.ToString()}");
         }
 

@@ -98,5 +98,18 @@ namespace ITI.QUIK.API.MultyServices.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("Check/AllDiscounts")]
+        public async Task<IActionResult> CheckSingleDiscount()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Check/AllDiscounts Call");
+
+            BoolResponse result = await _core.CheckAllDiscounts();
+
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpGet Check/AllDiscounts " +
+                $"result isOK={result.IsSuccess}");
+
+            return Ok(result);
+        }
     }
 }

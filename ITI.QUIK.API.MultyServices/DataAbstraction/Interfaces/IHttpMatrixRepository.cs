@@ -45,5 +45,6 @@ namespace DataAbstraction.Interfaces
         Task<ClientAndMoneyResponse> GetClientsSpotPortfoliosWhoTradesYesterday(int i);
         Task<DiscountMatrixSingleResponse> GetDiscountSingle(string security);
         Task<DiscountMatrixSingleResponse?> GetDiscountSingleForts(string security);
+        Task<DiscountsListResponse> GetDiscountsListFromMarket(string market);
     }
 }

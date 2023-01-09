@@ -1843,5 +1843,25 @@ namespace ChildHttpMatrixRepository
                 $"/api/Discounts/Delete/SingleDiscount/{security}/FromMarginTemplate/{template}");
             return result;
         }
+
+        public async Task<SecuritysListResponse?> GetDiscountSecurityesListFromGlobal()
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpMatrixRepository GetDiscountSecurityesListFromGlobal Called");
+
+            SecuritysListResponse result = await _executiveRepo.GetTDirectResponse<SecuritysListResponse>(
+                _connection,
+                "/api/Discounts/Get/ListOfDiscountSecurities/FromGlobal");
+            return result;
+        }
+
+        public async Task<SecuritysListResponse?> GetDiscountSecurityesListFromTemplate(string templateName)
+        {
+            _logger.LogInformation($"{DateTime.Now.ToString("HH:mm:ss:fffff")} HttpMatrixRepository GetDiscountSecurityesListFromTemplate Called for {templateName}");
+
+            SecuritysListResponse result = await _executiveRepo.GetTDirectResponse<SecuritysListResponse>(
+                _connection,
+                "/api/Discounts/Get/ListOfDiscountSecurities/FromMarginTemplate/" + templateName);
+            return result;
+        }
     }
 }
