@@ -50,5 +50,7 @@ namespace DataAbstraction.Interfaces
         Task<ListStringResponseModel> DeleteDiscountFromGlobal(string security);
         Task<SecuritysListResponse?> GetDiscountSecurityesListFromGlobal();
         Task<SecuritysListResponse?> GetDiscountSecurityesListFromTemplate(string templateName);
+        Task<DiscountValuesListResponse?> GetDiscountValuesListFromGlobal(string request);
+        Task<DiscountValuesListResponse?> GetDiscountValuesListFromMarginTemplate(string templateName, string request);
     }
 }

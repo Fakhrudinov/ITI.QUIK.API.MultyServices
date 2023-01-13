@@ -7,6 +7,6 @@ namespace DataAbstraction.Interfaces
         Task<BoolResponse> CheckAllDiscounts();
         Task<BoolResponse> CheckSingleDiscount(string security);
         Task<BoolResponse> DeleteSingleDiscount(string security);
-        Task<BoolResponse> PostSingleDiscount(string security);
+        Task<ListStringResponseModel> PostSingleDiscount(string security);
     }
 }
